@@ -189,3 +189,9 @@ canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .jobstrip figure{margin:0;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 6px 6px;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0}
 .jobstrip figure > div{display:flex;align-items:flex-end}
 .jobstrip figcaption{font-size:13px;font-weight:700}
+
+/* 기기 호환: 아이폰 가로 글자 커짐·탭 하이라이트·입력칸 확대 방지 */
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{-webkit-tap-highlight-color:transparent}
+a,button{touch-action:manipulation}
+input,select,textarea{font-size:16px}
