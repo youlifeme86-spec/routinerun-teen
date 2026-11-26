@@ -8,7 +8,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%2346B1D8'/%3E%3Crect x='3' y='9' width='10' height='4' fill='%237CC242'/%3E%3Crect x='6' y='3' width='4' height='6' fill='%23E2453C'/%3E%3C/svg%3E">
 <script src="config.js"></script>
 <script>
-window.RR_VERSION='2026.11.26-9';
+window.RR_VERSION='2026.11.26-10';
 /* 실시간 오류 기록: 학생 폰에서 난 오류를 구글 시트 [오류] 탭으로 보냄 */
 (function(){var n=0;window.RR_REPORT=function(msg,stack,extra){try{var C=window.RR_CONFIG||{};if(!C.API_URL||n>=8)return;n++;var a=null;try{a=JSON.parse(localStorage.getItem('rr-auth-v2')||'null')}catch(e){}
 fetch(C.API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},keepalive:true,body:JSON.stringify({action:'logError',token:a&&a.token||'',msg:String(msg||'').slice(0,1000),stack:String(stack||'').slice(0,3000),page:location.pathname+(location.hash.indexOf('#parent')===0?' (학부모)':''),tab:(window.RR_TAB||'')+(extra?' '+extra:''),ver:window.RR_VERSION||'',ua:navigator.userAgent.slice(0,300)})}).catch(function(){})}catch(e){}};
@@ -272,6 +272,8 @@ img.px,canvas.px{image-rendering:pixelated;image-rendering:crisp-edges}
 .upd{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:60;background:#2B1D16;color:#F7C531;padding:8px 8px 8px 14px;display:flex;gap:10px;align-items:center;font-size:13px;box-shadow:0 0 0 3px #F7C531;max-width:calc(100% - 32px)}
 .upd button{border:0;background:#F7C531;color:#2B1D16;font-family:var(--f-title);font-size:15px;padding:6px 10px}
 details summary{cursor:pointer;padding:4px 0}
+.sndbtn{position:absolute;right:8px;bottom:8px;z-index:8;border:0;background:#2B1D16;color:#F7C531;font-family:var(--f-pixel);font-size:8px;padding:6px 7px;box-shadow:0 0 0 2px #F7C531}
+.sndbtn[aria-pressed="false"]{color:#C9B08A;box-shadow:0 0 0 2px #6E5844}
 /* 공략 비법서 (점수 설계 안내) */
 .guide{display:block!important;background:#3A2A20!important;color:#F6E3B4}
 .guide summary{list-style:none;display:flex;align-items:center;gap:8px;padding:0}
@@ -308,7 +310,7 @@ details summary{cursor:pointer;padding:4px 0}
   <p class="tiny muted" id="foot" style="max-width:420px;text-align:center">연결 중...</p>
 </div>
 
-<script src="art.js?v=2026.11.26-6"></script>
+<script src="art.js?v=2026.11.26-10"></script>
 <script>
 (function(){
 /* ---------- 데이터 ---------- */
@@ -410,13 +412,27 @@ const DAILY_CAP=45;
 /* ---------- 시즌 설계: 한 달 기준 300점(평일 하루 2시간) = 3,000 데미지 ---------- */
 const BASE=300, BLESS_PCT=10, ITEM_GEAR=100, ITEM_CHEST=300;
 const RAIDS=[
- {id:'spring',n:'벚꽃엔딩 로드',sub:'중간고사 블라썸',exam:'1학기 중간고사',specs:[{m:4,n:4}],sk:['새학기 멘탈 흔들기','춘곤증 꽃가루'],title:'블라썸 브레이커'},
- {id:'summer',n:'폭염의 여름여름빔 타이탄',sub:'',exam:'1학기 기말고사',specs:[{m:7,n:2}],sk:['에어컨 고장 빔','여름방학 압수'],title:'폭염 생존자'},
- {id:'autumn',n:'가을타나봐 센치마왕',sub:'',exam:'2학기 중간고사',specs:[{m:10,n:2}],sk:['감성 폭발 멍때리기','천고마비 식곤증'],title:'슬럼프 퇴마사'},
- {id:'winter',n:'눈사람맛좀볼래? 프로스트 킹',sub:'',exam:'2학기 기말고사',specs:[{m:12,n:2}],sk:['이불 밖은 위험해','연말 파티 유혹'],title:'학년 마무리 전설'},
- {id:'mock',n:'누적누적빔 오버로드',sub:'전범위 거신',exam:'전국 모의고사',specs:[{m:3,n:3,day:16,incl:1},{m:6,n:3,day:16,incl:1},{m:9,n:3,day:16,incl:1},{m:11,n:3,day:16,incl:1}],sk:['3개월 전 기억 소환','OMR 밀려쓰기'],title:'전범위 정복자'}
+ {id:'spring',s:'벚꽃',n:'벚꽃엔딩 로드',sub:'중간고사 블라썸',exam:'1학기 중간고사',specs:[{m:4,n:4}],sk:['새학기 멘탈 흔들기','춘곤증 꽃가루'],title:'블라썸 브레이커'},
+ {id:'summer',s:'여름',n:'폭염의 여름여름빔 타이탄',sub:'',exam:'1학기 기말고사',specs:[{m:7,n:2}],sk:['에어컨 고장 빔','여름방학 압수'],title:'폭염 생존자'},
+ {id:'autumn',s:'가을',n:'가을타나봐 센치마왕',sub:'',exam:'2학기 중간고사',specs:[{m:10,n:2}],sk:['감성 폭발 멍때리기','천고마비 식곤증'],title:'슬럼프 퇴마사'},
+ {id:'winter',s:'겨울',n:'눈사람맛좀볼래? 프로스트 킹',sub:'',exam:'2학기 기말고사',specs:[{m:12,n:2}],sk:['이불 밖은 위험해','연말 파티 유혹'],title:'학년 마무리 전설'},
+ {id:'mock',s:'모의고사',only:'high',n:'누적누적빔 오버로드',sub:'전범위 거신',exam:'전국 모의고사',specs:[{m:3,n:3,day:16,incl:1},{m:6,n:3,day:16,incl:1},{m:9,n:3,day:16,incl:1},{m:10,n:3,day:16,incl:1}],sk:['3개월 전 기억 소환','OMR 밀려쓰기'],title:'전범위 정복자'}
+,
+ {id:'vsummer',s:'여름방학',n:'여름방학 늦잠 나무늘보 킹',sub:'방학 보스',exam:'여름방학',vac:1,only:'mid',specs:[{m:8,n:1}],sk:['알람 끄기 10연타','에어컨 앞 무한 낮잠'],title:'방학 갓생러'},
+ {id:'vwinter',s:'겨울방학',n:'겨울방학 귤까기 이불요괴',sub:'방학 보스',exam:'겨울방학',vac:1,only:'mid',specs:[{m:1,n:2}],sk:['이불 밖은 남극','귤 한 박스 순삭'],title:'이불 탈출 용사'}
 ];
 const HIDDEN={n:'꿈의 문 수문장',hp:12*BASE*10};
+/* 학교: 고등(기본)은 시험 레이드 5종, 중등은 모의고사 빼고 방학 보스 2종 */
+const SCHOOLS={mid:'중학생',high:'고등학생'};
+function school(st){st=st||S;return st&&st.school==='mid'?'mid':'high'}
+function myRaids(){const sc=school();return RAIDS.filter(r=>!r.only||r.only===sc)}
+/* 신규 용사 마스터의 가호: 이 기간에 들어온 학생은 들어오기 전 지난 기간만큼 레이드 충전·히든보스를 미리 채워 줘요 (랭킹·학부모 점수는 그대로) */
+const NEWBIE={from:'2026-11-26',to:'2026-11-30',name:'신규 용사 마스터의 가호'};
+function joinedDay(st){st=st||S;if(st.joined)return st.joined;const ks=Object.keys(st.logs||{}).filter(k=>st.logs[k].q.some(q=>q.done)).sort();const c=st.char&&st.char.created;let j=ks[0]||c||null;if(c&&j&&c<j)j=c;return j}
+function newbieOn(st){const j=joinedDay(st);return !!j&&j>=NEWBIE.from&&j<=NEWBIE.to}
+/* from~to 기간 중 가입일 전 몫 = 한 달 3,000 데미지를 날짜 비율로 */
+function preFill(from,to,st){if(!newbieOn(st))return 0;const j=joinedDay(st);let t=0;let d=parseDay(from);const end=parseDay(to<j?to:addDays(j,-1));
+  while(d<=end){const dim=new Date(d.getFullYear(),d.getMonth()+1,0).getDate();t+=BASE*10/dim;d=new Date(d.getFullYear(),d.getMonth(),d.getDate()+1)}return Math.round(t)}
 function ymd(y,m,d){const t=new Date(y,m-1,d);return t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0')}
 function monthKeyOf(k){return k.slice(0,7)}
 function qDmg(q){return q.dmg!=null?q.dmg:questPts(q)*10}
@@ -435,17 +451,40 @@ function monthBossDmg(s,mk,st){return bossTrack(s,mk,st).eff}
 function bossLeft(s,mk){return Math.max(0,SUBJ[s].hp-monthBossDmg(s,mk||monthKeyOf(TODAY())))}
 function raidInst(r,today){today=today||TODAY();const y=+today.slice(0,4);let best=null;
   [y-1,y,y+1].forEach(yy=>r.specs.forEach(sp=>{const openStart=ymd(yy,sp.m,sp.day||1);const openEnd=ymd(yy,sp.m+1,0);
-    const accStart=sp.incl?ymd(yy,sp.m-(sp.n-1),1):ymd(yy,sp.m-sp.n,1);
-    if(openEnd>=today&&(!best||openEnd<best.openEnd))best={r,sp,openStart,openEnd,accStart,id:r.id+'-'+openStart}}));
-  const b=best,cap=b.sp.n*BASE*10,hp=cap+1500;const open=today>=b.openStart;
-  const charge=dmgIn(b.accStart,open?addDays(b.openStart,-1):today);
+    const accStart=r.vac?openStart:sp.incl?ymd(yy,sp.m-(sp.n-1),1):ymd(yy,sp.m-sp.n,1);const oEnd=r.vac?ymd(yy,sp.m+sp.n,0):openEnd;
+    if(oEnd>=today&&(!best||oEnd<best.openEnd))best={r,sp,openStart,openEnd:oEnd,accStart,id:r.id+'-'+openStart}}));
+  const b=best,vac=!!r.vac,cap=vac?0:b.sp.n*BASE*10,hp=vac?b.sp.n*BASE*10:cap+1500;const open=today>=b.openStart;
+  const bonus=vac?0:Math.min(cap,preFill(b.accStart,addDays(b.openStart,-1)));
+  const charge=vac?0:dmgIn(b.accStart,open?addDays(b.openStart,-1):today)+bonus;
   const items=(S.itemUse||[]).filter(u=>u.inst===b.id).reduce((a,u)=>a+u.dmg,0);
   const direct=open?dmgIn(b.openStart,today)+items:0;
   const left=open?Math.max(0,hp-Math.min(charge,cap)-direct):hp;
-  return {...b,cap,hp,open,charge,direct,items,left}}
-function hiddenState(){const t=TODAY();const y=+t.slice(0,4),m=+t.slice(5,7);const start=ymd(m>=3?y:y-1,3,1);const d=dmgIn(start,t);return {start,dmg:d,left:Math.max(0,HIDDEN.hp-d)}}
+  return {...b,vac,cap,hp,open,charge,bonus,direct,items,left}}
+function hiddenState(){const t=TODAY();const y=+t.slice(0,4),m=+t.slice(5,7);const start=ymd(m>=3?y:y-1,3,1);const bonus=preFill(start,t);const d=dmgIn(start,t)+bonus;return {start,dmg:d,bonus,left:Math.max(0,HIDDEN.hp-d)}}
 function blessActive(){return S.bless&&TODAY()<=S.bless.until}
 const fmtN=n=>Math.round(n).toLocaleString();
+/* ---------- 소리·진동: 8비트 효과음과 보스 화면 배경음악 (파일 없이 브라우저에서 합성), 진동은 안드로이드만 ---------- */
+const SND=(()=>{let ctx=null,bgmT=null,step=0,unlocked=false;
+  const on=()=>{try{return localStorage.getItem('rr-sound')!=='off'}catch(e){return true}};
+  function ac(){try{if(!ctx){const C=window.AudioContext||window.webkitAudioContext;if(!C)return null;ctx=new C()}if(ctx.state==='suspended')ctx.resume();return ctx}catch(e){return null}}
+  function tone(f,d,type,vol,when,slide){const c=ac();if(!c)return;const t0=c.currentTime+(when||0);const o=c.createOscillator(),g=c.createGain();o.type=type||'square';o.frequency.setValueAtTime(f,t0);if(slide)o.frequency.exponentialRampToValueAtTime(slide,t0+d);g.gain.setValueAtTime(vol||.06,t0);g.gain.exponentialRampToValueAtTime(.0001,t0+d);o.connect(g);g.connect(c.destination);o.start(t0);o.stop(t0+d+.02)}
+  function noise(d,vol){const c=ac();if(!c)return;const b=c.createBuffer(1,Math.floor(c.sampleRate*d),c.sampleRate);const a=b.getChannelData(0);for(let i=0;i<a.length;i++)a[i]=(Math.random()*2-1)*(1-i/a.length);const s=c.createBufferSource(),g=c.createGain();g.gain.value=vol||.12;s.buffer=b;s.connect(g);g.connect(c.destination);s.start()}
+  const FX={click:()=>tone(880,.05,'square',.035),tab:()=>{tone(660,.06,'square',.045);tone(990,.07,'square',.045,.05)},
+    hit:()=>{noise(.18,.16);tone(220,.2,'sawtooth',.07,0,70)},
+    kill:()=>{[523,659,784,1046].forEach((f,i)=>tone(f,.18,'square',.06,i*.11));tone(1318,.45,'triangle',.07,.46)},
+    item:()=>{tone(784,.08,'square',.05);tone(1175,.14,'square',.05,.08)}};
+  const VIB={hit:[35],kill:[60,40,140],item:[20,30,20]};
+  function play(k){if(!on()||!unlocked)return;try{FX[k]&&FX[k]()}catch(e){}try{if(VIB[k]&&navigator.vibrate)navigator.vibrate(VIB[k])}catch(e){}}
+  const MEL=[659,0,784,659,587,523,587,0,523,0,659,523,494,440,494,0],BAS=[220,220,175,175,196,196,165,165];
+  function tick(){if(!ctx||ctx.state!=='running')return;const m=MEL[step%16];if(m)tone(m,.15,'square',.02);if(step%2===0)tone(BAS[(step>>1)%8]/2,.3,'triangle',.045);step++}
+  let want=false;
+  function bgm(w){want=!!w;const go=want&&on()&&unlocked&&!document.hidden;if(go&&!bgmT){ac();step=0;bgmT=setInterval(tick,190)}else if(!go&&bgmT){clearInterval(bgmT);bgmT=null}}
+  document.addEventListener('pointerdown',()=>{if(!unlocked){unlocked=true;ac();setTimeout(()=>bgm(want),0)}},true);
+  document.addEventListener('visibilitychange',()=>bgm(want));
+  document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('button');if(!b)return;if(b.id==='sndbtn'){toggle();b.textContent=on()?'♪ ON':'♪ OFF';b.setAttribute('aria-pressed',on());return}play(b.closest('.nav')?'tab':'click')},true);
+  function toggle(){const v=!on();try{localStorage.setItem('rr-sound',v?'on':'off')}catch(e){}bgm(want);if(v)play('click')}
+  return {play,bgm,on,toggle}})();
+
 function pctOf(a,b){return Math.max(0,Math.min(100,Math.round(a/b*100)))}
 
 /* ---------- 픽셀 스프라이트 ---------- */
@@ -493,7 +532,8 @@ function sceneHTML(inner,opts){opts=opts||{};const A=(window.RRART&&RRART.scene(
   const deco=opts.deco===false?'':(A.mtn?'<div data-spr="tree" data-sc="3" style="position:absolute;bottom:58px;left:-22px"></div><div data-spr="bush" data-sc="3" style="position:absolute;bottom:58px;left:128px"></div>':'<div data-spr="tree" data-sc="5" style="position:absolute;bottom:58px;left:-14px"></div><div data-spr="mush" data-sc="4" style="position:absolute;bottom:60px;left:120px"></div>');
   return `<div class="scene" id="scene">${back}${deco}
    <div class="ground" style="background-image:url(${A.ground||GROUND})"></div>${inner}
-   <div class="fx" id="fx"></div><canvas class="fx" id="pfx" width="420" height="250"></canvas><div class="flash" id="flash"></div></div>`}
+   <div class="fx" id="fx"></div><canvas class="fx" id="pfx" width="420" height="250"></canvas><div class="flash" id="flash"></div>
+   <button class="sndbtn" id="sndbtn" aria-pressed="${SND.on()}" aria-label="소리 켜기/끄기">${SND.on()?'♪ ON':'♪ OFF'}</button></div>`}
 function heroSpr(c){c=c||S.char;return c&&c.gender==='남'?'heroM':'hero'}
 function heroAttr(c){c=c||S.char||{};return `data-spr="${heroSpr(c)}" data-hero="${esc(c.color||'#EE7FAE')}" data-job="${esc(c.job||'')}"`}
 function heroHTML(){const c=S.char?S.char.color:'#EE7FAE';const art=!!window.RRART;return `<div class="hero" id="hero"><div class="aura" style="background:${esc(c)}"></div><div ${heroAttr()} data-sc="5"></div>${art?'':'<div data-spr="sword" data-sc="4" style="position:absolute;right:-22px;top:34px"></div>'}</div>`}
@@ -660,6 +700,7 @@ function renderNav(items,cur,on){nav.hidden=false;nav.innerHTML=items.map(([id,l
   nav.querySelectorAll('button').forEach(b=>b.onclick=()=>on(b.dataset.id))}
 
 function render(){
+  setTimeout(()=>SND.bgm(UI.mode==='student'&&!NEED_LOGIN&&!LOADING&&!!S.char&&(UI.tab==='boss'||UI.tab==='raid')),0);
   document.getElementById('modeStudent').setAttribute('aria-pressed',UI.mode==='student');
   document.getElementById('modeParent').setAttribute('aria-pressed',UI.mode==='parent');
   document.getElementById('modeTeacher').setAttribute('aria-pressed',UI.mode==='teacher');
@@ -722,10 +763,12 @@ function renderOnboarding(){
       <p>마라탕을 먹고 누워 쇼츠를 넘기다 잠든 밤. 스마트폰에 '도파민 균열'이 열리고, 눈을 떠 보니 대륙 스터디아였다.</p>
       <p>6대 과목 괴물이 현실로 돌아가는 '꿈의 문'을 봉인했다. 먼저 나와 맞는 왕국을 찾아보자.</p></div>
       ${stepsBar(1)}
-      <button class="btn" id="go">성향 테스트 시작 (10문항)</button>
+      <div class="card"><h3>나는 지금</h3><div class="row" style="gap:8px">${Object.keys(SCHOOLS).map(x=>`<button class="opt" data-sch="${x}" aria-pressed="${d.school===x}" style="flex:1;justify-content:center"><b>${x==='mid'?'중':'고'}</b><span>${SCHOOLS[x]}</span></button>`).join('')}</div>
+        <p class="tiny muted">${d.school==='mid'?'중학생: 중간·기말 레이드 4종 + 여름·겨울 방학 보스':d.school==='high'?'고등학생: 중간·기말 레이드 4종 + 전국 모의고사 레이드':'학교에 따라 시험 레이드 보스가 달라져요. 나중에 나 탭에서 바꿀 수 있어요.'}</p></div>
+      <button class="btn" id="go" ${d.school?'':'disabled'}>성향 테스트 시작 (10문항)</button>
       ${MODE_DB?'':`<button class="btn ghost" id="demo">예시 캐릭터로 바로 둘러보기</button>
       <p class="tiny muted">예시 캐릭터는 '조가나디, 느좋 공화국'이고 이번 주 지난 기록이 예시로 채워집니다. 이 기기에만 저장돼요.</p>`}`;
-    scr.innerHTML=h;$('#go').onclick=()=>{ob.step=0.5;ob.q=0;ob.ans=[];render()};if($('#demo'))$('#demo').onclick=makeDemo;return}
+    scr.innerHTML=h;scr.querySelectorAll('[data-sch]').forEach(b=>b.onclick=()=>{d.school=b.dataset.sch;render()});$('#go').onclick=()=>{ob.step=0.5;ob.q=0;ob.ans=[];render()};if($('#demo'))$('#demo').onclick=makeDemo;return}
   if(ob.step===0.5){
     const [q,opts]=TEST[ob.q];
     h=`${stepsBar(1)}<div class="row between"><span class="pill">성향 테스트 ${ob.q+1} / 10</span>${ob.q>0?'<button class="chip" id="back">이전</button>':''}</div>
@@ -766,7 +809,7 @@ function renderOnboarding(){
   if(st===4)scr.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{d.goal=GOALS[+b.dataset.g];scr.querySelectorAll('.opt').forEach(x=>x.setAttribute('aria-pressed',x===b));syncNext()});
   if(st===5)$('#dr').oninput=e=>{d.dream=e.target.value.trim();$('#cnt').textContent=e.target.value.length+' / 50';syncNext()};
   $('#prev').onclick=()=>{ob.step=st===1?0.8:st-1;render()};
-  $('#next').onclick=()=>{if(st<5){ob.step++;render();scr.scrollTop=0}else{S.char={...d,created:TODAY()};S.code=S.code||newCode();S.season=S.season||monthKeyOf(TODAY());save();UI.tab='me';UI.justMade=true;render();scr.scrollTop=0}};
+  $('#next').onclick=()=>{if(st<5){ob.step++;render();scr.scrollTop=0}else{S.char={...d,created:TODAY()};if(d.school)S.school=d.school;S.joined=S.joined||joinedDay()||TODAY();S.code=S.code||newCode();S.season=S.season||monthKeyOf(TODAY());save();UI.tab='me';UI.justMade=true;render();scr.scrollTop=0}};
 }
 function makeDemo(){
   S.code=S.code||newCode();S.char={name:'조가나디',gender:'여',kingdom:'nj',job:'공주',color:'#EE7FAE',colorName:'벚꽃 핑크',per:'갓생러',food:'마라탕',hob:'쇼츠',goal:'꿈의 문 열고 꿈 이루기',dream:'멋진 선배들이 있는 곳에서 맥북을 들고 홍대에서 영상편집하기',created:TODAY(),demo:true};
@@ -885,7 +928,7 @@ function renderPlan(){
 /* ---------- 보스전 (이달의 과목 보스) ---------- */
 function monthScoreRaw(mk){mk=mk||monthKeyOf(TODAY());return Object.keys(S.logs).filter(x=>x.startsWith(mk)).reduce((a,x)=>a+dayScore(x).raw,0)}
 /* ---------- 공략 비법서: 점수 설계 안내 (평일 2시간 = 월 300점 = 3,000 데미지) ---------- */
-function guideRaid(){const all=RAIDS.map(r=>raidInst(r));return all.find(x=>x.open&&x.left>0)||all.filter(x=>!x.open).sort((a,b)=>a.openStart<b.openStart?-1:1)[0]||all[0]}
+function guideRaid(){const all=myRaids().filter(r=>!r.vac).map(r=>raidInst(r));return all.find(x=>x.open&&x.left>0)||all.filter(x=>!x.open).sort((a,b)=>a.openStart<b.openStart?-1:1)[0]||all[0]}
 function guideHTML(mk){
   const tot=Object.keys(SUBJ).reduce((a,x)=>a+SUBJ[x].hp,0);const left=Object.keys(SUBJ).reduce((a,x)=>a+bossLeft(x,mk),0);
   const k=TODAY();const last=ymd(+mk.slice(0,4),+mk.slice(5,7)+1,0);const days=Math.max(1,Math.round((parseDay(last)-parseDay(k))/864e5)+1);
@@ -944,12 +987,12 @@ function qName(q){return q.a==='word'?ACT.word.n:`${SUBJ[q.s].n} ${ACT[q.a].n}${
 function playHit(fx,B){
   const hero=$('#hero'),boss=$('#bossSpr');if(hero){hero.classList.remove('dash');void hero.offsetWidth;hero.classList.add('dash')}
   setTimeout(()=>{
-    if(boss){boss.classList.remove('hit');void boss.offsetWidth;boss.classList.add('hit')}
+    if(boss){boss.classList.remove('hit');void boss.offsetWidth;boss.classList.add('hit')}SND.play('hit');
     const sc=$('#scene');const bx=sc?sc.clientWidth-90:300;burst(bx,150,FIRE,fx.why.some(w=>w.includes('궁극기'))?60:32);flashFx();
     dmgText('-'+fx.dmg,bx-30,90,true);setTimeout(()=>dmgText('레이드 +'+fx.dmg,bx-110,124),260);
     const after=Math.max(0,B.hp-fx.before-fx.dmg);const bar=$('#hpbar');if(bar)bar.style.width=pctOf(after,B.hp)+'%';const n=$('#hpnum');if(n)n.textContent=fmtN(after)+' / '+fmtN(B.hp);
     if(fx.bless)setTimeout(()=>sbanner('마스터의 가호!'),400);
-    if(fx.killed){setTimeout(()=>{if(boss)boss.classList.add('dead');burst(bx,140,['#fff','#F7C531','#EE7FAE','#8FE3DB'],70);sbanner('처치!');setTimeout(()=>killModal(UI.boss),1300)},500)}
+    if(fx.killed){setTimeout(()=>{SND.play('kill');if(boss)boss.classList.add('dead');burst(bx,140,['#fff','#F7C531','#EE7FAE','#8FE3DB'],70);sbanner('처치!');setTimeout(()=>killModal(UI.boss),1300)},500)}
     else setTimeout(()=>toast(`+${fx.pts}점 · ${fx.dmg} 데미지${fx.why.length?' ('+fx.why.join(', ')+')':''}`),900);
   },280)}
 function killModal(s){const B=SUBJ[s];if(document.querySelector('.modal')){toast(B.boss+' 처치! 칭호 ['+B.title+'] 획득');return}const m=document.createElement('div');m.className='modal';
@@ -972,31 +1015,35 @@ function timerSheet(){
 
 /* ---------- 시험 레이드 ---------- */
 function renderRaid(){
-  if(!UI.raid){const all=RAIDS.map(r=>raidInst(r));const open=all.find(x=>x.open);UI.raid=(open||all.sort((a,b)=>a.openStart<b.openStart?-1:1)[0]).r.id}
+  if(!UI.raid||!myRaids().some(x=>x.id===UI.raid)){UI.raid=null;const all=myRaids().map(r=>raidInst(r));const open=all.find(x=>x.open);UI.raid=(open||all.sort((a,b)=>a.openStart<b.openStart?-1:1)[0]).r.id}
   const r=RAIDS.find(x=>x.id===UI.raid),I=raidInst(r),k=TODAY();const hs=hiddenState();
-  const openM=+I.openStart.slice(5,7);const accMonths=[];for(let i=0;i<I.sp.n;i++)accMonths.push(((+I.accStart.slice(5,7)-1+i)%12)+1);
+  const openMs=[];for(let i=0;i<(I.vac?I.sp.n:1);i++)openMs.push(((+I.openStart.slice(5,7)-1+i)%12)+1);const accMonths=[];if(!I.vac)for(let i=0;i<I.sp.n;i++)accMonths.push(((+I.accStart.slice(5,7)-1+i)%12)+1);
   const items=S.items||[];const dead=I.open&&I.left===0;
   let h=sceneHTML(`<div class="hud"><div class="nm">${esc(r.n)}<small>${esc(r.exam)}${r.sub?' · '+esc(r.sub):''}</small></div><div class="tagr" style="color:${I.open?'#E2453C':'#2B1D16'}">${I.open?(dead?'CLEAR':'OPEN'):'D-'+Math.round((parseDay(I.openStart)-parseDay(k))/864e5)}</div></div>
     ${heroHTML()}<div class="boss ${I.open?'':'sleep'} ${dead?'gone':''}" id="bossSpr" style="right:12px;bottom:52px"><div data-spr="${r.id}" data-sc="9"></div></div><div class="speech" style="max-width:44%">"[${esc(r.sk[0])}]! 각오해라!"</div>`,{deco:false})+
   `<div class="card"><h3>1년 레이드 일정</h3>
-    <div class="tl">${[3,4,5,6,7,8,9,10,11,12,1,2].map(mo=>`<div class="${accMonths.includes(mo)?'acc':''} ${mo===openM?'open':''} ${mo===+k.slice(5,7)?'now':''}">${mo}월</div>`).join('')}</div>
+    <div class="tl">${[3,4,5,6,7,8,9,10,11,12,1,2].map(mo=>`<div class="${accMonths.includes(mo)?'acc':''} ${openMs.includes(mo)?'open':''} ${mo===+k.slice(5,7)?'now':''}">${mo}월</div>`).join('')}</div>
     <p class="tiny muted"><span class="pill blue">충전</span> 공부가 게이지로 쌓이는 달 · <span class="pill">개방</span> 시험 기간에 문이 열리는 달 · 빨간 테두리 = 이번 달</p>
-    <div class="chips">${RAIDS.map(x=>{const xi=raidInst(x);return `<button class="chip" data-r="${x.id}" aria-pressed="${x.id===r.id}">${esc(x.n.split(' ').pop())}${xi.open?' ●':''}</button>`}).join('')}</div></div>
-  <div class="card"><div class="row between"><b>충전 게이지</b><span class="num px">${fmtN(Math.min(I.charge,I.cap))} / ${fmtN(I.cap)}</span></div><div class="bar charge"><i style="width:${pctOf(I.charge,I.cap)}%"></i></div>
+    <div class="chips">${myRaids().map(x=>{const xi=raidInst(x);return `<button class="chip" data-r="${x.id}" aria-pressed="${x.id===r.id}">${esc(x.s)}${xi.open?' ●':''}</button>`}).join('')}</div></div>
+  ${I.vac?`<div class="card"><div class="row between"><b>보스 HP</b><span class="num px">${fmtN(I.left)} / ${fmtN(I.hp)}</span></div><div class="bar"><i id="rhp" style="width:${pctOf(I.left,I.hp)}%"></i></div>
+    <p class="tiny muted">방학 보스는 충전 없이 방학 동안의 공부로만 깎아요. ${fmt(I.openStart)}부터 ${fmt(I.openEnd)}까지, HP = 방학 ${I.sp.n}개월 × 3,000. 평일 하루 2시간 페이스면 딱 잡혀요.</p>
+    <p class="tiny"><span class="pill">공략</span> 방학에도 기준치 한 달 ${BASE}점! 쟁여둔 장비 카드·보물상자도 여기서 쓸 수 있어요.</p>`:`<div class="card"><div class="row between"><b>충전 게이지</b><span class="num px">${fmtN(Math.min(I.charge,I.cap))} / ${fmtN(I.cap)}</span></div><div class="bar charge"><i style="width:${pctOf(I.charge,I.cap)}%"></i></div>
+    ${I.bonus?`<p class="small"><span class="pill purple">${NEWBIE.name}</span> 들어오기 전 기간 몫 ${fmtN(I.bonus)} 데미지를 미리 채워 줬어요.</p>`:''}
     <div class="row between"><b>보스 HP</b><span class="num px">${fmtN(I.left)} / ${fmtN(I.hp)}</span></div><div class="bar"><i id="rhp" style="width:${pctOf(I.left,I.hp)}%"></i></div>
     <p class="tiny muted">${fmt(I.accStart)}부터 충전, ${fmt(I.openStart)}에 문이 열려요. HP = 누적 ${I.sp.n}개월 × 3,000 + 시험 기간 2주분 1,500. 문이 열리면 충전 게이지가 한 번에 터지고, 남은 몫은 시험 기간 공부와 쟁여둔 아이템으로 깎아요.</p>
     <p class="tiny"><span class="pill">공략</span> 월 점수는 매달 리셋돼도 충전 게이지는 그대로 쌓여요. 충전하는 ${I.sp.n}개월 동안 매달 ${BASE}점씩 채우면 게이지가 꽉 차고, 문이 열린 뒤엔 1,500만 남아요.</p>
+    `}
     ${dead?`<p><b>처치 완료!</b> 칭호 [${esc(r.title)}]</p>`:''}</div>
   ${I.open&&!dead?`<div class="card"><div class="row between"><h3>쟁여둔 아이템</h3><span class="pill">${items.length}개</span></div>
      ${items.length?items.map((it,i)=>`<div class="item"><span data-spr="${it.kind==='chest'?'chest':it.s}" data-sc="${it.kind==='chest'?3:2}"></span><div style="flex:1;min-width:0"><b class="small">${esc(it.name)}</b><div class="tiny muted">${esc(it.from)} 획득 · ${it.dmg} 데미지</div></div><button class="chip" data-use="${i}">사용</button></div>`).join(''):'<p class="small muted">아직 아이템이 없어요. 한 달을 마치면 처치한 과목 보스 장비 카드와, 기준치 300점을 채운 달의 보물상자를 받아요.</p>'}</div>`
-   :!I.open?`<div class="card"><p class="small">${esc(r.exam)} 기간에 문이 열려요. 지금은 평소 공부가 게이지로 쌓이는 중이에요. 아이템은 문이 열렸을 때 쓸 수 있어요 (지금 ${items.length}개 보관 중).</p></div>`:''}
+   :!I.open?`<div class="card"><p class="small">${I.vac?`${esc(r.exam)}이 시작되는 ${fmt(I.openStart)}에 나타나요. 방학 동안의 공부로 잡는 보스예요.`:`${esc(r.exam)} 기간에 문이 열려요. 지금은 평소 공부가 게이지로 쌓이는 중이에요.`} 아이템은 문이 열렸을 때 쓸 수 있어요 (지금 ${items.length}개 보관 중).</p></div>`:''}
   <div class="card" style="background:#3A2A20;color:#F6E3B4"><div class="row between"><h3>히든보스 · ${HIDDEN.n}</h3><span data-spr="hidden" data-sc="2"></span></div>
-    <div class="bar hid"><i style="width:${pctOf(hs.left,HIDDEN.hp)}%"></i></div><p class="tiny" style="opacity:.85">${fmt(hs.start)}부터 1년 동안의 모든 데미지가 쌓여요. HP ${fmtN(hs.left)} / ${fmtN(HIDDEN.hp)}. 처치하면 꿈의 문이 열리고 50자 꿈이 새겨진 엔딩 카드를 받아요.</p></div>`;
+    <div class="bar hid"><i style="width:${pctOf(hs.left,HIDDEN.hp)}%"></i></div><p class="tiny" style="opacity:.85">${fmt(hs.start)}부터 1년 동안의 모든 데미지가 쌓여요. HP ${fmtN(hs.left)} / ${fmtN(HIDDEN.hp)}.${hs.bonus?` ${NEWBIE.name}로 지난 달 몫 ${fmtN(hs.bonus)} 미리 채움.`:''} 처치하면 꿈의 문이 열리고 50자 꿈이 새겨진 엔딩 카드를 받아요.</p></div>`;
   scr.innerHTML=h;hydrate(scr);
   scr.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{UI.raid=b.dataset.r;render()});
   scr.querySelectorAll('[data-use]').forEach(b=>b.onclick=()=>{const it=S.items.splice(+b.dataset.use,1)[0];(S.itemUse=S.itemUse||[]).push({inst:I.id,dmg:it.dmg,name:it.name,k});save();
     const sc=$('#scene');const bx=sc.clientWidth-110;const bs=$('#bossSpr');for(let i=0;i<3;i++)setTimeout(()=>{burst(bx,140,i%2?FIRE:['#5BC0EB','#B9ECF8','#fff'],36);flashFx();if(bs){bs.classList.remove('hit');void bs.offsetWidth;bs.classList.add('hit')}},200+i*220);
-    dmgText('-'+it.dmg,bx-30,80,true);sbanner(it.name);setTimeout(()=>render(),1700)});
+    SND.play('item');setTimeout(()=>SND.play('hit'),250);dmgText('-'+it.dmg,bx-30,80,true);sbanner(it.name);setTimeout(()=>render(),1700)});
 }
 /* ---------- 월간 시즌: 결산·아이템·캐릭터/왕국 선택 ---------- */
 function settleMonth(mk){S.seasons=S.seasons||{};if(S.seasons[mk])return S.seasons[mk];
@@ -1164,12 +1211,18 @@ function renderMe(){
    <details><summary class="small">비밀번호 바꾸기</summary><div style="display:flex;flex-direction:column;gap:6px;margin-top:8px"><input type="password" id="opw" placeholder="지금 비밀번호" autocomplete="current-password"><input type="password" id="npw" placeholder="새 비밀번호 (6자 이상)" autocomplete="new-password"><button class="btn ghost" id="cpw">바꾸기</button></div></details>
    <details><summary class="small">오류·불편한 점 알리기</summary><div style="display:flex;flex-direction:column;gap:6px;margin-top:8px"><textarea id="rep" maxlength="500" placeholder="예: 공격 버튼을 눌렀는데 점수가 안 올라가요"></textarea><button class="btn ghost" id="repgo">선생님께 보내기</button></div></details>
    <button class="btn ghost" id="lout">로그아웃</button></div>`:''}
+  <div class="card"><h3>설정</h3>
+    <div class="row between small"><span>학교 <span class="tiny muted">(시험 레이드 보스가 달라져요)</span></span><span class="row" style="gap:4px">${Object.keys(SCHOOLS).map(x=>`<button class="chip" data-sch="${x}" aria-pressed="${school()===x}">${x==='mid'?'중등':'고등'}</button>`).join('')}</span></div>
+    <div class="row between small"><span>효과음·배경음악·진동</span><button class="chip" id="sndme" aria-pressed="${SND.on()}">${SND.on()?'켜짐':'꺼짐'}</button></div>
+    <p class="tiny muted">진동은 안드로이드 폰에서만 돼요.</p></div>
   <a class="btn ghost" href="support/student.html" style="text-align:center;text-decoration:none">사용 가이드 · 규칙 도감</a>
   <p class="tiny muted" style="text-align:center">버전 ${esc(APP_VERSION)}</p>
   `;
   scr.innerHTML=h;UI.justMade=false;
   $('#pcopy2').onclick=()=>{const v=$('#plink').value;navigator.clipboard.writeText(v).then(()=>toast('복사했어요')).catch(()=>{$('#plink').select();toast('선택된 링크를 복사해 주세요')})};
   scr.querySelectorAll('[data-sg]').forEach(b=>b.onclick=()=>{S.char.gender=b.dataset.sg;save();render()});
+  scr.querySelectorAll('[data-sch]').forEach(b=>b.onclick=()=>{S.school=b.dataset.sch;UI.raid=null;save();toast(SCHOOLS[S.school]+' 레이드로 바꿨어요');render()});
+  $('#sndme').onclick=()=>{SND.toggle();render()};
   if(!MODE_DB)return;
   $('#cpw').onclick=async e=>{const b=e.target,o=$('#opw').value,n=$('#npw').value;if(n.length<6){toast('새 비밀번호는 6자 이상');return}b.disabled=true;
     try{const j=await api('changePassword',{oldPw:o,newPw:n});AUTH.token=j.token;localStorage.setItem(AUTH_KEY,JSON.stringify(AUTH));toast('비밀번호를 바꿨어요');render()}catch(x){toast(x.message);b.disabled=false}};
@@ -1247,7 +1300,7 @@ function renderParent(){
       s:{n:'사회',tip:'통합사회는 개념 용어(기회비용, 시장 균형, 인권, 정의)를 정확히 설명할 수 있어야 해요. 교과서 정독 → 외우기 → 선생님 인증 순서가 좋아요.',need:['개념','암기']},
       c:{n:'과학',tip:'통합과학은 주기율표·화학 결합, 운동과 힘, 산화·환원처럼 원리 이해 후 계산·자료 해석 문제로 확인해야 해요.',need:['개념','유형']},
       h:{n:'한국사',tip:'연표 흐름(왕조·개혁·사건 순서)과 사료 해석이 핵심이에요. 정독으로 흐름을 잡고, 외우기 인증으로 연도·인물을 확실히 해 두면 좋아요.',need:['개념','암기']}};
-    const lecNo=S.lecNo||{};const allR=RAIDS.map(r=>raidInst(r)).sort((a,b)=>a.openStart<b.openStart?-1:1);const nextRaid=allR.find(x=>x.openStart>k)||allR[0];
+    const lecNo=S.lecNo||{};const allR=myRaids().filter(r=>!r.vac).map(r=>raidInst(r)).sort((a,b)=>a.openStart<b.openStart?-1:1);const nextRaid=allR.find(x=>x.openStart>k)||allR[0];
     h+=`<h1>과목별 학습</h1><p class="small muted">${fmt(w)} ~ ${fmt(days[6])} · 중고등 과목별 공부 단계 점검</p></div>
     <div class="card"><h3>시험 일정</h3><p class="small">${dday()>=0?`시험 전 마지막 인강 마감일 <b>12/6</b>까지 D-${dday()}. `:''}다음 시험: <b>${esc(nextRaid.r.exam)}</b> (${fmt(nextRaid.openStart)}부터 시험 기간).</p><p class="tiny muted">시험 기간에는 새 진도보다 오답·암기·기출 반복 비중을 늘리는 게 좋아요.</p></div>
     <div class="card"><h3>이번 주 과목 × 공부 단계</h3><div class="tscroll"><table class="table"><thead><tr><th>과목</th>${GR.map(g=>`<th class="r">${g[0]}</th>`).join('')}<th class="r">시간</th></tr></thead><tbody>
