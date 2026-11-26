@@ -12,7 +12,7 @@
  *   오류  : 학생 폰에서 난 오류가 실시간으로 쌓이는 곳
  */
 
-var SERVER_VERSION = '2026.11.26-4';
+var SERVER_VERSION = '2026.11.26-5';
 var TZ = 'Asia/Seoul';
 var CHUNK = 45000;            // 시트 한 칸 최대 50,000자라 45,000자씩 나눠 저장
 var MAX_CHUNKS = 40;          // 학생 한 명 최대 약 1.8MB
@@ -34,6 +34,9 @@ function onOpen() {
     .addItem('1. 처음 설정 (탭 + 관리자 계정)', 'setupMenu')
     .addItem('관리자 비밀번호 다시 정하기', 'resetAdminMenu')
     .addItem('오류 탭 비우기', 'clearErrorsMenu')
+    .addSeparator()
+    .addItem('AI 헬퍼 자동 공부 켜기', 'helperOnMenu')
+    .addItem('AI 헬퍼 자동 공부 끄기', 'helperOffMenu')
     .addToUi();
 }
 
@@ -72,6 +75,131 @@ function resetAdminMenu() {
 function clearErrorsMenu() {
   var sh = sheet_('err');
   if (sh.getLastRow() > 1) sh.deleteRows(2, sh.getLastRow() - 1);
+}
+
+/* ===================== AI 동기부여 헬퍼 =====================
+ * 실제 학생이 적을 때 랭킹·대항전이 비어 보이지 않게 넣은 가상 학생 6명.
+ * 매시간 트리거(helperTick)가 오후 4시~밤 11시 사이에 가끔 퀘스트 하나씩 완료 처리해서
+ * 하루에 조금씩 자연스럽게 점수가 쌓여요. 기준 학생(HELPER_REF)의 이달 점수를 보고
+ * 상위권은 조금 위, 중위권은 비슷하게, 하위권은 한참 아래로 따라갑니다.
+ *   ratio: 기준 학생 이달 점수 × ratio (+plus) 를 목표로
+ *   base : 기준 학생이 쉬어도 하루 평균 이만큼은 쌓이게 (점/일)
+ *   p    : 그날 공부하는 날일 확률 (날마다 고정)
+ * 헬퍼 계정을 지우거나 HELPERS 에서 빼면 더 이상 움직이지 않아요.
+ */
+var HELPER_REF = 'josoyoung';
+var HELPERS = {
+  ashotchoo:     { ratio: 1.15, plus: 4, base: 2.2, p: 0.75 },  // 상위권
+  mentalcookie:  { ratio: 1.05, plus: 0, base: 1.8, p: 0.6 },   // 중위권
+  sharpsim:      { ratio: 0.92, plus: 0, base: 1.6, p: 0.55 },  // 중위권
+  gupsiktrain:   { ratio: 0.55, plus: 0, base: 1.0, p: 0.4 },   // 하위권
+  tanghuluteeth: { ratio: 0.42, plus: 0, base: 0.8, p: 0.35 },  // 하위권
+  bungeotail:    { ratio: 0.3,  plus: 0, base: 0.5, p: 0.3 }    // 하위권
+};
+var H_ACT = { lec: [5, 45], sum: [7, 60], lv1: [4, 45], lv2: [5, 45], wrong: [6, 45], read: [3, 45], mem: [3, 45], word: [3, 30] };
+var H_PICK = ['lec', 'lec', 'lec', 'lec', 'sum', 'lv1', 'lv2', 'wrong', 'read', 'mem', 'word'];
+var H_SUBJ = ['m', 'k', 'e', 's', 'c', 'h'];
+
+function helperOnMenu() {
+  helperOffMenu(true);
+  ScriptApp.newTrigger('helperTick').timeBased().everyHours(1).create();
+  SpreadsheetApp.getUi().alert('AI 헬퍼 자동 공부를 켰어요.\n매일 오후 4시~밤 11시 사이에 조금씩 점수가 쌓여요.');
+}
+
+function helperOffMenu(silent) {
+  ScriptApp.getProjectTriggers().forEach(function (t) { if (t.getHandlerFunction() === 'helperTick') ScriptApp.deleteTrigger(t); });
+  if (silent !== true) SpreadsheetApp.getUi().alert('AI 헬퍼 자동 공부를 껐어요. 지금까지 점수는 그대로 남아요.');
+}
+
+function helperTick() {
+  var hour = Number(Utilities.formatDate(new Date(), TZ, 'H'));
+  if (hour < 16 || hour > 23) return;
+  var today = dayKey_(0), mk = today.slice(0, 7), dom = Number(today.slice(8, 10));
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(20000)) return;
+  var changed = false;
+  try {
+    var ref = readState_(HELPER_REF);
+    var refPts = 0;
+    if (ref && ref.state) { try { refPts = helperMonthPts_(JSON.parse(ref.state), mk); } catch (x) {} }
+    Object.keys(HELPERS).forEach(function (id) {
+      var h = HELPERS[id];
+      var f = findAccount_(id);
+      if (!f || !isActive_(f.row)) return;
+      if (helperRoll_(id + today) > h.p) return;              // 오늘은 쉬는 날
+      var rec = readState_(id);
+      if (!rec || !rec.state) return;
+      var st = JSON.parse(rec.state);
+      st.logs = st.logs || {};
+      var goal = Math.max(Math.round(refPts * h.ratio + h.plus), Math.round(h.base * dom));
+      if (helperMonthPts_(st, mk) >= goal) return;
+      var L = st.logs[today] || { q: [], life: {}, hidden: 0, streakChecked: true };
+      var dayPts = 0;
+      L.q.forEach(function (q) { if (q.done) dayPts += Number(q.pts || 0); });
+      if (dayPts >= 12 || L.q.length >= 4) return;
+      if (Math.random() > 0.45) return;                         // 한꺼번에 몰리지 않게
+      var q = helperQuest_(st, L);
+      if (!q) return;
+      L.q.push(q);
+      st.logs[today] = L;
+      st.daily = helperDaily_(st);
+      st.rev = rec.rev + 1;
+      writeState_(id, st, rec.rev + 1, rec.rowNo, rec.privRaw);
+      changed = true;
+    });
+  } finally { lock.releaseLock(); }
+  if (changed) CacheService.getScriptCache().remove('roster');
+}
+
+function helperRoll_(s) {
+  var b = Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, s, Utilities.Charset.UTF_8);
+  return ((b[0] + 256) % 256) / 256;
+}
+
+function helperMonthPts_(st, mk) {
+  var t = 0, d = st.daily || {};
+  Object.keys(d).forEach(function (k) { if (k.slice(0, 7) === mk) t += Number(d[k].r || 0); });
+  return t;
+}
+
+function helperQuest_(st, L) {
+  var usedS = {}, hasWord = false;
+  L.q.forEach(function (q) { usedS[q.s] = 1; if (q.a === 'word') hasWord = true; });
+  for (var tries = 0; tries < 10; tries++) {
+    var a = H_PICK[Math.floor(Math.random() * H_PICK.length)];
+    if (a === 'word' && hasWord) continue;
+    var free = H_SUBJ.filter(function (x) { return !usedS[x]; });
+    if (!free.length) return null;
+    var s = a === 'word' ? 'e' : free[Math.floor(Math.random() * free.length)];
+    if (a === 'word' && usedS.e) continue;
+    var pts = H_ACT[a][0];
+    var q = { s: s, a: a, done: true, pts: pts, dmg: pts * 10, at: Date.now() };
+    if (a === 'lec') {
+      st.lecNo = st.lecNo || {};
+      q.no = st.lecNo[s] || 1;
+      st.lecNo[s] = q.no + 1;
+    }
+    return q;
+  }
+  return null;
+}
+
+/** 앱의 computeDaily 와 같은 계산 (헬퍼는 점수가 늘 q.pts 에 들어 있음) */
+function helperDaily_(st) {
+  var out = {};
+  Object.keys(st.logs || {}).forEach(function (k) {
+    var L = st.logs[k];
+    if (!L || !L.q) return;
+    var raw = 0, min = 0, subs = {};
+    L.q.forEach(function (q) {
+      if (!q.done) return;
+      raw += Number(q.pts || (H_ACT[q.a] ? H_ACT[q.a][0] : 0));
+      min += Number(q.min || (q.a === 'lv2' && 'kem'.indexOf(q.s) >= 0 ? 60 : (H_ACT[q.a] ? H_ACT[q.a][1] : 45)));
+      subs[q.s] = 1;
+    });
+    if (raw) out[k] = { r: Math.min(raw, 45), raw: raw, min: min, n: Object.keys(subs).length, cell: null, hr: 0 };
+  });
+  return out;
 }
 
 /* ===================== 웹 앱 입구 ===================== */
