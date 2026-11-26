@@ -67,5 +67,5 @@
     }
   }
   if(window.RRART){ hydrate(); return; }
-  var sc=document.createElement('script'); sc.src='../art.js?v=2026.11.26-6'; sc.onload=hydrate; document.head.appendChild(sc);
+  var sc=document.createElement('script'); sc.src='../art.js?v=2026.11.26-10'; sc.onload=hydrate; document.head.appendChild(sc);
 })();
