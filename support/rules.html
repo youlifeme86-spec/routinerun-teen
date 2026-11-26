@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>규칙 도감 · 스터디아왕국 지원센터</title>
+<meta name="description" content="스터디아 9대 왕국, 6대 과목 보스, 시험 레이드, 히든보스, 점수표, 월간 시즌과 아이템 규칙.">
+<meta name="theme-color" content="#1E3A6E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+.kcard{border-left:6px solid var(--k)}
+.kcard .p{display:inline-block;font-weight:700;color:var(--k);font-size:14px}
+.zone{font-size:13px;color:var(--muted)}
+.boss h3{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.boss h3 span{font-family:var(--f-body);font-size:14px;color:var(--red);font-weight:700;white-space:nowrap}
+.hp{height:8px;background:var(--line);border-radius:99px;overflow:hidden;margin:6px 0 10px}
+.hp i{display:block;height:100%;background:var(--red)}
+.cells{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+@media (max-width:560px){.cells{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.cells div{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:14px}
+.cells b{display:block;font-family:var(--f-title);font-weight:400;font-size:19px}
+</style>
+</head>
+<body data-page="rules">
+
+<div class="page-hero"><div class="wrap">
+  <div class="crumb"><a href="index.html">지원센터</a> › 규칙 도감</div>
+  <h1>스터디아 규칙 도감</h1>
+  <p>왕국, 보스, 점수, 시즌. 궁금한 규칙은 여기서 찾아요.</p>
+</div></div>
+
+<div class="wrap guide">
+  <nav class="toc" aria-label="이 페이지 목차">
+    <b>목차</b>
+    <a href="#kingdoms">9대 왕국</a>
+    <a href="#bosses">6대 과목 보스</a>
+    <a href="#raids">시험 레이드</a>
+    <a href="#hidden">히든보스</a>
+    <a href="#score">점수표</a>
+    <a href="#dmg">데미지와 버프</a>
+    <a href="#season">월간 시즌</a>
+    <a href="#items">아이템과 보상</a>
+    <a href="#flow">마음 체크 8칸</a>
+  </nav>
+
+  <div class="doc">
+
+    <section id="kingdoms">
+      <h2>9대 왕국</h2>
+      <p>대륙 스터디아는 동부·서부·북부 3권역, 9개 왕국으로 나뉘어요. 성향 테스트로 정해지고, 매달 1일에 이주할 수 있어요. 왕국 패시브는 <b>보스 데미지에만</b> 붙어요.</p>
+      <div class="grid g3">
+        <div class="card kcard" style="--k:#E8559A"><span class="zone">동부</span><h3>도파밍 왕국</h3><span class="p">[즉각 보상]</span><p class="small">퀘스트 완료 시 코인·아이템 드롭률 +20%</p></div>
+        <div class="card kcard" style="--k:#C9925E"><span class="zone">동부</span><h3>느좋 공화국</h3><span class="p">[루틴 스택]</span><p class="small">연속 출석 1일당 데미지 +2% (최대 +30%)</p></div>
+        <div class="card kcard" style="--k:#F07B3F"><span class="zone">동부</span><h3>감다살 왕국</h3><span class="p">[떼창 시너지]</span><p class="small">파티원과 같은 날 체크하면 +30%</p></div>
+        <div class="card kcard" style="--k:#3E8EDB"><span class="zone">서부</span><h3>딸깍 제국</h3><span class="p">[오토 콤보]</span><p class="small">45분 이하 퀘스트 연속 완료마다 +5% (최대 +25%)</p></div>
+        <div class="card kcard" style="--k:#D64545"><span class="zone">서부</span><h3>하드캐리 연방</h3><span class="p">[에이스 크리티컬]</span><p class="small">유형 Lv2·N제·암기 인증에 치명타 ×2</p></div>
+        <div class="card kcard" style="--k:#8D6E4A"><span class="zone">서부</span><h3>풀템 제국</h3><span class="p">[파밍 가속]</span><p class="small">장비·스킨 해금 속도 +25%</p></div>
+        <div class="card kcard" style="--k:#4C7A5A"><span class="zone">북부</span><h3>고인물 요새</h3><span class="p">[장인의 복습]</span><p class="small">오답 퀘스트 1회마다 +5% (최대 +30%)</p></div>
+        <div class="card kcard" style="--k:#7A4FD0"><span class="zone">북부</span><h3>궁극기 왕국</h3><span class="p">[풀차지 버스트]</span><p class="small">집중 타이머 완주 시 궁극기 게이지 +40%</p></div>
+        <div class="card kcard" style="--k:#2BA7A0"><span class="zone">북부</span><h3>억까탈출 공화국</h3><span class="p">[멘탈 보호막]</span><p class="small">보스 회복 1회 무효, 3일 쉬고 복귀한 날 첫 퀘스트 +50%</p></div>
+      </div>
+    </section>
+
+    <section id="bosses">
+      <h2>6대 과목 보스</h2>
+      <p>매달 새로 나타나는 과목 보스. 그 과목 퀘스트를 깰 때마다 데미지가 들어가요. 처치하면 장비와 칭호를 얻어요.</p>
+      <div class="grid g2">
+        <div class="card boss"><h3>이차함수·판별식 골렘 <span>HP 750</span></h3><div class="hp"><i style="width:100%"></i></div><p class="small"><b>수학</b> · 방해 스킬: 허근의 저주, 정의역 이탈, 그래프 평행이동 함정</p><p class="small muted">장비 [황금 컴퍼스 대검] · 칭호 [수식 파괴자]</p></div>
+        <div class="card boss"><h3>가주어·진주어 포식자 <span>HP 600</span></h3><div class="hp"><i style="width:80%"></i></div><p class="small"><b>영어</b> · 방해 스킬: It~that 늪, to부정사·동명사 자리 바꾸기, 목적어 잡아먹기</p><p class="small muted">장비 [원어민의 번역 망토] · 칭호 [단어 지배자]</p></div>
+        <div class="card boss"><h3>시적화자·역설 안개요정 <span>HP 600</span></h3><div class="hp"><i style="width:80%"></i></div><p class="small"><b>국어</b> · 방해 스킬: 화자의 정서 숨기기, 고전시가 해석 불가, 역설과 반어 헷갈리기</p><p class="small muted">장비 [꿰뚫는 형광펜 지팡이] · 칭호 [독해의 신]</p></div>
+        <div class="card boss"><h3>빅뱅·주기율표 슬라임 <span>HP 390</span></h3><div class="hp"><i style="width:52%"></i></div><p class="small"><b>과학</b> · 방해 스킬: 전자껍질 붕괴, 관성의 법칙 튕겨내기, 산화·환원 폭탄</p><p class="small muted">장비 [무지개 플라스크 백팩] · 칭호 [매드 사이언티스트]</p></div>
+        <div class="card boss"><h3>기회비용·시장균형 미로버섯 <span>HP 360</span></h3><div class="hp"><i style="width:48%"></i></div><p class="small"><b>사회</b> · 방해 스킬: 외부효과 역전, 인권·정의 딜레마, 수요·공급 곡선 꼬기</p><p class="small muted">장비 [보이지 않는 손 장갑] · 칭호 [미로 탈출러]</p></div>
+        <div class="card boss"><h3>연표·갑오개혁 드래곤 <span>HP 300</span></h3><div class="hp"><i style="width:40%"></i></div><p class="small"><b>한국사</b> · 방해 스킬: 1894년 동학·갑오 콤보, 왕조 계보 셔플, 사료 연도 지우기</p><p class="small muted">장비 [타임머신 갓 &amp; 도포] · 칭호 [시간 여행자]</p></div>
+      </div>
+      <p class="small muted" style="margin-top:10px">6마리 HP를 합치면 3,000. 한 달 기준치 300점 × 10 = 3,000 데미지라서, 기준치만 채우면 다 잡을 수 있어요.</p>
+    </section>
+
+    <section id="raids">
+      <h2>시험 레이드 보스 5종</h2>
+      <p>평소 공부가 몇 달 동안 <b>충전 게이지</b>로 쌓이고, 시험 기간에 문이 열리면 게이지가 한 번에 터져요. 남은 HP는 시험 기간 공부와 쟁여둔 아이템으로 깎아요.</p>
+      <div class="tbl"><table>
+        <thead><tr><th>레이드 보스</th><th>시험</th><th>충전</th><th>문 열림</th><th>칭호</th></tr></thead>
+        <tbody>
+          <tr><td><b>벚꽃엔딩 로드</b><br><span class="tiny muted">새학기 멘탈 흔들기 · 춘곤증 꽃가루</span></td><td>1학기 중간</td><td>12~3월 (4개월)</td><td>4월</td><td>블라썸 브레이커</td></tr>
+          <tr><td><b>폭염의 여름여름빔 타이탄</b><br><span class="tiny muted">에어컨 고장 빔 · 여름방학 압수</span></td><td>1학기 기말</td><td>5~6월 (2개월)</td><td>7월</td><td>폭염 생존자</td></tr>
+          <tr><td><b>가을타나봐 센치마왕</b><br><span class="tiny muted">감성 폭발 멍때리기 · 천고마비 식곤증</span></td><td>2학기 중간</td><td>8~9월 (2개월)</td><td>10월</td><td>슬럼프 퇴마사</td></tr>
+          <tr><td><b>눈사람맛좀볼래? 프로스트 킹</b><br><span class="tiny muted">이불 밖은 위험해 · 연말 파티 유혹</span></td><td>2학기 기말</td><td>10~11월 (2개월)</td><td>12월</td><td>학년 마무리 전설</td></tr>
+          <tr><td><b>누적누적빔 오버로드</b><br><span class="tiny muted">3개월 전 기억 소환 · OMR 밀려쓰기</span></td><td>전국 모의고사</td><td>3개월씩</td><td>3·6·9·11월 16일~</td><td>전범위 정복자</td></tr>
+        </tbody>
+      </table></div>
+      <div class="note"><b>레이드 HP</b> = 충전 개월 수 × 3,000 + 시험 기간 2주분 1,500. 예: 프로스트 킹은 2 × 3,000 + 1,500 = 7,500.</div>
+    </section>
+
+    <section id="hidden">
+      <h2>히든보스: 꿈의 문 수문장</h2>
+      <p>1년짜리 최종 보스. HP <b>36,000</b>(12개월 × 3,000). 3월부터 1년 동안 매달 공부한 데미지가 계속 누적돼요. 월간 리셋이 되어도 히든보스 누적은 이어져요.</p>
+    </section>
+
+    <section id="score">
+      <h2>점수표</h2>
+      <div class="tbl"><table>
+        <thead><tr><th>활동</th><th class="n">점수</th><th class="n">데미지</th><th class="n">시간</th></tr></thead>
+        <tbody>
+          <tr><td>강의 <span class="tiny muted">(12/6까지 과목별 주 1회 +1)</span></td><td class="n">5 (6)</td><td class="n">50 (60)</td><td class="n">45분</td></tr>
+          <tr><td>단권화</td><td class="n">7</td><td class="n">70</td><td class="n">60분</td></tr>
+          <tr><td>유형 Lv1</td><td class="n">4</td><td class="n">40</td><td class="n">45분</td></tr>
+          <tr><td>유형 Lv2 <span class="tiny muted">(국영수 60분)</span></td><td class="n">5</td><td class="n">50</td><td class="n">45·60분</td></tr>
+          <tr><td>N제</td><td class="n">8</td><td class="n">80</td><td class="n">60분</td></tr>
+          <tr><td>오답</td><td class="n">6</td><td class="n">60</td><td class="n">45분</td></tr>
+          <tr><td>프린트·교과서 정독</td><td class="n">3</td><td class="n">30</td><td class="n">45분</td></tr>
+          <tr><td>외우기 <span class="tiny muted">(선생님 인증 날 5점)</span></td><td class="n">3 (5)</td><td class="n">30 (50)</td><td class="n">45분</td></tr>
+          <tr><td>선생님 과제</td><td class="n">4</td><td class="n">40</td><td class="n">45분</td></tr>
+          <tr><td>영어단어 외우기 <span class="tiny muted">(하루 1회)</span></td><td class="n">3</td><td class="n">30</td><td class="n">30분</td></tr>
+          <tr><td>방청소 스스로 하기</td><td class="n">2</td><td class="n">-</td><td class="n">-</td></tr>
+          <tr><td>운동하기</td><td class="n">2</td><td class="n">-</td><td class="n">-</td></tr>
+          <tr><td>세끼 건강식 먹기</td><td class="n">3</td><td class="n">-</td><td class="n">-</td></tr>
+        </tbody>
+      </table></div>
+      <ul>
+        <li>같은 과목은 하루 3회, 같은 과목·같은 활동은 하루 2회까지 (강의는 활동 중복 제한 없음).</li>
+        <li>랭킹용 하루 점수 상한 45점. 하루는 새벽 2시 마감.</li>
+        <li>한 달 기준 300점 = 평일 하루 2시간 = 3,000 데미지.</li>
+      </ul>
+    </section>
+
+    <section id="dmg">
+      <h2>데미지와 버프</h2>
+      <div class="tbl"><table>
+        <thead><tr><th>버프</th><th>효과</th><th>얻는 법</th></tr></thead>
+        <tbody>
+          <tr><td><b>마스터의 가호</b></td><td>7일 동안 데미지 +10%</td><td>선생님 과제 퀘스트 완료. 매주 하면 매주 갱신</td></tr>
+          <tr><td><b>음식 포션</b></td><td>30분 동안 데미지 +15%</td><td>보스전 화면에서 하루 2회</td></tr>
+          <tr><td><b>궁극기</b></td><td>다음 공격 데미지 ×3</td><td>게이지 100%. 생활 미션 +20%, 25분 집중 완주 +20% (궁극기 왕국 +40%)</td></tr>
+          <tr><td><b>왕국 패시브</b></td><td>왕국마다 다름</td><td><a href="#kingdoms">9대 왕국</a> 참고</td></tr>
+        </tbody>
+      </table></div>
+      <p class="small muted">버프는 보스 데미지에만 적용되고 랭킹·학부모 리포트 점수는 바뀌지 않아요. 한 번의 공격 배율은 최대 4배.</p>
+    </section>
+
+    <section id="season">
+      <h2>월간 시즌</h2>
+      <ol class="steps">
+        <li><b>매달 1일 리셋</b>이번 달 점수는 0점부터, 과목 보스 6마리도 새로 나타나요. "처음부터 다시"는 없고 지난달 기록은 모두 보관돼요.</li>
+        <li><b>월말 결산</b>달이 바뀌면 결산 창이 떠요. 이번 달 점수, 처치한 보스, 받은 아이템을 보여 줘요.</li>
+        <li><b>그대로 / 왕국 이주 / 새 캐릭터</b>셋 중 하나를 골라요. 새 캐릭터를 만들어도 기록과 아이템은 그대로예요.</li>
+        <li><b>이어지는 것</b>레이드 충전 게이지, 히든보스 누적, 레벨, 연속 출석.</li>
+      </ol>
+    </section>
+
+    <section id="items">
+      <h2>아이템과 보상</h2>
+      <div class="grid g2">
+        <div class="card"><h3>장비 카드</h3><p class="small">그달 처치한 과목 보스마다 1장. 시험 레이드에서 쓰면 <b>100 데미지</b>.</p></div>
+        <div class="card"><h3>시즌 보물상자</h3><p class="small">한 달 300점 달성 시 1개. 시험 레이드에서 쓰면 <b>300 데미지</b>.</p></div>
+        <div class="card"><h3>칭호</h3><p class="small">과목 보스·레이드 보스를 처치하면 얻어요. 예: [수식 파괴자], [학년 마무리 전설].</p></div>
+        <div class="card"><h3>출석 펫</h3><p class="small">연속 7일 [알람 부엉이], 30일 [황금 마라탕 펫].</p></div>
+      </div>
+      <p class="small muted" style="margin-top:10px">아이템은 시험 레이드 문이 열렸을 때만 쓸 수 있어요. 그 전에는 나 탭에 쟁여 둬요.</p>
+    </section>
+
+    <section id="flow">
+      <h2>마음 체크 8칸</h2>
+      <p>공부 끝에 하는 마음 체크는 <b>실력(익숙함)</b>과 <b>도전(난이도)</b>, 몰입감을 물어 오늘 내가 어느 칸에 있었는지 보여 줘요. 점수와는 상관없고, 내일 공부를 어떻게 바꿀지 힌트를 줘요.</p>
+      <div class="cells">
+        <div><b>몰입</b>어렵지만 해낼 만했음 → 다음 단계 미리 열기</div>
+        <div><b>각성</b>빡셌는데 버팀 → 같은 난이도 + 개념 보강</div>
+        <div><b>통제</b>여유 있음 → Lv2·심화 도전</div>
+        <div><b>이완</b>너무 편함 → 쉬운 반복 줄이기</div>
+        <div><b>지루함</b>반복이 많음 → 타임어택</div>
+        <div><b>무관심</b>의미가 안 느껴짐 → 꿈 카드 다시 보기</div>
+        <div><b>걱정</b>헷갈림 → 강의·정독 먼저</div>
+        <div><b>불안</b>버거움 → 난이도 내리고 워밍업</div>
+      </div>
+      <p class="small muted" style="margin-top:10px">자유 입력 한마디는 본인이 "공개"를 켰을 때만 부모님 화면에 보여요.</p>
+    </section>
+
+  </div>
+</div>
+<script src="site.js"></script>
+</body>
+</html>
