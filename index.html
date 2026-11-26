@@ -995,7 +995,7 @@ function renderToday(){
   if(blessActive())h+=`<div class="banner" style="background:#5B3B8C"><span data-spr="star" data-sc="5"></span><div><b>마스터의 가호</b><p class="small" style="opacity:.9">선생님 과제 완료! ${fmt(S.bless.until)}까지 모든 공격 데미지 +${BLESS_PCT}%</p></div></div>`;
   else h+=`<div class="card" style="gap:4px"><div class="row between"><b>마스터의 가호</b><span class="pill">꺼짐</span></div><p class="tiny muted">이번 주 선생님 과제를 완료하면 1주일 동안 데미지 +${BLESS_PCT}%. 매주 과제를 하면 매주 받아요.</p></div>`;
   if(dd>=0)h+=`<div class="banner"><div class="d num">D-${dd}</div><div><b>시험 전 강의완강 베네핏</b><p class="small" style="opacity:.85">12/6까지 들은 강의는 과목마다 주 1회 +1점. 이번 주 남은 과목: ${Object.keys(SUBJ).filter(s=>lectureBonusAvailable(s,k)).map(s=>SUBJ[s].n).join(' ')||'없음'}</p></div></div>`;
-  h+=`<div class="card" style="gap:8px"><div class="row between"><h3>공부 퀘스트</h3><span class="num small"><b style="font-size:20px">${sc.rank}</b> / ${DAILY_CAP}점</span></div>`;
+  h+=`<div class="card" style="gap:8px"><div class="row between"><h3>공부 퀘스트</h3><span class="num small"><b style="font-size:20px">${sc.rank}</b> / ${DAILY_CAP}점</span></div><p class="tiny muted">오늘 공부 시간 <b class="num">${hm(sc.min)}</b> · 이번 주 <b class="num">${hm(minIn(weekDays()))}</b> <span>([나] 탭에서 자세히)</span></p>`;
   if(!tot)h+=`<p class="small muted">오늘 플랜이 비어 있어요. 플랜 탭에서 요일별 퀘스트를 넣거나, 아래 '즉석 추가'로 오늘 한 공부를 넣으세요.</p>`;
   L.q.forEach((q,i)=>{const a=ACT[q.a];const locked=q.a==='lv2'&&!L.q.some(x=>x.s===q.s&&x.a==='lv1'&&x.done)&&!q.done;
     const willBonus=q.a==='lec'&&!q.done&&lectureBonusAvailable(q.s,k);
@@ -1373,6 +1373,24 @@ function renderTeacher(){
 }
 
 /* ---------- 내 캐릭터 ---------- */
+/* 학생용 약식 공부 시간 리포트 */
+function hm(m){m=Math.round(m||0);const h=Math.floor(m/60),r=m%60;return h?(h+'시간'+(r?' '+r+'분':'')):r+'분'}
+function minIn(keys){return keys.reduce((a,k)=>a+dayScore(k).min,0)}
+function weekDays(k){const w=weekKey(k||TODAY());return [...Array(7)].map((_,i)=>addDays(w,i))}
+function studyCard(){
+  const k=TODAY(),days=weekDays(),lastW=weekDays(addDays(k,-7)),mk=k.slice(0,7);
+  const mdays=Object.keys(S.logs).filter(d=>d.startsWith(mk));
+  const wk=minIn(days),lw=minIn(lastW),mo=minIn(mdays),dmins=days.map(d=>dayScore(d).min),mx=Math.max(60,...dmins);
+  const sub={};days.forEach(d=>{const L=S.logs[d];if(L)L.q.filter(q=>q.done).forEach(q=>{sub[q.s]=(sub[q.s]||0)+actMin(q.a,q.s)})});
+  const studied=mdays.filter(d=>dayScore(d).min>0).length;const diff=wk-lw;
+  return `<div class="card"><div class="row between"><h3>내 공부 시간</h3><span class="tiny muted">퀘스트 기준 예상 시간</span></div>
+    <div class="row" style="justify-content:space-around;text-align:center">
+      <div><p class="tiny muted">오늘</p><p class="num" style="font-family:var(--f-title);font-size:22px">${hm(dayScore(k).min)}</p></div>
+      <div><p class="tiny muted">이번 주</p><p class="num" style="font-family:var(--f-title);font-size:22px">${hm(wk)}</p></div>
+      <div><p class="tiny muted">${Number(mk.slice(5))}월</p><p class="num" style="font-family:var(--f-title);font-size:22px">${hm(mo)}</p></div></div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;align-items:end;height:84px">${days.map((d,i)=>`<div style="display:flex;flex-direction:column;align-items:center;gap:2px;height:100%;justify-content:flex-end"><span class="tiny num">${dmins[i]?Math.round(dmins[i]/6)/10:''}</span><i style="display:block;width:70%;height:${Math.round(dmins[i]/mx*56)}px;min-height:${dmins[i]?3:0}px;background:${d===k?'#E2453C':'#F7C531'};box-shadow:var(--px2)"></i><span class="tiny" style="${d===k?'font-weight:700':''}">${'월화수목금토일'[i]}</span></div>`).join('')}</div>
+    ${Object.keys(sub).length?`<div class="chips">${Object.keys(SUBJ).filter(x=>sub[x]).map(x=>`<span class="pill">${SUBJ[x].n} ${hm(sub[x])}</span>`).join('')}</div>`:''}
+    <p class="tiny muted">${lw?`지난주보다 ${diff>=0?'+':'-'}${hm(Math.abs(diff))}`:'지난주 기록이 쌓이면 비교해 줄게'} · 이달 공부한 날 ${studied}일 · 막대 숫자는 시간</p></div>`}
 function renderMe(){
   const c=S.char,K=KINGDOMS[c.kingdom];const total=Object.keys(S.logs).reduce((a,k)=>a+dayScore(k).raw,0);const lv=Math.floor(total/300)+1;
   const titles=['떨어진 자','견습 모험가','숙련 모험가','왕국의 기사','대륙의 주인'];
@@ -1382,6 +1400,7 @@ function renderMe(){
     <p>${esc(c.food)}을(를) 좋아하는 ${esc(c.per)} ${esc(c.job)}.</p>
     <div class="dream"><span class="tiny" style="opacity:.8">나의 꿈</span><br>${esc(c.dream)}</div>
     <p class="tiny" style="opacity:.85">여정의 목표: ${esc(c.goal)} · 오라 ${esc(c.colorName||'')}</p></div>
+  ${studyCard()}
   <div class="card"><div class="row between"><h3>경험치</h3><span class="num small">${total % 300} / 300</span></div><div class="bar gauge"><i style="width:${(total%300)/3}%"></i></div><p class="tiny muted">누적 ${total}점 · 300점마다 레벨업</p></div>
   <div class="card"><div class="row between"><h3>${Number(TODAY().slice(5,7))}월 시즌</h3><span class="num px">${monthScoreRaw()} / ${BASE}</span></div><div class="bar gauge"><i style="width:${pctOf(monthScoreRaw(),BASE)}%"></i></div>
     <p class="tiny muted">기준치 300점 = 평일 하루 2시간. 채우면 이달 과목 보스 6마리를 모두 잡을 수 있어요. 매달 1일에 0점으로 새로 시작해요.</p>
@@ -1461,7 +1480,7 @@ const FLOW_NOTE='<p class="tiny muted">칙센트미하이의 몰입 8채널 모�
 const WEEK_BASE=Math.round(BASE*7/30);
 const STEP_GR=[['개념','lec','sum','read'],['유형','lv1','lv2'],['실전','nje'],['오답','wrong'],['암기','mem','word'],['과제','hw']];
 function stepOf(a){const r=STEP_GR.find(r=>r.includes(a));return r?r[0]:'과제'}
-const hm=m=>m>=60?`${Math.floor(m/60)}시간${m%60?' '+(m%60)+'분':''}`:`${m}분`;
+const phm=m=>m>=60?`${Math.floor(m/60)}시간${m%60?' '+(m%60)+'분':''}`:`${m}분`;
 function weekStats(w,n){const days=[...Array(n||7)].map((_,i)=>addDays(w,i));let min=0,cnt=0,raw=0,on=0;
   days.forEach(d=>{const sc=dayScore(d);const L=S.logs[d];const c=L?L.q.filter(q=>q.done).length:0;min+=sc.min;raw+=sc.raw;cnt+=c;if(c)on++});return {days,min,cnt,raw,on}}
 function parentWeek(k){
@@ -1476,9 +1495,9 @@ function parentWeek(k){
     <div class="chips">${[...Array(8)].map((_,i)=>{const ws=addDays(weekKey(k),-7*i);return `<button class="chip" data-wk="${i}" aria-pressed="${i===off}">${i?fmt(ws).replace(/\(.\)/,'')+'~'+fmt(addDays(ws,6)).replace(/\(.\)/,''):'이번 주'}</button>`}).join('')}</div></div>`;
   /* 3. 요약 */
   const dMin=A.min-P.min;
-  h+=`<div class="card"><p class="tiny muted">공부한 시간 (예상)</p><p class="num" style="font-size:30px;font-weight:800;color:var(--accent)">약 ${hm(A.min)}</p>
-    <p class="small" style="color:${dMin>=0?'#2FA06A':'#B3261E'}">${P.min?`지난주 같은 기간보다 ${hm(Math.abs(dMin))} ${dMin>=0?'더':'덜'} 공부했어요`:'지난주 같은 기간 기록이 없어요'}</p>
-    <div class="ptiles">${[[A.cnt+'회','공부 횟수'],[A.on+'일','공부한 날'],[A.on?hm(Math.round(A.min/A.on)):'-','하루 평균'],[A.raw+'점',`점수 (주 기준 ${WEEK_BASE}점의 ${pctOf(A.raw,WEEK_BASE)}%)`]].map(([v,l])=>`<div><b class="num">${v}</b><span>${l}</span></div>`).join('')}</div></div>`;
+  h+=`<div class="card"><p class="tiny muted">공부한 시간 (예상)</p><p class="num" style="font-size:30px;font-weight:800;color:var(--accent)">약 ${phm(A.min)}</p>
+    <p class="small" style="color:${dMin>=0?'#2FA06A':'#B3261E'}">${P.min?`지난주 같은 기간보다 ${phm(Math.abs(dMin))} ${dMin>=0?'더':'덜'} 공부했어요`:'지난주 같은 기간 기록이 없어요'}</p>
+    <div class="ptiles">${[[A.cnt+'회','공부 횟수'],[A.on+'일','공부한 날'],[A.on?phm(Math.round(A.min/A.on)):'-','하루 평균'],[A.raw+'점',`점수 (주 기준 ${WEEK_BASE}점의 ${pctOf(A.raw,WEEK_BASE)}%)`]].map(([v,l])=>`<div><b class="num">${v}</b><span>${l}</span></div>`).join('')}</div></div>`;
   /* 4. 마음 체크 */
   let most=null;const ems=days.filter(d=>S.emo[d]).map(d=>({d,e:S.emo[d],lab:'월화수목금토일'[(parseDay(d).getDay()+6)%7]}));
   if(ems.length){const cnt={};ems.forEach(o=>cnt[o.e.cell]=(cnt[o.e.cell]||0)+1);most=Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a]||FLOW_RING.indexOf(a)-FLOW_RING.indexOf(b))[0];
@@ -1489,7 +1508,7 @@ function parentWeek(k){
       <div class="pkv"><div><span>마음 체크한 날</span><b>${ems.length}일</b></div><div><span>평균 컨디션</span><b>${avgC?`${FACES[Math.round(avgC)-1][0]} ${avgC.toFixed(1)} / 5 (${FACES[Math.round(avgC)-1][1]})`:'-'}</b></div>
         <div><span>난이도 · 익숙함 평균</span><b class="num">${(ems.reduce((a,o)=>a+(o.e.C||0),0)/ems.length).toFixed(1)} · ${(ems.reduce((a,o)=>a+(o.e.S||0),0)/ems.length).toFixed(1)}</b></div><div><span>가장 많았던 칸</span><b style="color:#2C4BE0">${most} ${cnt[most]}일</b></div></div>
       <p class="small" style="font-weight:700;margin-top:8px">학습 상태별 일수</p>${Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a]).map(c=>`<div class="row small"><span style="width:52px">${c}</span><div class="bar" style="flex:1;background:var(--bg)"><i style="width:${cnt[c]/ems.length*100}%;background:${FLOW_COL[c]}"></i></div><span class="num" style="width:30px;text-align:right">${cnt[c]}일</span></div>`).join('')}
-      <p class="small" style="font-weight:700;margin-top:8px">컨디션별 평균 공부 시간</p>${grp.map(g=>`<div class="row small"><span style="width:64px">${g.n}</span><div class="bar" style="flex:1;background:var(--bg)"><i style="width:${g.m/gmax*100}%;background:${g.col}"></i></div><span class="num muted small" style="width:122px;text-align:right;white-space:nowrap">${g.c?`${g.c}일 · ${hm(g.m)}`:'-'}</span></div>`).join('')}
+      <p class="small" style="font-weight:700;margin-top:8px">컨디션별 평균 공부 시간</p>${grp.map(g=>`<div class="row small"><span style="width:64px">${g.n}</span><div class="bar" style="flex:1;background:var(--bg)"><i style="width:${g.m/gmax*100}%;background:${g.col}"></i></div><span class="num muted small" style="width:122px;text-align:right;white-space:nowrap">${g.c?`${g.c}일 · ${phm(g.m)}`:'-'}</span></div>`).join('')}
       ${flowCoach(most,ems.filter(o=>o.e.cell===most).map(o=>o.e))}
       <p class="small" style="font-weight:700;margin-top:8px">아이가 남긴 말</p>${said.length?said.map(o=>`<p class="small">${fmt(o.d)} "${esc(o.e.text)}"</p>`).join(''):'<p class="tiny muted">아이가 공개를 켠 한마디만 보여요.</p>'}
       ${FLOW_NOTE}</div>`}
@@ -1499,7 +1518,7 @@ function parentWeek(k){
   days.forEach(d=>{const L=S.logs[d];if(!L)return;L.q.filter(q=>q.done).forEach(q=>{const o=sub[q.s]=sub[q.s]||{n:0,m:0};o.n++;o.m+=q.min||actMin(q.a,q.s);const g=stepOf(q.a);stp[g]=(stp[g]||0)+1;
     if(q.a==='lec')lec++;if(['lv1','lv2','nje'].includes(q.a))prob++;if(q.a==='wrong')wr++;if(q.at)late.push(new Date(q.at).getHours())})});
   const smax=Math.max(60,...Object.values(sub).map(o=>o.m));
-  h+=`<div class="card"><h3>과목별 공부</h3>${Object.keys(SUBJ).map(s=>{const o=sub[s]||{n:0,m:0};return `<div class="row small"><span style="width:52px">${SUBJ[s].n}</span><div class="bar" style="flex:1;background:var(--bg)"><i style="width:${o.m/smax*100}%;background:var(--${s})"></i></div><span class="num muted small" style="width:122px;text-align:right;white-space:nowrap">${o.n?`${o.n}회 · ${hm(o.m)}`:'-'}</span></div>`}).join('')}</div>`;
+  h+=`<div class="card"><h3>과목별 공부</h3>${Object.keys(SUBJ).map(s=>{const o=sub[s]||{n:0,m:0};return `<div class="row small"><span style="width:52px">${SUBJ[s].n}</span><div class="bar" style="flex:1;background:var(--bg)"><i style="width:${o.m/smax*100}%;background:var(--${s})"></i></div><span class="num muted small" style="width:122px;text-align:right;white-space:nowrap">${o.n?`${o.n}회 · ${phm(o.m)}`:'-'}</span></div>`}).join('')}</div>`;
   const tot=Object.values(stp).reduce((a,b)=>a+b,0);const SC={개념:'#8FA0F2',유형:'#3B7DD8',실전:'#2C4BE0',오답:'#E0644B',암기:'#2FA06A',과제:'#A0703C'};
   h+=`<div class="card"><h3>공부 단계 균형</h3>${tot?`<div class="stackbar">${STEP_GR.map(r=>stp[r[0]]?`<i style="flex:${stp[r[0]]};background:${SC[r[0]]}" title="${r[0]} ${stp[r[0]]}회"></i>`:'').join('')}</div>
     <div class="chips">${STEP_GR.map(r=>`<span class="pill"><span style="color:${SC[r[0]]}">●</span> ${r[0]} ${stp[r[0]]||0}</span>`).join('')}</div>
