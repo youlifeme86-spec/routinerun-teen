@@ -16,7 +16,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%2346B1D8'/%3E%3Crect x='3' y='9' width='10' height='4' fill='%237CC242'/%3E%3Crect x='6' y='3' width='4' height='6' fill='%23E2453C'/%3E%3C/svg%3E">
 <script src="config.js"></script>
 <script>
-window.RR_VERSION='2026.11.26-17';
+window.RR_VERSION='2026.11.27-2';
 /* 실시간 오류 기록: 학생 폰에서 난 오류를 구글 시트 [오류] 탭으로 보냄 */
 (function(){var n=0;window.RR_REPORT=function(msg,stack,extra){try{var C=window.RR_CONFIG||{};if(!C.API_URL||n>=8)return;n++;var a=null;try{a=JSON.parse(localStorage.getItem('rr-auth-v2')||'null')}catch(e){}
 fetch(C.API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},keepalive:true,body:JSON.stringify({action:'logError',token:a&&a.token||'',msg:String(msg||'').slice(0,1000),stack:String(stack||'').slice(0,3000),page:location.pathname+(location.hash.indexOf('#parent')===0?' (학부모)':''),tab:(window.RR_TAB||'')+(extra?' '+extra:''),ver:window.RR_VERSION||'',ua:navigator.userAgent.slice(0,300)})}).catch(function(){})}catch(e){}};
@@ -969,7 +969,7 @@ function renderToday(){
   if(blessActive())h+=`<div class="banner" style="background:#5B3B8C"><span data-spr="star" data-sc="5"></span><div><b>마스터의 가호</b><p class="small" style="opacity:.9">선생님 과제 완료! ${fmt(S.bless.until)}까지 모든 공격 데미지 +${BLESS_PCT}%</p></div></div>`;
   else h+=`<div class="card" style="gap:4px"><div class="row between"><b>마스터의 가호</b><span class="pill">꺼짐</span></div><p class="tiny muted">이번 주 선생님 과제를 완료하면 1주일 동안 데미지 +${BLESS_PCT}%. 매주 과제를 하면 매주 받아요.</p></div>`;
   if(dd>=0)h+=`<div class="banner"><div class="d num">D-${dd}</div><div><b>시험 전 강의완강 베네핏</b><p class="small" style="opacity:.85">12/6까지 들은 강의는 과목마다 주 1회 +1점. 이번 주 남은 과목: ${Object.keys(SUBJ).filter(s=>lectureBonusAvailable(s,k)).map(s=>SUBJ[s].n).join(' ')||'없음'}</p></div></div>`;
-  h+=`<div class="card" style="gap:8px"><div class="row between"><h3>공부 퀘스트</h3><span class="num small"><b style="font-size:20px">${sc.rank}</b> / ${DAILY_CAP}점</span></div>`;
+  h+=`<div class="card" style="gap:8px"><div class="row between"><h3>공부 퀘스트</h3><span class="num small"><b style="font-size:20px">${sc.rank}</b> / ${DAILY_CAP}점</span></div><p class="tiny muted">오늘 공부 시간 <b class="num">${hm(sc.min)}</b> · 이번 주 <b class="num">${hm(minIn(weekDays()))}</b> <span>([나] 탭에서 자세히)</span></p>`;
   if(!tot)h+=`<p class="small muted">오늘 플랜이 비어 있어요. 플랜 탭에서 요일별 퀘스트를 넣거나, 아래 '즉석 추가'로 오늘 한 공부를 넣으세요.</p>`;
   L.q.forEach((q,i)=>{const a=ACT[q.a];const locked=q.a==='lv2'&&!L.q.some(x=>x.s===q.s&&x.a==='lv1'&&x.done)&&!q.done;
     const willBonus=q.a==='lec'&&!q.done&&lectureBonusAvailable(q.s,k);
@@ -1328,6 +1328,24 @@ function renderTeacher(){
 }
 
 /* ---------- 내 캐릭터 ---------- */
+/* 학생용 약식 공부 시간 리포트 */
+function hm(m){m=Math.round(m||0);const h=Math.floor(m/60),r=m%60;return h?(h+'시간'+(r?' '+r+'분':'')):r+'분'}
+function minIn(keys){return keys.reduce((a,k)=>a+dayScore(k).min,0)}
+function weekDays(k){const w=weekKey(k||TODAY());return [...Array(7)].map((_,i)=>addDays(w,i))}
+function studyCard(){
+  const k=TODAY(),days=weekDays(),lastW=weekDays(addDays(k,-7)),mk=k.slice(0,7);
+  const mdays=Object.keys(S.logs).filter(d=>d.startsWith(mk));
+  const wk=minIn(days),lw=minIn(lastW),mo=minIn(mdays),dmins=days.map(d=>dayScore(d).min),mx=Math.max(60,...dmins);
+  const sub={};days.forEach(d=>{const L=S.logs[d];if(L)L.q.filter(q=>q.done).forEach(q=>{sub[q.s]=(sub[q.s]||0)+actMin(q.a,q.s)})});
+  const studied=mdays.filter(d=>dayScore(d).min>0).length;const diff=wk-lw;
+  return `<div class="card"><div class="row between"><h3>내 공부 시간</h3><span class="tiny muted">퀘스트 기준 예상 시간</span></div>
+    <div class="row" style="justify-content:space-around;text-align:center">
+      <div><p class="tiny muted">오늘</p><p class="num" style="font-family:var(--f-title);font-size:22px">${hm(dayScore(k).min)}</p></div>
+      <div><p class="tiny muted">이번 주</p><p class="num" style="font-family:var(--f-title);font-size:22px">${hm(wk)}</p></div>
+      <div><p class="tiny muted">${Number(mk.slice(5))}월</p><p class="num" style="font-family:var(--f-title);font-size:22px">${hm(mo)}</p></div></div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;align-items:end;height:84px">${days.map((d,i)=>`<div style="display:flex;flex-direction:column;align-items:center;gap:2px;height:100%;justify-content:flex-end"><span class="tiny num">${dmins[i]?Math.round(dmins[i]/6)/10:''}</span><i style="display:block;width:70%;height:${Math.round(dmins[i]/mx*56)}px;min-height:${dmins[i]?3:0}px;background:${d===k?'#E2453C':'#F7C531'};box-shadow:var(--px2)"></i><span class="tiny" style="${d===k?'font-weight:700':''}">${'월화수목금토일'[i]}</span></div>`).join('')}</div>
+    ${Object.keys(sub).length?`<div class="chips">${Object.keys(SUBJ).filter(x=>sub[x]).map(x=>`<span class="pill">${SUBJ[x].n} ${hm(sub[x])}</span>`).join('')}</div>`:''}
+    <p class="tiny muted">${lw?`지난주보다 ${diff>=0?'+':'-'}${hm(Math.abs(diff))}`:'지난주 기록이 쌓이면 비교해 줄게'} · 이달 공부한 날 ${studied}일 · 막대 숫자는 시간</p></div>`}
 function renderMe(){
   const c=S.char,K=KINGDOMS[c.kingdom];const total=Object.keys(S.logs).reduce((a,k)=>a+dayScore(k).raw,0);const lv=Math.floor(total/300)+1;
   const titles=['떨어진 자','견습 모험가','숙련 모험가','왕국의 기사','대륙의 주인'];
@@ -1337,6 +1355,7 @@ function renderMe(){
     <p>${esc(c.food)}을(를) 좋아하는 ${esc(c.per)} ${esc(c.job)}.</p>
     <div class="dream"><span class="tiny" style="opacity:.8">나의 꿈</span><br>${esc(c.dream)}</div>
     <p class="tiny" style="opacity:.85">여정의 목표: ${esc(c.goal)} · 오라 ${esc(c.colorName||'')}</p></div>
+  ${studyCard()}
   <div class="card"><div class="row between"><h3>경험치</h3><span class="num small">${total % 300} / 300</span></div><div class="bar gauge"><i style="width:${(total%300)/3}%"></i></div><p class="tiny muted">누적 ${total}점 · 300점마다 레벨업</p></div>
   <div class="card"><div class="row between"><h3>${Number(TODAY().slice(5,7))}월 시즌</h3><span class="num px">${monthScoreRaw()} / ${BASE}</span></div><div class="bar gauge"><i style="width:${pctOf(monthScoreRaw(),BASE)}%"></i></div>
     <p class="tiny muted">기준치 300점 = 평일 하루 2시간. 채우면 이달 과목 보스 6마리를 모두 잡을 수 있어요. 매달 1일에 0점으로 새로 시작해요.</p>
