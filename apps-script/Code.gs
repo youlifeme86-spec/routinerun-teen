@@ -12,7 +12,7 @@
  *   오류  : 학생 폰에서 난 오류가 실시간으로 쌓이는 곳
  */
 
-var SERVER_VERSION = '2026.11.26-5';
+var SERVER_VERSION = '2026.11.26-6';
 var TZ = 'Asia/Seoul';
 var CHUNK = 45000;            // 시트 한 칸 최대 50,000자라 45,000자씩 나눠 저장
 var MAX_CHUNKS = 40;          // 학생 한 명 최대 약 1.8MB
@@ -101,14 +101,31 @@ var H_PICK = ['lec', 'lec', 'lec', 'lec', 'sum', 'lv1', 'lv2', 'wrong', 'read', 
 var H_SUBJ = ['m', 'k', 'e', 's', 'c', 'h'];
 
 function helperOnMenu() {
-  helperOffMenu(true);
-  ScriptApp.newTrigger('helperTick').timeBased().everyHours(1).create();
+  helperSet_(true);
   SpreadsheetApp.getUi().alert('AI 헬퍼 자동 공부를 켰어요.\n매일 오후 4시~밤 11시 사이에 조금씩 점수가 쌓여요.');
 }
 
 function helperOffMenu(silent) {
-  ScriptApp.getProjectTriggers().forEach(function (t) { if (t.getHandlerFunction() === 'helperTick') ScriptApp.deleteTrigger(t); });
+  helperSet_(false);
   if (silent !== true) SpreadsheetApp.getUi().alert('AI 헬퍼 자동 공부를 껐어요. 지금까지 점수는 그대로 남아요.');
+}
+
+/** 자동 공부 트리거 켜기/끄기 (시트 메뉴와 관리자 화면이 같이 씀) */
+function helperSet_(on) {
+  ScriptApp.getProjectTriggers().forEach(function (t) { if (t.getHandlerFunction() === 'helperTick') ScriptApp.deleteTrigger(t); });
+  if (on) ScriptApp.newTrigger('helperTick').timeBased().everyHours(1).create();
+}
+
+function helperIsOn_() {
+  try {
+    return ScriptApp.getProjectTriggers().some(function (t) { return t.getHandlerFunction() === 'helperTick'; });
+  } catch (x) { return null; }
+}
+
+function adminHelperSet_(b) {
+  auth_(b, 'admin');
+  helperSet_(!!b.on);
+  return { helperOn: helperIsOn_() };
 }
 
 function helperTick() {
@@ -243,6 +260,7 @@ var ROUTES = {
   adminApprove: adminApprove_,
   adminStudent: adminStudent_,
   adminDelete: adminDelete_,
+  adminHelperSet: adminHelperSet_,
   adminClearErrors: function (b) { auth_(b, 'admin'); clearErrorsMenu(); return {}; }
 };
 
@@ -382,7 +400,8 @@ function adminOverview_(b) {
       id: r[A.id], name: r[A.name], role: r[A.role], active: isActive_(r), parentCode: r[A.code],
       school: normSchool_(sum.school) || normSchool_(r[A.school]), schoolPreset: normSchool_(r[A.school]),
       created: iso_(r[A.created]), lastLogin: iso_(r[A.last]), savedAt: s.savedAt || '', memo: r[A.memo] || '',
-      char: sum.char || null, daily: daily, bless: sum.bless || null, monthPts: sum.monthPts || 0
+      char: sum.char || null, daily: daily, bless: sum.bless || null, monthPts: sum.monthPts || 0,
+      helper: HELPERS.hasOwnProperty(String(r[A.id]))
     });
   });
   var errSh = sheet_('err');
@@ -393,7 +412,11 @@ function adminOverview_(b) {
       return { time: iso_(r[0]), id: r[1], ver: r[2], page: r[3], tab: r[4], msg: r[5], stack: r[6], ua: r[7] };
     });
   }
-  return { today: today, students: students, pending: pending, errors: errors, errorCount: Math.max(0, last - 1), serverVersion: SERVER_VERSION };
+  var links = {};
+  try { links.sheet = SpreadsheetApp.getActiveSpreadsheet().getUrl(); } catch (x) {}
+  try { links.script = 'https://script.google.com/home/projects/' + ScriptApp.getScriptId() + '/edit'; } catch (x) {}
+  return { today: today, students: students, pending: pending, errors: errors, errorCount: Math.max(0, last - 1), serverVersion: SERVER_VERSION,
+    helperOn: helperIsOn_(), helperRef: HELPER_REF, links: links };
 }
 
 function adminCreate_(b) {
