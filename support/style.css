@@ -164,3 +164,28 @@ footer .wrap{padding:24px 16px;display:flex;flex-wrap:wrap;gap:12px 24px;justify
 footer a{color:var(--muted)}
 footer nav{display:flex;flex-wrap:wrap;gap:6px 16px}
 @media (max-width:700px){.cloud.c2{display:none}}
+
+/* 픽셀 배경 (site.js 가 art.js 로 그려 넣음) */
+.hero.pix::after{background:var(--ground) repeat-x;background-size:64px 64px;height:64px;image-rendering:pixelated}
+.hero.pix .grass-tufts{display:none}
+.hero .px-mtn{position:absolute;left:0;right:0;bottom:92px;height:96px;background-repeat:repeat-x;background-size:240px 96px;image-rendering:pixelated;z-index:0}
+.hero .px-hills{position:absolute;left:0;right:0;bottom:62px;height:60px;background-repeat:repeat-x;background-size:128px 60px;image-rendering:pixelated;z-index:0}
+.hero .px-isle{position:absolute;top:26px;right:30%;z-index:0;animation:pxfloat 4.5s ease-in-out infinite}
+@keyframes pxfloat{50%{transform:translateY(-8px)}}
+@media (max-width:700px){.hero .px-isle{display:none}}
+@media (prefers-reduced-motion:reduce){.hero .px-isle{animation:none}}
+.hero.pix .sprite,.hero.pix .bossspr{bottom:58px}
+.hero.pix .wrap{padding-bottom:160px}
+.hero.pix .bossspr{right:calc(6% + 250px)}
+.hero .sprite2{position:absolute;right:calc(6% + 128px);bottom:58px;z-index:1}
+@media (max-width:700px){.hero .sprite2{display:none}}
+canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
+.bspr{flex:none;display:grid;place-items:center;width:64px;min-height:56px}
+.boss.has-spr{display:flex;gap:14px;align-items:flex-start}
+.boss.has-spr > div.bd{flex:1;min-width:0}
+.rspr{display:inline-block;vertical-align:middle;margin-right:8px}
+.rname{display:flex;align-items:center;gap:8px}
+.jobstrip{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+.jobstrip figure{margin:0;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 6px 6px;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0}
+.jobstrip figure > div{display:flex;align-items:flex-end}
+.jobstrip figcaption{font-size:13px;font-weight:700}

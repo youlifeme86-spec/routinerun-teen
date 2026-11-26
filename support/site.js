@@ -43,3 +43,29 @@
   paint();
   tb.onclick = function(){ var n = cur()==='dark' ? 'light' : 'dark'; root.setAttribute('data-theme', n); try{ localStorage.setItem('studia-help-theme', n); }catch(e){} paint(); };
 })();
+
+/* 픽셀 그림: 학생 앱과 같은 art.js 로 캐릭터·보스·배경을 그려요 (없으면 원래 그림 유지) */
+(function(){
+  function hydrate(){
+    if(!window.RRART) return;
+    document.querySelectorAll('[data-spr]').forEach(function(el){
+      try{ var c = RRART.make(el.getAttribute('data-spr'), +el.getAttribute('data-sc')||4, el.dataset); if(c){ el.innerHTML=''; el.appendChild(c); } }catch(e){}
+    });
+    var hero = document.querySelector('.hero');
+    if(hero && !hero.classList.contains('pix')){
+      try{
+        var A = RRART.scene();
+        if(A.mtn){
+          hero.classList.add('pix');
+          hero.style.setProperty('--ground','url('+A.ground+')');
+          var m=document.createElement('div');m.className='px-mtn';m.style.backgroundImage='url('+A.mtn+')';
+          var h=document.createElement('div');h.className='px-hills';h.style.backgroundImage='url('+A.hills+')';
+          var i=document.createElement('div');i.className='px-isle';var ic=RRART.make('island',2);if(ic)i.appendChild(ic);
+          hero.insertBefore(h,hero.firstChild);hero.insertBefore(i,hero.firstChild);hero.insertBefore(m,hero.firstChild);
+        }
+      }catch(e){}
+    }
+  }
+  if(window.RRART){ hydrate(); return; }
+  var sc=document.createElement('script'); sc.src='../art.js?v=2026.11.26-6'; sc.onload=hydrate; document.head.appendChild(sc);
+})();
