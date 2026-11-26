@@ -16,7 +16,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%2346B1D8'/%3E%3Crect x='3' y='9' width='10' height='4' fill='%237CC242'/%3E%3Crect x='6' y='3' width='4' height='6' fill='%23E2453C'/%3E%3C/svg%3E">
 <script src="config.js"></script>
 <script>
-window.RR_VERSION='2026.11.26-17';
+window.RR_VERSION='2026.11.27-1';
 /* 실시간 오류 기록: 학생 폰에서 난 오류를 구글 시트 [오류] 탭으로 보냄 */
 (function(){var n=0;window.RR_REPORT=function(msg,stack,extra){try{var C=window.RR_CONFIG||{};if(!C.API_URL||n>=8)return;n++;var a=null;try{a=JSON.parse(localStorage.getItem('rr-auth-v2')||'null')}catch(e){}
 fetch(C.API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},keepalive:true,body:JSON.stringify({action:'logError',token:a&&a.token||'',msg:String(msg||'').slice(0,1000),stack:String(stack||'').slice(0,3000),page:location.pathname+(location.hash.indexOf('#parent')===0?' (학부모)':''),tab:(window.RR_TAB||'')+(extra?' '+extra:''),ver:window.RR_VERSION||'',ua:navigator.userAgent.slice(0,300)})}).catch(function(){})}catch(e){}};
@@ -150,6 +150,13 @@ textarea{resize:vertical;min-height:72px}
 .faces button{border:1.5px solid var(--line);background:var(--paper);border-radius:14px;padding:8px 2px;font-size:11px;display:flex;flex-direction:column;align-items:center;gap:2px}
 .faces button span{font-size:24px}
 .faces button[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.fcoach{border:2px solid #2C4BE0;border-radius:14px;padding:12px 14px;margin-top:10px;background:rgba(44,75,224,.06)}
+.ptiles{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px}.ptiles div{background:var(--bg);border-radius:12px;padding:10px 4px;text-align:center;display:flex;flex-direction:column;gap:2px}.ptiles b{font-size:17px;color:var(--accent);white-space:nowrap}.ptiles span{font-size:11px;color:var(--muted,#777)}
+.pkv{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}.pkv div{display:flex;flex-direction:column}.pkv span{font-size:12px;color:var(--muted,#777)}
+.stackbar{display:flex;height:16px;border-radius:8px;overflow:hidden;background:var(--bg);margin:4px 0}
+.wkbars{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;text-align:center}.wkbars>div{display:flex;flex-direction:column;align-items:center;gap:3px}.wb{height:110px;width:100%;background:var(--bg);border-radius:8px;display:flex;align-items:flex-end;overflow:hidden}.wb i{display:block;width:100%;background:#F2A65A;border-radius:8px 8px 0 0}
+.plist{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px}.pask{background:rgba(44,75,224,.07);border-radius:12px;padding:10px 12px;margin-top:8px}
+@media print{.nav,.modebar,.noprint,#foot,.sbar,.shint{display:none!important}body,#phone,#screen{background:#fff!important;overflow:visible!important;height:auto!important}}
 .flowgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
 .flowgrid div{border-radius:10px;padding:8px 4px;text-align:center;font-size:12px;background:var(--bg);border:1px solid var(--line)}
 .flowgrid div.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:700}
@@ -256,6 +263,16 @@ img.px,canvas.px{image-rendering:pixelated;image-rendering:crisp-edges}
 @keyframes float{50%{transform:translateY(-8px)}}
 .boss.hit{animation:shake .42s steps(6) 1;filter:brightness(2.2)}
 @keyframes shake{20%{transform:translate(-8px,2px)}40%{transform:translate(8px,-2px)}60%{transform:translate(-6px,0)}80%{transform:translate(6px,1px)}}
+.boss.cr1>div{filter:drop-shadow(0 0 0 #fff) contrast(1.05)}
+.boss.cr2>div{filter:saturate(.8) drop-shadow(2px 0 0 #E2453C)}
+.boss.cr3>div{filter:saturate(.6) drop-shadow(2px 0 0 #E2453C) drop-shadow(-2px 0 0 #E2453C);animation:wobble .5s steps(2) infinite}
+.boss.cr1::after,.boss.cr2::after,.boss.cr3::after{content:'';position:absolute;inset:18% 22%;pointer-events:none;background:linear-gradient(118deg,transparent 46%,#2B1D16 46% 50%,transparent 50%),linear-gradient(62deg,transparent 60%,#2B1D16 60% 63%,transparent 63%);opacity:.55}
+.boss.cr2::after{background:linear-gradient(118deg,transparent 46%,#2B1D16 46% 50%,transparent 50%),linear-gradient(62deg,transparent 60%,#2B1D16 60% 63%,transparent 63%),linear-gradient(160deg,transparent 30%,#2B1D16 30% 33%,transparent 33%);opacity:.7}
+.boss.cr3::after{background:linear-gradient(118deg,transparent 46%,#2B1D16 46% 50%,transparent 50%),linear-gradient(62deg,transparent 60%,#2B1D16 60% 63%,transparent 63%),linear-gradient(160deg,transparent 30%,#2B1D16 30% 33%,transparent 33%),linear-gradient(20deg,transparent 70%,#2B1D16 70% 73%,transparent 73%);opacity:.85}
+@keyframes wobble{50%{transform:translateX(2px)}}
+.speech.say{animation:say .5s steps(4) 1}
+@keyframes say{0%{transform:scale(.6)}60%{transform:scale(1.12)}100%{transform:scale(1)}}
+.aura.combo{animation:aura .25s steps(2) 4;opacity:.7}
 .boss.dead{animation:die 1.2s steps(8) forwards}
 .boss.gone{opacity:.25;filter:grayscale(1);animation:none}
 @keyframes die{30%{opacity:.2}45%{opacity:1}60%{opacity:.2}100%{opacity:.25;filter:grayscale(1);transform:translateY(10px)}}
@@ -266,6 +283,7 @@ img.px,canvas.px{image-rendering:pixelated;image-rendering:crisp-edges}
 @keyframes pop{0%{transform:translateY(8px) scale(.6);opacity:0}20%{transform:translateY(-10px) scale(1.2);opacity:1}80%{opacity:1}100%{transform:translateY(-46px);opacity:0}}
 .flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:6}
 .flash.on{animation:fl .5s steps(4) 1}
+.flash.gold{background:#F7C531}
 @keyframes fl{25%{opacity:.75}100%{opacity:0}}
 .shakeall{animation:scr .35s steps(5) 1}
 @keyframes scr{25%{transform:translate(-4px,2px)}50%{transform:translate(4px,-2px)}75%{transform:translate(-2px,1px)}}
@@ -517,8 +535,10 @@ const SND=(()=>{let ctx=null,bgmT=null,step=0,unlocked=false;
   const FX={click:()=>tone(880,.05,'square',.035),tab:()=>{tone(660,.06,'square',.045);tone(990,.07,'square',.045,.05)},
     hit:()=>{noise(.18,.16);tone(220,.2,'sawtooth',.07,0,70)},
     kill:()=>{[523,659,784,1046].forEach((f,i)=>tone(f,.18,'square',.06,i*.11));tone(1318,.45,'triangle',.07,.46)},
-    item:()=>{tone(784,.08,'square',.05);tone(1175,.14,'square',.05,.08)}};
-  const VIB={hit:[35],kill:[60,40,140],item:[20,30,20]};
+    item:()=>{tone(784,.08,'square',.05);tone(1175,.14,'square',.05,.08)},
+    crit:()=>{noise(.25,.22);tone(1568,.12,'square',.06);tone(2093,.22,'square',.06,.08,1046)},
+    mega:()=>{noise(.35,.25);[784,1046,1318,1568,2093].forEach((f,i)=>tone(f,.12,'square',.06,i*.06));tone(2637,.4,'triangle',.07,.32)}};
+  const VIB={hit:[35],kill:[60,40,140],item:[20,30,20],crit:[40,30,90],mega:[60,30,60,30,180]};
   function play(k){if(!on()||!unlocked)return;try{FX[k]&&FX[k]()}catch(e){}try{if(VIB[k]&&navigator.vibrate)navigator.vibrate(VIB[k])}catch(e){}}
   const MEL=[659,0,784,659,587,523,587,0,523,0,659,523,494,440,494,0],BAS=[220,220,175,175,196,196,165,165];
   function tick(){if(!ctx||ctx.state!=='running')return;const m=MEL[step%16];if(m)tone(m,.15,'square',.02);if(step%2===0)tone(BAS[(step>>1)%8]/2,.3,'triangle',.045);step++}
@@ -716,19 +736,23 @@ function monthScore(){const k=TODAY();const pre=k.slice(0,7);return Object.keys(
 function lectureBonusAvailable(s,k){if(k>LECTURE_DEADLINE)return false;const w=weekKey(k);return !(S.bonus[w]&&S.bonus[w][s])}
 
 /* ---------- 데미지 ---------- */
+const CRIT={crit:.15,mega:.03};
 function damageFor(q,L){
   const base=questPts(q)*10;const kd=S.char.kingdom;let bonus=0,crit=1;const why=[];
   if(kd==='nj'){const b=Math.min(30,2*streak());if(b){bonus+=b;why.push('루틴 스택 +'+b+'%')}}
   if(kd==='ddk'){const done=L.q.filter(x=>x.done&&actMin(x.a,x.s)<=45).length;const b=Math.min(25,5*Math.max(0,done-1));if(b&&actMin(q.a,q.s)<=45){bonus+=b;why.push('오토 콤보 +'+b+'%')}}
   if(kd==='gim'&&q.a==='wrong'){const n=Object.values(S.logs).reduce((a,l)=>a+l.q.filter(x=>x.done&&x.a==='wrong').length,0);const b=Math.min(30,5*n);bonus+=b;why.push('장인의 복습 +'+b+'%')}
   if(kd==='hc'&&(q.a==='lv2'||q.a==='nje')){crit=2;why.push('에이스 크리티컬 ×2')}
+  /* 랜덤 크리티컬: 퀘스트마다 한 번 뽑은 값(q.roll)을 저장해서 체크를 풀었다 다시 눌러도 결과가 같아요. 점수는 그대로, 데미지만. */
+  if(q.roll==null)q.roll=Math.random();let ck='';
+  {const rc=q.roll<CRIT.mega?2:q.roll<CRIT.mega+CRIT.crit?1.5:1;if(rc>crit){crit=rc;ck=rc===2?'mega':'crit';why.push(rc===2?'MEGA HIT ×2':'CRITICAL ×1.5')}}
   const pot=S.potion[TODAY()];if(pot&&pot.until>Date.now()){bonus+=15;why.push('포션 +15%')}
   if(blessActive()){bonus+=BLESS_PCT;why.push('마스터의 가호 +'+BLESS_PCT+'%')}
   bonus=Math.min(100,bonus);
   let mult=(1+bonus/100)*crit;
   if(S.gauge>=100){mult*=3;S.gauge=0;why.push('궁극기 ×3')}
   mult=Math.min(4,mult);
-  return {dmg:Math.round(base*mult),why}}
+  return {dmg:Math.round(base*mult),why,crit:ck}}
 
 /* ---------- 렌더 공통 ---------- */
 const $=s=>document.querySelector(s);
@@ -1006,7 +1030,7 @@ function toggleQuest(i){
     const r=damageFor(q,L);q.dmg=r.dmg;
     let blessNew=false;if(q.a==='hw'){S.bless={from:k,until:addDays(k,6)};q.blessed=1;blessNew=true}
     save();
-    UI.pendingFx={s:q.s,before,dmg:r.dmg,pts:questPts(q),why:r.why,killed:before<SUBJ[q.s].hp&&before+r.dmg>=SUBJ[q.s].hp,bless:blessNew};
+    UI.pendingFx={s:q.s,before,dmg:r.dmg,pts:questPts(q),why:r.why,crit:r.crit,combo:L.q.filter(x=>x.done).length,killed:before<SUBJ[q.s].hp&&before+r.dmg>=SUBJ[q.s].hp,bless:blessNew};
     UI.tab='boss';UI.boss=q.s;render();toTop();return;
   } else {
     q.done=false;delete q.dmg;if(q.blessed&&S.bless&&S.bless.from===k){delete S.bless;delete q.blessed}
@@ -1100,10 +1124,10 @@ function renderBoss(){
   const dmgNow=monthBossDmg(s,mk);const shown=fx?fx.before:dmgNow;const hp=Math.max(0,B.hp-shown);const p=pctOf(hp,B.hp);
   const K=KINGDOMS[S.char.kingdom];const pot=S.potion[TODAY()]||{n:0,until:0};const potOn=pot.until>Date.now();
   const lastDays=[0,1,2].map(i=>addDays(TODAY(),-i));const idle=!lastDays.some(k=>S.logs[k]&&S.logs[k].q.some(q=>q.s===s&&q.done));
-  const line=hp===0?'"크윽... 꿈의 문 봉인 하나가 풀렸다..."':p<=50?`"제법이군... 하지만 [${B.sk[2]}]은 못 피할걸?"`:`"[${B.sk[0]}]! 이 문제는 답이 없다!"`;
+  const line=bossLine(s,hp,B.hp);
   const L=log();const openQ=L.q.findIndex(q=>q.s===s&&!q.done&&!(q.a==='lv2'&&!L.q.some(x=>x.s===s&&x.a==='lv1'&&x.done)));
   let h=sceneHTML(`<div class="hud"><div class="nm">${esc(B.boss)}<small>${B.n} 보스 · ${Number(mk.slice(5))}월</small></div>${p<=50&&hp>0?'<div class="tagr" style="color:#E2453C">광폭화</div>':''}</div>
-    <div class="speech">${esc(line)}</div>${heroHTML()}<div class="boss ${hp===0?'gone':''}" id="bossSpr"><div data-spr="${s}" data-sc="7"></div></div>`)+
+    <div class="speech" id="bspeech">${esc(line)}</div>${heroHTML()}<div class="boss ${hp===0?'gone':''} ${crackCls(hp,B.hp)}" id="bossSpr"><div data-spr="${s}" data-sc="7"></div></div>`)+
   `<div class="card"><div class="row between"><b>HP</b><span class="num px" id="hpnum">${fmtN(hp)} / ${fmtN(B.hp)}</span></div><div class="bar" style="height:18px"><i id="hpbar" style="width:${p}%"></i></div>
     <p class="tiny muted">방해 스킬: ${B.sk.map(esc).join(' · ')}</p>
     ${bossWarn(s,mk,hp)}</div>
@@ -1124,14 +1148,33 @@ function renderBoss(){
   $('#tm').onclick=timerSheet;
   if(fx)playHit(fx,B);
 }
+/* 보스 HP 구간 반응: 75%·50%·25% 아래로 내려갈 때마다 대사와 금 간 모습이 바뀌어요 */
+const STAGE_LINE={
+  m:['"판별식 계산 끝났어? 생각보다 빠르네."','"D가 양수였나... 너 근이 두 개였구나."','"꼭짓점까지 왔다고? 그래프 끝을 보겠다는 거지."'],
+  k:['"화자의 정서, 벌써 잡아냈어?"','"역설인 줄 알아챘구나. 안개가 걷히잖아."','"여기까지 읽었으면... 행간도 보이겠네."'],
+  e:['"It~that 늪을 빠져나왔네. 워밍업 끝?"','"절반 깎였어? 이번 주 페이스 꽤 무섭네."','"진주어 찾는 눈, 이제 속일 수가 없군."'],
+  s:['"기회비용 따져 보고 온 거야?"','"시장 균형이 무너진다... 이 페이스 실화야?"','"보이지 않는 손이 나를 밀어내고 있어."'],
+  c:['"전자껍질이 흔들린다. 생각보다 빠르네."','"주기율표 절반을 외웠다고? 반응 속도 무섭네."','"산화 직전이야... 끝을 보겠다는 거지."'],
+  h:['"1894년을 기억하는 자가 있었다니."','"왕조 계보를 다 꿰었어? 연표가 찢어진다."','"여기까지 왔으면 역사의 끝을 보겠다는 거지."']};
+function bossStage(hp,max){const p=hp/max*100;return hp<=0?4:p<=25?3:p<=50?2:p<=75?1:0}
+function bossLine(s,hp,max){const B=SUBJ[s],st=bossStage(hp,max);
+  if(st===4)return '"CLEAR. 이번 시즌 기록이 아카이브에 저장됐습니다."';
+  if(st===0)return `"[${B.sk[0]}]! 이 문제는 답이 없다!"`;
+  return (STAGE_LINE[s]||STAGE_LINE.e)[st-1]}
+function crackCls(hp,max){const st=bossStage(hp,max);return st>=1&&st<=3?'cr'+st:''}
 function qName(q){return q.a==='word'?ACT.word.n:`${SUBJ[q.s].n} ${ACT[q.a].n}${q.a==='lec'&&q.no?' '+q.no+'강':''}`}
 function playHit(fx,B){
   const hero=$('#hero'),boss=$('#bossSpr');if(hero){hero.classList.remove('dash');void hero.offsetWidth;hero.classList.add('dash')}
   setTimeout(()=>{
     if(boss){boss.classList.remove('hit');void boss.offsetWidth;boss.classList.add('hit')}SND.play('hit');
-    const sc=$('#scene');const bx=sc?sc.clientWidth-90:300;burst(bx,150,FIRE,fx.why.some(w=>w.includes('궁극기'))?60:32);flashFx();
+    const sc=$('#scene');const bx=sc?sc.clientWidth-90:300;burst(bx,150,FIRE,fx.why.some(w=>w.includes('궁극기'))||fx.crit?60:32);flashFx();
+    if(fx.crit){SND.play(fx.crit);const f=$('#flash');if(f)f.classList.add('gold');setTimeout(()=>f&&f.classList.remove('gold'),700);
+      if(fx.crit==='mega'){sbanner('MEGA HIT!');burst(bx,130,['#fff','#F7C531','#FFE680'],80)}else dmgText('CRITICAL!',Math.max(10,bx-150),60,true)}
     dmgText('-'+fx.dmg,bx-30,90,true);setTimeout(()=>dmgText('레이드 +'+fx.dmg,bx-110,124),260);
+    if(fx.combo>=2)setTimeout(()=>{dmgText(fx.combo+' COMBO!',18,72,fx.combo>=3);const a=document.querySelector('#hero .aura');if(a){a.classList.remove('combo');void a.offsetWidth;a.classList.add('combo')}},420);
     const after=Math.max(0,B.hp-fx.before-fx.dmg);const bar=$('#hpbar');if(bar)bar.style.width=pctOf(after,B.hp)+'%';const n=$('#hpnum');if(n)n.textContent=fmtN(after)+' / '+fmtN(B.hp);
+    {const s0=bossStage(B.hp-fx.before,B.hp),s1=bossStage(after,B.hp);if(s1>s0&&s1<4)setTimeout(()=>{const sp=$('#bspeech');if(sp){sp.textContent=bossLine(UI.boss,after,B.hp);sp.classList.remove('say');void sp.offsetWidth;sp.classList.add('say')}
+      if(boss){boss.classList.remove('cr1','cr2','cr3');const c=crackCls(after,B.hp);if(c)boss.classList.add(c)}sbanner(['','HP 75%','HP 50%','HP 25%'][s1]+' 돌파!')},fx.crit==='mega'?1700:1000)}
     if(fx.bless)setTimeout(()=>sbanner('마스터의 가호!'),400);
     if(fx.killed){setTimeout(()=>{SND.play('kill');if(boss)boss.classList.add('dead');burst(bx,140,['#fff','#F7C531','#EE7FAE','#8FE3DB'],70);sbanner('처치!');setTimeout(()=>killModal(UI.boss),1300)},500)}
     else setTimeout(()=>toast(`+${fx.pts}점 · ${fx.dmg} 데미지${fx.why.length?' ('+fx.why.join(', ')+')':''}`),900);
@@ -1373,6 +1416,117 @@ function renderMe(){
     clearInterval(rosterTimer);forceLogout('로그아웃했어요')};
 }
 
+/* ---------- 학부모 리포트: 몰입 8채널 그림과 주간 리포트 ---------- */
+/* 칙센트미하이 몰입 8채널 모델(Finding Flow, 1997). 아이의 마음 체크 답(난이도·익숙함 1~5점)으로 위치를 정해요. */
+const FLOW_RING=['몰입','각성','불안','걱정','무관심','지루함','이완','통제'];
+const FLOW_ANG={몰입:-45,각성:-90,불안:-135,걱정:180,무관심:135,지루함:90,이완:45,통제:0};
+const FLOW_COL={몰입:'#6F86F0',각성:'#8FA0F2',불안:'#E39A95',걱정:'#EEC3C0',무관심:'#B9BCC4',지루함:'#E6CFAE',이완:'#A9CDBA',통제:'#B9C3F4'};
+const FLOW_INFO={
+  몰입:{en:'Flow',cond:'도전 높음 · 실력 높음',look:'시간 가는 줄 모르고 풀고, 틀려도 다시 붙잡아요.',tip:'이 리듬(과목·시간대)을 끊지 않게 지켜 주세요. 실력이 오르면 곧 통제 칸으로 밀리니, 2주쯤 뒤에는 한 단계 어려운 교재를 준비해 두면 좋아요.',q:'이번 주 공부가 제일 잘 됐던 시간이 언제였어?'},
+  각성:{en:'Arousal',cond:'도전 높음 · 실력 보통',look:'긴장되지만 해볼 만하다는 상태예요. 질문이 많아지는 시기입니다.',tip:'난이도는 그대로 두고, 막힌 개념 하나만 짚게 해 주세요(인강 한 강, 해설 한 번). 몰입에 가장 가까운 칸이에요.',q:'요즘 제일 빡센 과목이 뭐야? 어디서 막혀?'},
+  통제:{en:'Control',cond:'도전 보통 · 실력 높음',look:'술술 풀리고 자신감이 붙었어요.',tip:'한 단계 어려운 문제(유형 Lv2·N제)를 1~2문제 섞어 보자고 제안해 주세요.',q:'요즘 좀 쉬운 과목 있어? 한 단계 올려 볼래?'},
+  이완:{en:'Relaxation',cond:'도전 낮음 · 실력 높음',look:'편하지만 대충 풀고 실수가 늘 수 있어요.',tip:'쉬운 반복을 줄이고 서술형·심화, 또는 "나한테 설명해 줘"로 도전을 올려 주세요.',q:'이번 주에 공부한 것 하나만 나한테 설명해 줄래?'},
+  지루함:{en:'Boredom',cond:'도전 낮음 · 실력 보통',look:'"이거 아는 건데요" 하며 딴짓이 늘어요.',tip:'시간 제한 챌린지, 유형 섞기, 목표 점수 걸기로 도전을 올려 주세요.',q:'제일 지루한 공부가 뭐야? 다르게 해 볼 방법 있을까?'},
+  무관심:{en:'Apathy',cond:'도전 낮음 · 실력 낮음',look:'시작을 미루고 "몰라요"가 늘어요. 공부의 이유가 흐려진 상태예요.',tip:'문제보다 마음이 먼저예요. 공부 얘기보다 진로·관심사, 공부하는 이유를 먼저 이야기해 주세요. 잔소리로는 나아지지 않아요.',q:'요즘 제일 관심 가는 게 뭐야?'},
+  걱정:{en:'Worry',cond:'도전 보통 · 실력 낮음',look:'손이 멈추고 틀릴까 봐 망설여요. 헷갈리는 개념이 쌓이는 중이에요.',tip:'도전은 그대로 두고 예제 따라 풀기, 개념 다시 짚기로 실력부터 올려요. 강의를 더 듣기보다 예제 하나를 완전히 이해하는 게 빨라요.',q:'어느 개념이 제일 헷갈려? 나한테 한 번 설명해 줄래?'},
+  불안:{en:'Anxiety',cond:'도전 높음 · 실력 낮음',look:'버거워서 포기하거나 찍고, 시험 전 불안을 호소할 수 있어요.',tip:'난이도를 바로 낮추고 쉬운 유형으로 성공 경험부터 만들어요. 점수 얘기는 잠시 쉬고, 오래 가면 담임 선생님과 상의해 주세요.',q:'이번 주 끝낸 것 중에 제일 뿌듯한 거 하나만 알려 줄래?'}};
+function flowStep(c){const i=FLOW_RING.indexOf(c);if(i<=0||c==='무관심')return null;return FLOW_RING[i<=4?i-1:(i+1)%8]}
+/* pts: [{d,e}] — e는 S.emo[날짜] */
+function flowSVG(pts,opt){opt=opt||{};const W=300,c=W/2,R=W*0.9;
+  const pt=a=>[c+Math.cos(a*Math.PI/180)*R,c+Math.sin(a*Math.PI/180)*R];
+  let g=`<svg viewBox="-34 -4 ${W+40} ${W+34}" width="100%" style="max-width:380px;display:block;margin:0 auto" role="img" aria-label="몰입 8칸 그림"><defs><clipPath id="fclip"><rect x="0" y="0" width="${W}" height="${W}"/></clipPath><marker id="farr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#1F2A44"/></marker></defs><g clip-path="url(#fclip)">`;
+  FLOW_RING.forEach(n=>{const a=FLOW_ANG[n],[x1,y1]=pt(a-22.5),[x2,y2]=pt(a+22.5);g+=`<polygon points="${c},${c} ${x1},${y1} ${x2},${y2}" fill="${FLOW_COL[n]}" fill-opacity="${opt.focus&&opt.focus!==n?.38:.72}" stroke="#fff" stroke-width="1.5"/>`});
+  g+=`</g><rect x="0" y="0" width="${W}" height="${W}" fill="none" stroke="#1F2A44" stroke-width="1.5"/>`;
+  FLOW_RING.forEach(n=>{const a=FLOW_ANG[n]*Math.PI/180,r=W*0.4;const x=c+Math.cos(a)*r,y=c+Math.sin(a)*r;g+=`<text x="${x}" y="${y-2}" text-anchor="middle" style="font-size:13px;font-weight:700;fill:#1F2A44">${n}</text><text x="${x}" y="${y+12}" text-anchor="middle" style="font-size:9px;fill:#4A5068">${FLOW_INFO[n].en}</text>`});
+  const pos=pts.map((p,i)=>{const e=p.e;let x,y;const ok=e.S!=null&&e.C!=null;
+    if(ok){x=(Math.min(5,Math.max(1,e.S))-1)/4*W;y=W-(Math.min(5,Math.max(1,e.C))-1)/4*W;const ang=Math.atan2(y-c,x-c)*180/Math.PI;let dif=Math.abs(((ang-FLOW_ANG[e.cell])%360+540)%360-180);if(dif>22.5||Math.hypot(x-c,y-c)<22)x=null}
+    if(x==null){const a=(FLOW_ANG[e.cell]+((i%3)-1)*9)*Math.PI/180,r=W*(0.22+0.05*(i%2));x=c+Math.cos(a)*r;y=c+Math.sin(a)*r}
+    return {x:Math.round(x),y:Math.round(y),p}});
+  if(opt.focus&&flowStep(opt.focus)){const own=pos.filter(o=>o.p.e.cell===opt.focus);if(own.length){const sx=own.reduce((a,o)=>a+o.x,0)/own.length,sy=own.reduce((a,o)=>a+o.y,0)/own.length;const ta=FLOW_ANG[flowStep(opt.focus)]*Math.PI/180;const tx=c+Math.cos(ta)*W*0.3,ty=c+Math.sin(ta)*W*0.3;const dx=tx-sx,dy=ty-sy,L=Math.hypot(dx,dy)||1;
+    g+=`<line x1="${sx+dx/L*12}" y1="${sy+dy/L*12}" x2="${tx}" y2="${ty}" stroke="#1F2A44" stroke-width="2.5" stroke-dasharray="5 4" marker-end="url(#farr)"/>`}}
+  pos.forEach((o,i)=>{const last=i===pos.length-1;g+=`<circle cx="${o.x}" cy="${o.y}" r="${last?9:6}" fill="${last?'#2C4BE0':'#6F86F0'}" stroke="#fff" stroke-width="2.5"/>`;if(o.p.lab)g+=`<text x="${o.x}" y="${o.y-11}" text-anchor="middle" style="font-size:9px;font-weight:700;fill:#1F2A44">${esc(o.p.lab)}</text>`});
+  g+=`<text x="${W/2}" y="${W+20}" text-anchor="middle" style="font-size:11px;fill:#4A5068">실력(익숙함) →</text><text transform="translate(-14 ${W/2}) rotate(-90)" text-anchor="middle" style="font-size:11px;fill:#4A5068">문제 난이도(도전) →</text></svg>`;
+  return g}
+function flowCoach(cell,es){const I=FLOW_INFO[cell];if(!I)return '';const av=f=>{const v=es.filter(e=>e[f]!=null);return v.length?(v.reduce((a,e)=>a+e[f],0)/v.length).toFixed(1):'-'};
+  const st=flowStep(cell);
+  return `<div class="fcoach"><p><b style="font-size:18px">${cell}</b> <span class="small muted">${I.en} · ${I.cond}</span></p>
+    <p class="small">${I.look}</p>
+    <p class="tiny" style="color:#2C4BE0;font-weight:700;margin-top:6px">데이터 신호</p><p class="small num">난이도 ${av('C')} · 익숙함 ${av('S')} · 몰입감 ${av('F')} <span class="muted">(1~5점, 아이 응답)</span></p>
+    <p class="tiny" style="color:#2C4BE0;font-weight:700;margin-top:6px">가정에서는</p><p class="small">${I.tip}</p>
+    ${st?`<p class="tiny muted" style="margin-top:4px">화살표: 다음에 가면 좋은 칸은 '${st}'이에요. 몰입 쪽으로 한 칸씩 옮기는 게 목표예요.</p>`:''}</div>`}
+const FLOW_NOTE='<p class="tiny muted">칙센트미하이의 몰입 8채널 모델(Finding Flow, 1997)을 공부에 맞게 옮겼어요. 너무 쉬우면 지루하고, 너무 어려우면 불안해집니다. 위치는 아이가 마음 체크에서 답한 난이도·익숙함으로 정해요.</p>';
+
+const WEEK_BASE=Math.round(BASE*7/30);
+const STEP_GR=[['개념','lec','sum','read'],['유형','lv1','lv2'],['실전','nje'],['오답','wrong'],['암기','mem','word'],['과제','hw']];
+function stepOf(a){const r=STEP_GR.find(r=>r.includes(a));return r?r[0]:'과제'}
+const hm=m=>m>=60?`${Math.floor(m/60)}시간${m%60?' '+(m%60)+'분':''}`:`${m}분`;
+function weekStats(w,n){const days=[...Array(n||7)].map((_,i)=>addDays(w,i));let min=0,cnt=0,raw=0,on=0;
+  days.forEach(d=>{const sc=dayScore(d);const L=S.logs[d];const c=L?L.q.filter(q=>q.done).length:0;min+=sc.min;raw+=sc.raw;cnt+=c;if(c)on++});return {days,min,cnt,raw,on}}
+function parentWeek(k){
+  const off=UI.pwk||0;const w=addDays(weekKey(k),-7*off);const cur=off===0;
+  const nDays=cur?Math.max(1,Math.round((parseDay(k)-parseDay(w))/864e5)+1):7;
+  const A=weekStats(w),P=weekStats(addDays(w,-7),nDays);const days=A.days;
+  const demo=days.some(d=>S.logs[d]&&S.logs[d].demo);
+  const K=KINGDOMS[S.char.kingdom];
+  let h=`<h1>주간 리포트</h1></div>
+  <div class="card prt-head"><div class="row"><span ${heroAttr()} data-sc="3"></span><div style="min-width:0;flex:1"><b style="font-size:18px">${esc(S.char.name)}</b><p class="small" style="color:${K.c}">${K.n} · 연속 출석 ${streak()}일</p></div><button class="chip noprint" id="pprint">프린트</button></div></div>
+  <div class="card noprint"><div class="row between"><h3>${fmt(w)} ~ ${fmt(days[6])}</h3>${cur?'<span class="pill">진행 중</span>':''}</div>
+    <div class="chips">${[...Array(8)].map((_,i)=>{const ws=addDays(weekKey(k),-7*i);return `<button class="chip" data-wk="${i}" aria-pressed="${i===off}">${i?fmt(ws).replace(/\(.\)/,'')+'~'+fmt(addDays(ws,6)).replace(/\(.\)/,''):'이번 주'}</button>`}).join('')}</div></div>`;
+  /* 3. 요약 */
+  const dMin=A.min-P.min;
+  h+=`<div class="card"><p class="tiny muted">공부한 시간 (예상)</p><p class="num" style="font-size:30px;font-weight:800;color:var(--accent)">약 ${hm(A.min)}</p>
+    <p class="small" style="color:${dMin>=0?'#2FA06A':'#B3261E'}">${P.min?`지난주 같은 기간보다 ${hm(Math.abs(dMin))} ${dMin>=0?'더':'덜'} 공부했어요`:'지난주 같은 기간 기록이 없어요'}</p>
+    <div class="ptiles">${[[A.cnt+'회','공부 횟수'],[A.on+'일','공부한 날'],[A.on?hm(Math.round(A.min/A.on)):'-','하루 평균'],[A.raw+'점',`점수 (주 기준 ${WEEK_BASE}점의 ${pctOf(A.raw,WEEK_BASE)}%)`]].map(([v,l])=>`<div><b class="num">${v}</b><span>${l}</span></div>`).join('')}</div></div>`;
+  /* 4. 마음 체크 */
+  let most=null;const ems=days.filter(d=>S.emo[d]).map(d=>({d,e:S.emo[d],lab:'월화수목금토일'[(parseDay(d).getDay()+6)%7]}));
+  if(ems.length){const cnt={};ems.forEach(o=>cnt[o.e.cell]=(cnt[o.e.cell]||0)+1);most=Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a]||FLOW_RING.indexOf(a)-FLOW_RING.indexOf(b))[0];
+    const conds=ems.filter(o=>o.e.cond);const avgC=conds.length?(conds.reduce((a,o)=>a+o.e.cond,0)/conds.length):0;
+    const grp=[['좋은 날',e=>e.cond>=4,'#2FA06A'],['보통인 날',e=>e.cond===3,'#F2A65A'],['힘든 날',e=>e.cond&&e.cond<=2,'#B3261E']].map(([n,f,col])=>{const ds=ems.filter(o=>f(o.e)).map(o=>o.d);const m=ds.length?Math.round(ds.reduce((a,d)=>a+dayScore(d).min,0)/ds.length):0;return {n,col,c:ds.length,m}});
+    const gmax=Math.max(60,...grp.map(g=>g.m));const said=ems.filter(o=>o.e.share&&o.e.text);
+    h+=`<div class="card"><h3>마음 체크로 본 공부 (몰입 8칸)</h3>${flowSVG(ems,{focus:most})}
+      <div class="pkv"><div><span>마음 체크한 날</span><b>${ems.length}일</b></div><div><span>평균 컨디션</span><b>${avgC?`${FACES[Math.round(avgC)-1][0]} ${avgC.toFixed(1)} / 5 (${FACES[Math.round(avgC)-1][1]})`:'-'}</b></div>
+        <div><span>난이도 · 익숙함 평균</span><b class="num">${(ems.reduce((a,o)=>a+(o.e.C||0),0)/ems.length).toFixed(1)} · ${(ems.reduce((a,o)=>a+(o.e.S||0),0)/ems.length).toFixed(1)}</b></div><div><span>가장 많았던 칸</span><b style="color:#2C4BE0">${most} ${cnt[most]}일</b></div></div>
+      <p class="small" style="font-weight:700;margin-top:8px">학습 상태별 일수</p>${Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a]).map(c=>`<div class="row small"><span style="width:52px">${c}</span><div class="bar" style="flex:1;background:var(--bg)"><i style="width:${cnt[c]/ems.length*100}%;background:${FLOW_COL[c]}"></i></div><span class="num" style="width:30px;text-align:right">${cnt[c]}일</span></div>`).join('')}
+      <p class="small" style="font-weight:700;margin-top:8px">컨디션별 평균 공부 시간</p>${grp.map(g=>`<div class="row small"><span style="width:64px">${g.n}</span><div class="bar" style="flex:1;background:var(--bg)"><i style="width:${g.m/gmax*100}%;background:${g.col}"></i></div><span class="num muted small" style="width:122px;text-align:right;white-space:nowrap">${g.c?`${g.c}일 · ${hm(g.m)}`:'-'}</span></div>`).join('')}
+      ${flowCoach(most,ems.filter(o=>o.e.cell===most).map(o=>o.e))}
+      <p class="small" style="font-weight:700;margin-top:8px">아이가 남긴 말</p>${said.length?said.map(o=>`<p class="small">${fmt(o.d)} "${esc(o.e.text)}"</p>`).join(''):'<p class="tiny muted">아이가 공개를 켠 한마디만 보여요.</p>'}
+      ${FLOW_NOTE}</div>`}
+  else h+=`<div class="card"><h3>마음 체크로 본 공부</h3><p class="small muted">이번 주 마음 체크 기록이 없어요. 마음 체크를 하면 몰입 8칸 그림으로 아이의 학습 상태를 보여 드려요.</p></div>`;
+  /* 5·6. 과목별, 공부 단계 */
+  const sub={},stp={};let lec=0,prob=0,wr=0;const late=[];
+  days.forEach(d=>{const L=S.logs[d];if(!L)return;L.q.filter(q=>q.done).forEach(q=>{const o=sub[q.s]=sub[q.s]||{n:0,m:0};o.n++;o.m+=q.min||actMin(q.a,q.s);const g=stepOf(q.a);stp[g]=(stp[g]||0)+1;
+    if(q.a==='lec')lec++;if(['lv1','lv2','nje'].includes(q.a))prob++;if(q.a==='wrong')wr++;if(q.at)late.push(new Date(q.at).getHours())})});
+  const smax=Math.max(60,...Object.values(sub).map(o=>o.m));
+  h+=`<div class="card"><h3>과목별 공부</h3>${Object.keys(SUBJ).map(s=>{const o=sub[s]||{n:0,m:0};return `<div class="row small"><span style="width:52px">${SUBJ[s].n}</span><div class="bar" style="flex:1;background:var(--bg)"><i style="width:${o.m/smax*100}%;background:var(--${s})"></i></div><span class="num muted small" style="width:122px;text-align:right;white-space:nowrap">${o.n?`${o.n}회 · ${hm(o.m)}`:'-'}</span></div>`}).join('')}</div>`;
+  const tot=Object.values(stp).reduce((a,b)=>a+b,0);const SC={개념:'#8FA0F2',유형:'#3B7DD8',실전:'#2C4BE0',오답:'#E0644B',암기:'#2FA06A',과제:'#A0703C'};
+  h+=`<div class="card"><h3>공부 단계 균형</h3>${tot?`<div class="stackbar">${STEP_GR.map(r=>stp[r[0]]?`<i style="flex:${stp[r[0]]};background:${SC[r[0]]}" title="${r[0]} ${stp[r[0]]}회"></i>`:'').join('')}</div>
+    <div class="chips">${STEP_GR.map(r=>`<span class="pill"><span style="color:${SC[r[0]]}">●</span> ${r[0]} ${stp[r[0]]||0}</span>`).join('')}</div>
+    <p class="small">${lec>=2&&lec>=2*(prob+wr)?'강의는 꼬박꼬박 들었지만 문제로 확인한 시간이 적어요. 중고등은 \'들은 것\'과 \'풀 수 있는 것\'의 차이가 점수 차이가 됩니다.':wr>=3?`틀린 문제를 다시 푼 횟수가 ${wr}번이에요. 상위권 학생들의 공통 습관이에요.`:'개념·문제·오답이 고르게 섞여 있어요.'}</p>`:'<p class="small muted">이번 주 기록이 없어요.</p>'}<p class="tiny muted">자세한 과목별 단계는 위 '과목별' 탭에서 볼 수 있어요.</p></div>`;
+  /* 7. 요일별 */
+  const mins=days.map(d=>dayScore(d).min);const mm=Math.max(60,...mins);
+  h+=`<div class="card"><h3>요일별 공부 시간과 컨디션</h3><div class="wkbars">${days.map((d,i)=>{const e=S.emo[d];const fut=d>k;return `<div><span class="tiny num muted">${mins[i]?(Math.round(mins[i]/6)/10)+'h':''}</span><div class="wb"><i style="height:${mins[i]/mm*100}%"></i></div><b class="small">${'월화수목금토일'[i]}</b><span>${e&&e.cond?FACES[e.cond-1][0]:fut?'':'·'}</span></div>`}).join('')}</div></div>`;
+  /* 8. 추가 포인트 */
+  const extra=[];days.forEach(d=>{const L=S.logs[d];if(!L)return;L.q.filter(q=>q.done&&q.a==='hw').forEach(q=>extra.push([d,'선생님 과제 완료 (마스터의 가호 7일)',qPts(q,L)]));
+    if(L.hidden)extra.push([d,'외우기 선생님 인증',MEM_VERIFIED-ACT.mem.pt]);if(L.early)extra.push([d,'자정 전 마감 보너스',L.early.pts]);
+    L.q.filter(q=>q.done&&q.a==='lec'&&q.pts===6).forEach(q=>extra.push([d,SUBJ[q.s].n+' 강의 보너스',1]))});
+  h+=`<div class="card"><h3>추가 포인트</h3>${extra.length?extra.map(([d,t,p])=>`<div class="row between small"><span>${fmt(d)} ${esc(t)}</span><b style="color:#2FA06A">+${p}점</b></div>`).join(''):'<p class="small muted">이번 주는 추가 포인트가 없어요.</p>'}</div>`;
+  /* 9. 한눈에 보기 */
+  const out=[];const topS=Object.keys(sub).sort((a,b)=>sub[b].n-sub[a].n)[0];
+  if(topS)out.push(`가장 많이 한 과목은 ${SUBJ[topS].n}(${sub[topS].n}회)이에요.`);
+  if(!cur&&A.on===7||cur&&A.on===nDays&&nDays>=3)out.push(`${cur?'이번 주 들어':'7일'} 하루도 빠짐없이 공부했어요. 자기 주도 학습에서 가장 어려운 부분을 해내고 있어요.`);
+  const empty=Object.keys(SUBJ).filter(s=>!sub[s]);if(A.cnt&&empty.length&&empty.length<6)out.push(`이번 주 ${empty.map(s=>SUBJ[s].n).join('·')} 기록이 없어요. 플랜에 빠져 있는지, 학원에서 하는지 확인해 보세요.`);
+  const dayMax=Math.max(...days.map(d=>dayScore(d).raw));if(A.raw>=20&&dayMax>=A.raw*.5)out.push('하루에 몰아서 한 편이에요. 나눠서 하는 게 기억에 더 오래 남아요.');
+  if(late.length>=4&&late.filter(hh=>hh<5).length>late.length/2)out.push('공부 체크가 주로 자정을 넘겨 있어요. 수면 시간이 충분한지 함께 봐 주세요.');
+  if(P.min>=60&&A.min<P.min*.7)out.push('지난주보다 공부 시간이 줄었어요. 수행평가나 학교 행사가 있었는지 먼저 물어봐 주세요.');
+  let raidTxt='';try{const k0=k;const R=myRaids().filter(r=>!r.vac).map(r=>raidInst(r)).filter(x=>x.openStart>k0).sort((a,b)=>a.openStart<b.openStart?-1:1)[0];
+    if(R){const dd=Math.round((parseDay(R.openStart)-parseDay(k0))/864e5);raidTxt=`다음 시험(${R.r.exam})까지 D-${dd}.`;if(dd<=14&&(stp['개념']||0)>tot/2)out.push(`시험까지 D-${dd}예요. 이 시기에는 새 진도보다 기출·오답·암기 비중을 늘리는 게 좋아요.`)}}catch(e){}
+  const ask=most?FLOW_INFO[most].q:'이번 주 공부 중에 제일 기억에 남는 거 하나만 알려 줄래?';
+  h+=`<div class="card"><h3>한눈에 보기</h3>${out.length?`<ul class="plist">${out.slice(0,4).map(x=>`<li class="small">${x}</li>`).join('')}</ul>`:'<p class="small muted">기록이 쌓이면 요약이 보여요.</p>'}
+    <div class="pask"><b>이번 주 대화 질문</b><p>"${ask}"</p><p class="tiny muted">칭찬이나 잔소리보다, 질문 하나가 중고등 학생에게 더 잘 닿아요.</p></div>${raidTxt?`<p class="small muted">${raidTxt}</p>`:''}</div>
+  <p class="tiny muted">공부 시간은 실제로 잰 시간이 아니라 퀘스트별 기준 시간(예: 강의 45분, 유형 Lv2 국영수 60분)으로 계산한 예상치예요. 다른 학생과의 순위는 보여 드리지 않고, 비교는 지난주의 아이 자신과만 해요.${demo?' 지난 날은 예시 기록이에요.':''}</p>`;
+  return h}
+function bindParentWeek(){scr.querySelectorAll('[data-wk]').forEach(b=>b.onclick=()=>{UI.pwk=+b.dataset.wk;render()});const p=document.getElementById('pprint');if(p)p.onclick=()=>window.print()}
+
 /* ---------- 학부모 분석 ---------- */
 function parentSentences(k){
   const sc=dayScore(k),e=S.emo[k],L=S.logs[k];if(!L||!L.q.some(q=>q.done))return null;
@@ -1382,9 +1536,8 @@ function parentSentences(k){
   const cellTxt={몰입:'어렵지만 해낼 수 있는 수준이라 집중이 잘 된 날입니다',각성:'도전이 컸지만 버텨낸 날입니다',통제:'익숙한 내용이라 여유가 있었습니다',이완:'쉬운 내용 위주라 긴장이 풀린 날입니다',지루함:'쉬운 반복이 많아 지루함을 느꼈습니다',무관심:'공부에 의미를 잘 못 느낀 날입니다',걱정:'헷갈리는 개념이 많아 걱정이 있었습니다',불안:'내용이 버거워 불안을 느꼈습니다'};
   const s2=e?`마음 체크 결과 '${e.cell}' 칸. ${cellTxt[e.cell]}.`:'마음 체크는 아직 하지 않았습니다.';
   const lec=L.q.filter(q=>q.done&&q.a==='lec').length,wr=L.q.filter(q=>q.done&&q.a==='wrong').length;
-  const s3=wr?'틀린 문제를 다시 고치는 오답 퀘스트까지 해낸 점을 칭찬해 주세요.':lec?'강의를 미루지 않고 들은 점을 칭찬해 주세요.':'오늘 계획한 공부를 스스로 체크한 점을 칭찬해 주세요.';
-  const homeTxt={불안:'점수 이야기보다 "어디가 제일 어려웠어?" 한 가지만 물어봐 주세요.',걱정:'헷갈린 개념을 설명해 달라고 해 보세요. 말로 정리하면 줄어듭니다.',무관심:'꿈 카드 이야기를 꺼내 공부와 연결해 주세요.',지루함:'내일은 시간 제한 챌린지를 함께 걸어 보세요.',이완:'실수가 없었는지 한 문제만 같이 확인해 보세요.',통제:'한 단계 어려운 문제에 도전해 보자고 권해 주세요.',각성:'버틴 것을 구체적으로 칭찬해 주세요.',몰입:'방해하지 않는 것이 가장 좋은 지원입니다.'};
-  const s4='가정에서는: '+(e?homeTxt[e.cell]:'저녁에 오늘 한 퀘스트 하나만 물어봐 주세요.');
+  const s3=wr?'틀린 문제를 다시 고치는 오답까지 해냈어요. 상위권 학생들의 공통 습관이에요.':lec?'강의를 미루지 않고 들었어요. 들은 내용을 문제로 확인했는지가 다음 단계예요.':'오늘 계획한 공부를 스스로 체크했어요.';
+  const s4='가정에서는: "'+(e&&FLOW_INFO[e.cell]?FLOW_INFO[e.cell].q:'오늘 한 것 중에 제일 어려웠던 게 뭐야?')+'" 하나만 물어봐 주세요.';
   return [s1,s2,s3,s4];
 }
 function renderParent(){
@@ -1400,29 +1553,16 @@ function renderParent(){
       <div><p class="tiny muted">플랜 완료</p><p class="num" style="font-size:24px;font-family:var(--f-display)">${plan?Math.round(done/plan*100):0}%</p></div></div></div>
     ${sent?`<div class="card">${sent.map((s,i)=>`<p class="${i===3?'':'small'}" ${i===3?'style="font-weight:700"':''}>${esc(s)}</p>`).join('')}</div>`:`<div class="card"><p class="small muted">아직 오늘 체크한 퀘스트가 없습니다. 체크는 새벽 2시까지 가능해요.</p></div>`}
     ${L&&L.q.some(q=>q.done)?`<div class="card"><h3>오늘 한 공부</h3>${L.q.filter(q=>q.done).map(q=>`<div class="row between small"><span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--${q.s});margin-right:6px"></span>${esc(qName(q))}</span><span class="num muted">${actMin(q.a,q.s)}분 · ${qPts(q,L)}점</span></div>`).join('')}${L.hiddenReq?`<p class="tiny muted">외우기 선생님 인증: ${L.hidden?'완료 (외우기 5점)':'확인 기다리는 중'}</p>`:''}</div>`:''}
-    ${e?`<div class="card"><h3>몰입 8칸</h3>${flowGrid(e.cell)}${e.share&&e.text?`<p class="small">아이의 한마디: "${esc(e.text)}"</p>`:'<p class="tiny muted">아이의 자유 입력은 아이가 공개를 켰을 때만 보입니다.</p>'}</div>`:''}
+    ${e?`<div class="card"><h3>몰입 8칸으로 본 오늘</h3>${flowSVG([{d:k,e}],{focus:e.cell})}${flowCoach(e.cell,[e])}${FLOW_NOTE}${e.share&&e.text?`<p class="small">아이의 한마디: "${esc(e.text)}"</p>`:'<p class="tiny muted">아이의 자유 입력은 아이가 공개를 켰을 때만 보입니다.</p>'}</div>`:''}
     <div class="card"><h3>랭킹</h3><p class="small">이번 주 ${weekScore()}점 · 지난주보다 ${weekScore()-weekScore(addDays(k,-7))>=0?'+':''}${weekScore()-weekScore(addDays(k,-7))}점</p><p class="tiny muted">다른 학생과의 순위는 학부모 화면에 보이지 않습니다.</p></div>`;
   }
-  if(t==='week'){
-    const w=weekKey(k);const days=[...Array(7)].map((_,i)=>addDays(w,i));const vals=days.map(d=>dayScore(d));const mx=Math.max(20,...vals.map(v=>v.raw));
-    const subjCnt={};const actCnt={};days.forEach(d=>{const L=S.logs[d];if(L)L.q.filter(q=>q.done).forEach(q=>{subjCnt[q.s]=(subjCnt[q.s]||0)+1;const g=q.a==='lec'?'강의':['lv1','lv2','nje'].includes(q.a)?'문제 풀기':q.a==='wrong'?'오답':['sum','read','mem','word'].includes(q.a)?'정리·암기':'과제';actCnt[g]=(actCnt[g]||0)+1})});
-    const W=300,H=150,bw=30;
-    h+=`<h1>주간 리포트</h1><p class="small muted">${fmt(w)} ~ ${fmt(days[6])}${days.some(d=>S.logs[d]&&S.logs[d].demo)?' · 지난 날은 예시 기록':''}</p></div>
-    <div class="card"><h3>요일별 점수</h3><div class="tscroll"><svg viewBox="0 0 ${W} ${H+42}" width="100%" role="img" aria-label="요일별 점수 막대">
-      ${[0,.5,1].map(f=>`<line x1="24" x2="${W}" y1="${10+H*(1-f)}" y2="${10+H*(1-f)}" stroke="var(--line)"/><text x="0" y="${14+H*(1-f)}">${Math.round(mx*f)}</text>`).join('')}
-      ${vals.map((v,i)=>{const x=34+i*38,hh=H*v.raw/mx;const empty=!S.logs[days[i]]||!S.logs[days[i]].q.some(q=>q.done);return `<rect x="${x}" y="${10+H-hh}" width="${bw}" height="${hh}" rx="6" fill="${days[i]===k?'var(--accent)':'var(--gold)'}"/>${v.raw?`<text x="${x+bw/2}" y="${6+H-hh}" text-anchor="middle">${v.raw}</text>`:''}<text x="${x+bw/2}" y="${H+24}" text-anchor="middle">${'월화수목금토일'[i]}</text>${empty&&days[i]<k?`<text x="${x+bw/2}" y="${H+38}" text-anchor="middle" style="fill:var(--bad)">빈날</text>`:''}`}).join('')}
-    </svg></div><p class="tiny muted">빈날은 기록이 없는 날입니다. 아이에게 다음 날 아침 알림이 갑니다.</p></div>
-    <div class="card"><h3>과목 균형</h3>${Object.keys(SUBJ).map(s=>`<div class="row small"><span style="width:52px">${SUBJ[s].n}</span><div class="bar" style="flex:1;background:var(--bg)"><i style="width:${Math.min(100,(subjCnt[s]||0)*20)}%;background:var(--${s})"></i></div><span class="num" style="width:28px;text-align:right">${subjCnt[s]||0}</span></div>`).join('')}
-      ${Object.keys(SUBJ).filter(s=>!subjCnt[s]).length?`<p class="small">이번 주 비어 있는 과목: <b>${Object.keys(SUBJ).filter(s=>!subjCnt[s]).map(s=>SUBJ[s].n).join(', ')}</b></p>`:''}</div>
-    <div class="card"><h3>활동 균형</h3><div class="chips">${['강의','문제 풀기','오답','정리·암기','과제'].map(g=>`<span class="pill">${g} ${actCnt[g]||0}회</span>`).join('')}</div>
-      <p class="small">${(actCnt['강의']||0)>2*((actCnt['오답']||0)+(actCnt['문제 풀기']||0))?'강의에 비해 문제 풀기·오답이 적습니다. 들은 내용을 문제로 확인하는 시간이 필요해요.':'강의와 문제 풀기가 고르게 섞여 있습니다.'}</p></div>`;
-  }
+  if(t==='week')h+=parentWeek(k);
   if(t==='month'){
     const m=k.slice(0,7);const ds=Object.keys(S.logs).filter(d=>d.startsWith(m)).sort();
     const path=Object.keys(S.emo).filter(d=>d.startsWith(m)).sort().map(d=>[d,S.emo[d].cell]);
     h+=`<h1>월간 리포트</h1><p class="small muted">${Number(m.slice(5))}월 누적</p></div>
     <div class="card"><div class="row between"><h3>이달 점수</h3><span class="num" style="font-family:var(--f-display);font-size:24px">${ds.reduce((a,d)=>a+dayScore(d).raw,0)} / ${BASE}점</span></div><div class="bar gauge"><i style="width:${pctOf(ds.reduce((a,d)=>a+dayScore(d).raw,0),BASE)}%"></i></div><p class="small muted">기준치 300점은 평일 하루 2시간입니다. 이달 과목 보스 ${6-Object.keys(SUBJ).filter(x=>bossLeft(x)).length}/6 처치.</p><p class="small muted">기록한 날 ${ds.filter(d=>S.logs[d].q.some(q=>q.done)).length}일 · 연속 출석 ${streak()}일</p></div>
-    <div class="card"><h3>몰입 칸 이동 경로</h3>${path.length?`<div class="chips">${path.map(([d,c])=>`<span class="pill">${fmt(d)} ${c}</span>`).join('')}</div>`:'<p class="small muted">마음 체크 기록이 쌓이면 이동 경로가 보입니다.</p>'}</div>
+    <div class="card"><h3>몰입 칸 이동 경로</h3>${path.length?flowSVG(path.map(([d])=>({d,e:S.emo[d],lab:String(parseDay(d).getDate())})))+'<p class="tiny muted">점 위 숫자는 날짜, 가장 진한 점이 가장 최근이에요.</p>':''}${path.length?`<div class="chips">${path.map(([d,c])=>`<span class="pill">${fmt(d)} ${c}</span>`).join('')}</div>`:'<p class="small muted">마음 체크 기록이 쌓이면 이동 경로가 보입니다.</p>'}</div>
     <div class="card"><h3>시험 전후 비교</h3><p class="small">12/6 인강 마감일 전후의 하루 평균 점수와 몰입 칸을 비교합니다. 12/7부터 채워집니다.</p></div>`;
   }
   if(t==='study'){
@@ -1462,7 +1602,7 @@ function renderParent(){
     <div class="card"><div class="row between"><h3>컨디션 '레전드 힘듬' 2회 이상 (7일)</h3><span class="pill" style="${hard>=2?'background:var(--bad);color:#fff':''}">${hard>=2?'알림':hard+'회'}</span></div></div>
     <div class="card"><p class="small">신호가 오면 카톡 또는 문자로 알려드립니다. 힘든 상황이 계속되면 청소년상담 1388에서 상담을 받을 수 있어요.</p></div>`;
   }
-  scr.innerHTML=h;
+  scr.innerHTML=h;if(t==='week')bindParentWeek();
 }
 
 function adopt(remote){S=JSON.parse(JSON.stringify(remote));if(!S.rev)S.rev=0}
