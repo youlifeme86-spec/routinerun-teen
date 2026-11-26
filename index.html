@@ -8,7 +8,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%2346B1D8'/%3E%3Crect x='3' y='9' width='10' height='4' fill='%237CC242'/%3E%3Crect x='6' y='3' width='4' height='6' fill='%23E2453C'/%3E%3C/svg%3E">
 <script src="config.js"></script>
 <script>
-window.RR_VERSION='2026.11.26-7';
+window.RR_VERSION='2026.11.26-9';
 /* 실시간 오류 기록: 학생 폰에서 난 오류를 구글 시트 [오류] 탭으로 보냄 */
 (function(){var n=0;window.RR_REPORT=function(msg,stack,extra){try{var C=window.RR_CONFIG||{};if(!C.API_URL||n>=8)return;n++;var a=null;try{a=JSON.parse(localStorage.getItem('rr-auth-v2')||'null')}catch(e){}
 fetch(C.API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},keepalive:true,body:JSON.stringify({action:'logError',token:a&&a.token||'',msg:String(msg||'').slice(0,1000),stack:String(stack||'').slice(0,3000),page:location.pathname+(location.hash.indexOf('#parent')===0?' (학부모)':''),tab:(window.RR_TAB||'')+(extra?' '+extra:''),ver:window.RR_VERSION||'',ua:navigator.userAgent.slice(0,300)})}).catch(function(){})}catch(e){}};
@@ -272,6 +272,24 @@ img.px,canvas.px{image-rendering:pixelated;image-rendering:crisp-edges}
 .upd{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:60;background:#2B1D16;color:#F7C531;padding:8px 8px 8px 14px;display:flex;gap:10px;align-items:center;font-size:13px;box-shadow:0 0 0 3px #F7C531;max-width:calc(100% - 32px)}
 .upd button{border:0;background:#F7C531;color:#2B1D16;font-family:var(--f-title);font-size:15px;padding:6px 10px}
 details summary{cursor:pointer;padding:4px 0}
+/* 공략 비법서 (점수 설계 안내) */
+.guide{display:block!important;background:#3A2A20!important;color:#F6E3B4}
+.guide summary{list-style:none;display:flex;align-items:center;gap:8px;padding:0}
+.guide summary::-webkit-details-marker{display:none}
+.guide summary .t{font-family:var(--f-title);font-size:19px;color:#F7C531}
+.guide summary .arw{margin-left:auto;font-family:var(--f-pixel);font-size:9px;color:#F7C531}
+.guide[open] summary .arw{transform:rotate(90deg)}
+.guide .eq{display:flex;flex-wrap:wrap;align-items:center;gap:4px;margin:10px 0 4px}
+.guide .eq span{background:#F7C531;color:#2B1D16;padding:3px 6px;font-family:var(--f-title);font-size:14px;box-shadow:var(--px2);margin:2px}
+.guide .eq i{font-style:normal;font-family:var(--f-pixel);font-size:10px;color:#F7C531}
+.guide .hpt{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin:6px 0}
+.guide .hpt div{background:#4A3428;padding:5px 4px;text-align:center;font-size:11px;line-height:1.3;margin:2px}
+.guide .hpt b{display:block;font-family:var(--f-pixel);font-size:9px;color:#F7C531;margin-top:2px}
+.guide .hpt div.kill{background:#3E9B4B;color:#fff}.guide .hpt div.kill b{color:#fff}
+.guide h4{margin:12px 0 4px;font-family:var(--f-title);font-weight:400;font-size:16px;color:#8FE3DB}
+.guide p{margin:4px 0;font-size:13px;line-height:1.55}
+.guide .tiny{color:#C9B08A}
+.guide .bar{margin:4px 2px}
 @media (prefers-reduced-motion:reduce){.cloud,.tw,.hero,.boss,.hero .aura{animation:none!important}}
 </style>
 
@@ -403,7 +421,17 @@ function ymd(y,m,d){const t=new Date(y,m-1,d);return t.getFullYear()+'-'+String(
 function monthKeyOf(k){return k.slice(0,7)}
 function qDmg(q){return q.dmg!=null?q.dmg:questPts(q)*10}
 function dmgIn(from,to,st){st=st||S;let t=0;Object.keys(st.logs||{}).forEach(k=>{if(k<from||k>to)return;st.logs[k].q.forEach(q=>{if(q.done)t+=qDmg(q)})});return t}
-function monthBossDmg(s,mk,st){st=st||S;let t=0;Object.keys(st.logs||{}).forEach(k=>{if(!k.startsWith(mk))return;st.logs[k].q.forEach(q=>{if(q.done&&q.s===s)t+=qDmg(q)})});return t}
+function dayBossDmg(s,k,st){const L=(st||S).logs[k];let t=0;if(L)L.q.forEach(q=>{if(q.done&&q.s===s)t+=qDmg(q)});return t}
+/* 보스 반격(회복): 그 과목을 3일 연속 안 하면 그날 밤 HP 5% 회복 (3일마다 반복, 처치한 보스는 회복 안 함, 점수는 안 깎음).
+   억까탈출 공화국 [멘탈 보호막]은 그 달 첫 회복 1회를 막아 줘요. 오늘 공부로 막을 수 있게 어제까지만 계산해요. */
+const HEAL_DAYS=3,HEAL_PCT=5;
+function bossTrack(s,mk,st){st=st||S;const hp=SUBJ[s].hp,y=+mk.slice(0,4),m=+mk.slice(5,7),last=new Date(y,m,0).getDate(),today=TODAY();
+  let eff=0,streak=0,heals=[],shield=(st.char&&st.char.kingdom==='ukk')?1:0,blocked=0;
+  for(let d=1;d<=last;d++){const k=ymd(y,m,d);if(k>today)break;const dm=dayBossDmg(s,k,st);eff+=dm;
+    if(k===today)break;
+    if(dm>0)streak=0;else{streak++;if(streak%HEAL_DAYS===0&&eff>0&&eff<hp){if(shield){shield=0;blocked++}else{const h=Math.min(eff,Math.round(hp*HEAL_PCT/100));eff-=h;heals.push({k,h})}}}}
+  return {eff,heals,blocked,streak}}
+function monthBossDmg(s,mk,st){return bossTrack(s,mk,st).eff}
 function bossLeft(s,mk){return Math.max(0,SUBJ[s].hp-monthBossDmg(s,mk||monthKeyOf(TODAY())))}
 function raidInst(r,today){today=today||TODAY();const y=+today.slice(0,4);let best=null;
   [y-1,y,y+1].forEach(yy=>r.specs.forEach(sp=>{const openStart=ymd(yy,sp.m,sp.day||1);const openEnd=ymd(yy,sp.m+1,0);
@@ -856,6 +884,33 @@ function renderPlan(){
 
 /* ---------- 보스전 (이달의 과목 보스) ---------- */
 function monthScoreRaw(mk){mk=mk||monthKeyOf(TODAY());return Object.keys(S.logs).filter(x=>x.startsWith(mk)).reduce((a,x)=>a+dayScore(x).raw,0)}
+/* ---------- 공략 비법서: 점수 설계 안내 (평일 2시간 = 월 300점 = 3,000 데미지) ---------- */
+function guideRaid(){const all=RAIDS.map(r=>raidInst(r));return all.find(x=>x.open&&x.left>0)||all.filter(x=>!x.open).sort((a,b)=>a.openStart<b.openStart?-1:1)[0]||all[0]}
+function guideHTML(mk){
+  const tot=Object.keys(SUBJ).reduce((a,x)=>a+SUBJ[x].hp,0);const left=Object.keys(SUBJ).reduce((a,x)=>a+bossLeft(x,mk),0);
+  const k=TODAY();const last=ymd(+mk.slice(0,4),+mk.slice(5,7)+1,0);const days=Math.max(1,Math.round((parseDay(last)-parseDay(k))/864e5)+1);
+  const perDay=Math.ceil(left/10/days);const I=guideRaid();
+  let seen=false;try{seen=localStorage.getItem('rr-guide-seen')==='1'}catch(e){}
+  return `<details class="card guide" id="guide" ${seen?'':'open'}><summary><span data-spr="chest" data-sc="2"></span><span class="t">공략 비법서</span><span class="tiny">한 달이면 6마리 전부!</span><span class="arw">▶</span></summary>
+   <div class="eq"><span>평일 하루 2시간</span><i>=</i><span>한 달 ${BASE}점</span><i>=</i><span>${fmtN(BASE*10)} 데미지</span></div>
+   <p>1점은 10 데미지. 그리고 이번 달 과목 보스 6마리의 HP를 전부 더하면 딱 <b style="color:#F7C531">${fmtN(tot)}</b>! 한 달 꾸준히 하면 <b>모두 쓰러뜨릴 수 있게</b> 설계돼 있어요.</p>
+   <div class="hpt">${Object.keys(SUBJ).map(x=>`<div class="${bossLeft(x,mk)?'':'kill'}">${SUBJ[x].n}<b>${bossLeft(x,mk)?SUBJ[x].hp/10+'점':'CLEAR'}</b></div>`).join('')}</div>
+   <p class="tiny">칸의 점수 = 그 과목 보스를 잡는 데 드는 한 달 공부량. 한 과목만 몰아치면 다른 보스가 남으니 골고루 때려요. 한 과목을 3일 연속 쉬면 그 보스가 반격해서 HP 5%를 회복해요(점수는 안 깎여요). 생활 퀘스트(청소·운동·식사)는 점수만 오르고 데미지는 없어요.</p>
+   ${left>0?`<p>지금 남은 HP <b style="color:#F7C531">${fmtN(left)}</b>. 이번 달 남은 ${days}일 동안 하루 <b style="color:#F7C531">${perDay}점</b>씩이면 전부 처치!</p>`:`<p><b style="color:#F7C531">이번 달 6마리 전부 처치!</b> 남은 공부는 시험 레이드와 히든보스로 그대로 들어가요.</p>`}
+   <h4>점수는 리셋, 레이드 충전은 누적</h4>
+   <p>월 점수는 매달 1일에 0점이 되지만, 같은 공격이 <b>시험 레이드 충전 게이지</b>에도 쌓이고 이건 사라지지 않아요. 충전하는 달마다 ${BASE}점씩 채우면 게이지가 꽉 차서(개월 수 × ${fmtN(BASE*10)}), 시험 기간에 문이 열리는 순간 한 번에 터져요.</p>
+   <p>레이드 HP = 충전 개월 수 × ${fmtN(BASE*10)} + 1,500. 게이지를 꽉 채웠다면 남은 건 1,500뿐! 시험 기간 2주 공부와 월말에 받은 장비 카드·보물상자로 마무리해요.</p>
+   <div class="row between small"><span>${esc(I.r.n)} ${I.open?'(지금 열림)':'충전'}</span><span class="num px">${fmtN(Math.min(I.charge,I.cap))} / ${fmtN(I.cap)}</span></div><div class="bar charge"><i style="width:${pctOf(I.charge,I.cap)}%"></i></div>
+   <p class="tiny">1년 동안의 모든 데미지는 히든보스 [${esc(HIDDEN.n)}](HP ${fmtN(HIDDEN.hp)} = 12개월 × ${fmtN(BASE*10)})에도 쌓여요. 매달 꾸준히 = 1년 뒤 꿈의 문 오픈.</p>
+  </details>`}
+function bindGuide(){const g=$('#guide');if(g)g.addEventListener('toggle',()=>{if(!g.open){try{localStorage.setItem('rr-guide-seen','1')}catch(e){}}})}
+function bossWarn(s,mk,hp){const B=SUBJ[s],T=bossTrack(s,mk);if(hp<=0)return '';let out='';
+  const healed=T.heals.reduce((a,x)=>a+x.h,0);
+  if(healed)out+=`<p class="small" style="color:#B3261E">반격! [${esc(B.sk[0])}]로 이번 달 HP ${fmtN(healed)} 회복 (${T.heals.map(x=>fmt(x.k)).join(', ')})</p>`;
+  if(T.blocked)out+=`<p class="small" style="color:#2BA7A0">멘탈 보호막이 보스 회복 1회를 막았어!</p>`;
+  const todayDone=dayBossDmg(s,TODAY())>0;
+  if(!todayDone&&(T.streak+1)%HEAL_DAYS===0)out+=`<p class="small" style="color:#B3261E">경고: ${B.n}을 ${T.streak}일째 안 했어. 오늘도 안 하면 오늘 밤 [${esc(B.sk[0])}] 발동, HP ${HEAL_PCT}% 회복!</p>`;
+  return out}
 function renderBoss(){
   const s=UI.boss,B=SUBJ[s],mk=monthKeyOf(TODAY());const fx=UI.pendingFx&&UI.pendingFx.s===s?UI.pendingFx:null;UI.pendingFx=null;
   const dmgNow=monthBossDmg(s,mk);const shown=fx?fx.before:dmgNow;const hp=Math.max(0,B.hp-shown);const p=pctOf(hp,B.hp);
@@ -867,8 +922,9 @@ function renderBoss(){
     <div class="speech">${esc(line)}</div>${heroHTML()}<div class="boss ${hp===0?'gone':''}" id="bossSpr"><div data-spr="${s}" data-sc="7"></div></div>`)+
   `<div class="card"><div class="row between"><b>HP</b><span class="num px" id="hpnum">${fmtN(hp)} / ${fmtN(B.hp)}</span></div><div class="bar" style="height:18px"><i id="hpbar" style="width:${p}%"></i></div>
     <p class="tiny muted">방해 스킬: ${B.sk.map(esc).join(' · ')}</p>
-    ${idle&&hp>0?`<p class="small" style="color:#B3261E">경고: ${B.n}을 3일째 안 했어. [${esc(B.sk[0])}] 발동하면 HP 5% 회복${S.char.kingdom==='ukk'?' (멘탈 보호막이 1회 막아줌)':''}</p>`:''}</div>
+    ${bossWarn(s,mk,hp)}</div>
   <div class="bossgrid">${Object.keys(SUBJ).map(x=>`<button class="bcell ${bossLeft(x,mk)?'':'kill'}" data-b="${x}" aria-pressed="${x===s}"><span data-spr="${x}" data-sc="2"></span><span class="nm">${SUBJ[x].n}</span><div class="bar"><i style="width:${pctOf(bossLeft(x,mk),SUBJ[x].hp)}%"></i></div></button>`).join('')}</div>
+  ${guideHTML(mk)}
   ${hp>0?(openQ>=0?`<button class="btn" id="atk">${esc(qName(L.q[openQ]))} 완료로 공격!</button>`:`<div class="card"><p class="small">오늘 ${B.n} 퀘스트가 없어요. 오늘 탭의 '즉석 추가'로 넣을 수 있어요.</p></div>`)
     :`<div class="card"><h3>처치 완료!</h3><p class="small">장비 [${esc(B.gear)}] · 칭호 [${esc(B.title)}]. 월말에 장비 카드로 받아 시험 레이드에서 쓸 수 있어요. 이번 달 남은 ${B.n} 공부는 레이드와 히든보스로 들어가요.</p></div>`}
   <div class="card"><div class="row"><span ${heroAttr()} data-sc="3"></span><div style="min-width:0"><b>${esc(S.char.name)}</b> <span class="tiny muted">${esc(S.char.job)}</span><p class="small" style="color:${K.c}">${K.n} · [${K.p}] ${K.d}</p></div></div>
@@ -878,6 +934,7 @@ function renderBoss(){
     <p class="tiny muted">1점 = 10 데미지. 한 번의 공격이 과목 보스, 시험 레이드, 히든보스에 함께 들어가요. 랭킹·부모 리포트엔 배율 없는 점수 그대로.</p></div>`;
   scr.innerHTML=h;hydrate(scr);
   scr.querySelectorAll('[data-b]').forEach(b=>b.onclick=()=>{UI.boss=b.dataset.b;render()});
+  bindGuide();
   if($('#atk'))$('#atk').onclick=()=>toggleQuest(openQ);
   $('#pot').onclick=()=>{S.potion[TODAY()]={n:pot.n+1,until:Date.now()+30*60e3};save();toast(`${S.char.food} 포션! 30분간 데미지 +15%`);render()};
   $('#tm').onclick=timerSheet;
@@ -928,6 +985,7 @@ function renderRaid(){
   <div class="card"><div class="row between"><b>충전 게이지</b><span class="num px">${fmtN(Math.min(I.charge,I.cap))} / ${fmtN(I.cap)}</span></div><div class="bar charge"><i style="width:${pctOf(I.charge,I.cap)}%"></i></div>
     <div class="row between"><b>보스 HP</b><span class="num px">${fmtN(I.left)} / ${fmtN(I.hp)}</span></div><div class="bar"><i id="rhp" style="width:${pctOf(I.left,I.hp)}%"></i></div>
     <p class="tiny muted">${fmt(I.accStart)}부터 충전, ${fmt(I.openStart)}에 문이 열려요. HP = 누적 ${I.sp.n}개월 × 3,000 + 시험 기간 2주분 1,500. 문이 열리면 충전 게이지가 한 번에 터지고, 남은 몫은 시험 기간 공부와 쟁여둔 아이템으로 깎아요.</p>
+    <p class="tiny"><span class="pill">공략</span> 월 점수는 매달 리셋돼도 충전 게이지는 그대로 쌓여요. 충전하는 ${I.sp.n}개월 동안 매달 ${BASE}점씩 채우면 게이지가 꽉 차고, 문이 열린 뒤엔 1,500만 남아요.</p>
     ${dead?`<p><b>처치 완료!</b> 칭호 [${esc(r.title)}]</p>`:''}</div>
   ${I.open&&!dead?`<div class="card"><div class="row between"><h3>쟁여둔 아이템</h3><span class="pill">${items.length}개</span></div>
      ${items.length?items.map((it,i)=>`<div class="item"><span data-spr="${it.kind==='chest'?'chest':it.s}" data-sc="${it.kind==='chest'?3:2}"></span><div style="flex:1;min-width:0"><b class="small">${esc(it.name)}</b><div class="tiny muted">${esc(it.from)} 획득 · ${it.dmg} 데미지</div></div><button class="chip" data-use="${i}">사용</button></div>`).join(''):'<p class="small muted">아직 아이템이 없어요. 한 달을 마치면 처치한 과목 보스 장비 카드와, 기준치 300점을 채운 달의 보물상자를 받아요.</p>'}</div>`
