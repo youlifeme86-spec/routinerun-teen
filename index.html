@@ -16,7 +16,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%2346B1D8'/%3E%3Crect x='3' y='9' width='10' height='4' fill='%237CC242'/%3E%3Crect x='6' y='3' width='4' height='6' fill='%23E2453C'/%3E%3C/svg%3E">
 <script src="config.js"></script>
 <script>
-window.RR_VERSION='2026.11.27-1';
+window.RR_VERSION='2026.11.27-3';
 /* 실시간 오류 기록: 학생 폰에서 난 오류를 구글 시트 [오류] 탭으로 보냄 */
 (function(){var n=0;window.RR_REPORT=function(msg,stack,extra){try{var C=window.RR_CONFIG||{};if(!C.API_URL||n>=8)return;n++;var a=null;try{a=JSON.parse(localStorage.getItem('rr-auth-v2')||'null')}catch(e){}
 fetch(C.API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},keepalive:true,body:JSON.stringify({action:'logError',token:a&&a.token||'',msg:String(msg||'').slice(0,1000),stack:String(stack||'').slice(0,3000),page:location.pathname+(location.hash.indexOf('#parent')===0?' (학부모)':''),tab:(window.RR_TAB||'')+(extra?' '+extra:''),ver:window.RR_VERSION||'',ua:navigator.userAgent.slice(0,300)})}).catch(function(){})}catch(e){}};
@@ -24,7 +24,7 @@ window.addEventListener('error',function(e){if(!e.filename&&e.message==='Script 
 window.addEventListener('unhandledrejection',function(e){var r=e.reason;RR_REPORT('Promise: '+(r&&r.message||r),r&&r.stack)});})();
 </script>
 <style>:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;padding:0}img{max-width:100%}[hidden]{display:none!important}</style>
-<title>루틴런 중고등</title>
+<title>스터디아왕국-teen</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=Gowun+Dodum&family=Do+Hyeon&family=Press+Start+2P&family=Noto+Sans+KR:wght@400;500;700&display=swap">
 <style>
@@ -361,7 +361,7 @@ details summary{cursor:pointer;padding:4px 0}
 <div class="shell">
   <div class="modebar" role="group" aria-label="화면 선택">
     <button id="modeStudent" aria-pressed="true">학생 화면</button>
-    <button id="modeParent" aria-pressed="false">학부모 화면</button>
+    <button id="modeParent" aria-pressed="false" hidden>학부모 화면</button>
     <button id="modeTeacher" aria-pressed="false" hidden>선생님</button>
   </div>
   <div class="phone" id="phone">
@@ -821,12 +821,14 @@ function render(){
   document.getElementById('modeStudent').setAttribute('aria-pressed',UI.mode==='student');
   document.getElementById('modeParent').setAttribute('aria-pressed',UI.mode==='parent');
   document.getElementById('modeTeacher').setAttribute('aria-pressed',UI.mode==='teacher');
-  document.querySelector('.modebar').hidden=!!PARENT_CODE;
+  /* 학부모 리포트는 학생 앱과 분리: 학부모 링크(#parent-코드)로만 열려요 */
+  if(!PARENT_CODE&&UI.mode==='parent')UI.mode='student';
+  document.querySelector('.modebar').hidden=!!PARENT_CODE||!IS_OWNER;
   document.getElementById('modeTeacher').hidden=!IS_OWNER;
   phone.classList.toggle('game',UI.mode==='student');
   window.RR_TAB=UI.mode+'/'+UI.tab;
   if(NEED_LOGIN&&!PARENT_CODE){document.querySelector('.modebar').hidden=true;phone.classList.add('game');nav.hidden=true;renderLogin();hydrate(scr);return}
-  document.querySelector('.modebar').hidden=!!PARENT_CODE;
+  document.querySelector('.modebar').hidden=!!PARENT_CODE||!IS_OWNER;
   if(LOADING){nav.hidden=true;scr.innerHTML=`<div class="card"><h2>스터디아에 접속하는 중...</h2><p class="small muted">기록을 불러오고 있어요.</p></div>`;return}
   if(UI.mode==='teacher')return renderTeacher();
   if(UI.mode==='parent'){if(PARENT_CODE&&!S.char){nav.hidden=true;scr.innerHTML=`<div class="card"><h2>학부모 분석</h2><p class="muted">${PARENT_ERR?esc(PARENT_ERR)+'. ':''}아이가 아직 캐릭터를 만들지 않았거나, 링크가 바뀌었을 수 있어요. 선생님께 받은 학부모 링크가 맞는지 확인해 주세요.</p></div>`;return}
