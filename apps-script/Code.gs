@@ -12,7 +12,7 @@
  *   오류  : 학생 폰에서 난 오류가 실시간으로 쌓이는 곳
  */
 
-var SERVER_VERSION = '2026.11.26';
+var SERVER_VERSION = '2026.11.26-2';
 var TZ = 'Asia/Seoul';
 var CHUNK = 45000;            // 시트 한 칸 최대 50,000자라 45,000자씩 나눠 저장
 var MAX_CHUNKS = 40;          // 학생 한 명 최대 약 1.8MB
@@ -198,7 +198,7 @@ function roster_(b) {
     if (!sum || !sum.char) return;
     var daily = {};
     Object.keys(sum.daily || {}).forEach(function (k) { if (k >= since) daily[k] = { r: sum.daily[k].r || 0 }; });
-    out[id] = { char: { name: sum.char.name, color: sum.char.color, kingdom: sum.char.kingdom }, daily: daily };
+    out[id] = { char: { name: sum.char.name, color: sum.char.color, kingdom: sum.char.kingdom, job: sum.char.job }, daily: daily, board: sum.board || null };
   });
   try { cache.put('roster', JSON.stringify(out), 30); } catch (x) {}
   return { students: out, approved: mine };
@@ -395,9 +395,25 @@ function summary_(st) {
   Object.keys(daily).forEach(function (k) { if (k.slice(0, 7) === mk) pts += Number(daily[k].raw || 0); });
   var hiddenReq = [];
   Object.keys(st.logs || {}).forEach(function (k) { var L = st.logs[k]; if (L && L.hiddenReq && !L.hidden) hiddenReq.push(k); });
+  // 랭킹 사이트용 보스 현황: 이번 달 과목별 데미지, 1년(3월~) 누적 데미지
+  var y = Number(mk.slice(0, 4)), m = Number(mk.slice(5, 7));
+  var seasonStart = (m >= 3 ? y : y - 1) + '-03-01';
+  var boss = { m: 0, e: 0, k: 0, s: 0, c: 0, h: 0 }, season = 0, memOk = 0;
+  Object.keys(st.logs || {}).forEach(function (k) {
+    var L = st.logs[k];
+    if (!L || !L.q) return;
+    if (k.slice(0, 7) === mk && L.hidden) memOk++;
+    L.q.forEach(function (q) {
+      if (!q.done) return;
+      var d = q.dmg != null ? Number(q.dmg) : Number(q.pts || 0) * 10;
+      if (k >= seasonStart) season += d;
+      if (k.slice(0, 7) === mk && boss[q.s] != null) boss[q.s] += d;
+    });
+  });
   return {
     char: c ? { name: c.name, color: c.color, kingdom: c.kingdom, job: c.job } : null,
-    daily: daily, bless: st.bless || null, monthPts: pts, hiddenReq: hiddenReq
+    daily: daily, bless: st.bless || null, monthPts: pts, hiddenReq: hiddenReq,
+    board: { mk: mk, boss: boss, season: season, items: (st.items || []).length, memOk: memOk }
   };
 }
 

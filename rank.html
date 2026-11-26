@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#2E2440">
+<title>스터디아 랭킹</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Press+Start+2P&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<script src="config.js"></script>
+<style>
+:root{--sky:#46B1D8;--sky2:#86D9F0;--paper:#FFF4D6;--paper2:#FFFBEA;--ink:#2B1D16;--muted:#6E5844;--red:#E2453C;--gold:#F7C531;--night:#2E2440;--night2:#3A2A20;--blue:#5BC0EB;--purple:#8C5BD6;--green:#3E9B4B;
+  --px:0 -3px 0 0 #2B1D16,0 3px 0 0 #2B1D16,-3px 0 0 0 #2B1D16,3px 0 0 0 #2B1D16,0 7px 0 0 rgba(43,29,22,.3);--px2:0 -2px 0 #2B1D16,0 2px 0 #2B1D16,-2px 0 0 #2B1D16,2px 0 0 #2B1D16;
+  --f-title:'Do Hyeon',system-ui,sans-serif;--f-pixel:'Press Start 2P',ui-monospace,monospace;--f-body:'Noto Sans KR',system-ui,-apple-system,sans-serif}
+*{box-sizing:border-box}
+html{color-scheme:light}
+body{margin:0;background:linear-gradient(#46B1D8 0,#86D9F0 300px,#B9ECF8 100%);background-attachment:fixed;color:var(--ink);font:15px/1.5 var(--f-body);min-height:100vh}
+h1,h2,h3{font-family:var(--f-title);font-weight:400;margin:0}
+p{margin:0}
+button{font:inherit;color:inherit;cursor:pointer}
+.wrap{max-width:980px;margin:0 auto;padding:16px max(16px,env(safe-area-inset-left,0px)) 40px;display:flex;flex-direction:column;gap:14px}
+.title{font-size:34px;color:#F9DDB6;letter-spacing:1px;text-shadow:2px 0 #2B1D16,-2px 0 #2B1D16,0 2px #2B1D16,0 -2px #2B1D16,2px 2px #2B1D16,-2px -2px #2B1D16,2px -2px #2B1D16,-2px 2px #2B1D16,0 5px #2B1D16}
+.top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.top .sp{flex:1}
+.tag{background:var(--paper);box-shadow:var(--px2);padding:4px 8px;font-family:var(--f-pixel);font-size:9px;margin:2px}
+.card{background:var(--paper);box-shadow:var(--px);margin:3px;padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.card.dark{background:var(--night2);color:#F6E3B4}
+.tabs{display:flex;gap:4px;background:var(--night2);box-shadow:var(--px2);margin:2px;padding:4px;overflow-x:auto}
+.tabs button{border:0;background:transparent;color:#C9B08A;padding:8px 12px;font-family:var(--f-title);font-size:17px;white-space:nowrap}
+.tabs button[aria-pressed="true"]{background:var(--gold);color:var(--ink)}
+.sub{display:flex;gap:6px;flex-wrap:wrap}
+.sub button{border:0;background:#F6E3B4;box-shadow:var(--px2);margin:2px;padding:5px 11px;font-size:14px}
+.sub button[aria-pressed="true"]{background:var(--ink);color:var(--gold)}
+.btn{border:0;background:var(--red);color:#fff;font-family:var(--f-title);font-size:18px;padding:9px 14px;box-shadow:var(--px2);margin:2px}
+.btn.ghost{background:#F6E3B4;color:var(--ink);font-family:var(--f-body);font-size:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+.rank{display:flex;align-items:center;gap:10px;padding:8px 6px;border-bottom:2px dotted #C9B08A}
+.rank:last-child{border-bottom:0}
+.rank .no{width:30px;text-align:center;font-family:var(--f-title);font-size:22px;flex:none}
+.rank.top1{background:#FFE89A}.rank.top2{background:#F1EBDD}.rank.top3{background:#F6DCC4}
+.rank .who{flex:1;min-width:0}
+.rank .who b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.num{font-variant-numeric:tabular-nums}
+.pxn{font-family:var(--f-pixel);font-size:11px}
+.small{font-size:13px}.tiny{font-size:12px}.muted{color:var(--muted)}
+.dark .muted{color:#C9B08A}
+.bar{height:10px;background:#4A2A22;box-shadow:var(--px2);margin:2px}
+.bar>i{display:block;height:100%;background:var(--red)}
+.bar.gold>i{background:var(--gold)}.bar.blue>i{background:var(--blue)}.bar.purple>i{background:var(--purple)}
+.pill{display:inline-block;background:var(--ink);color:var(--gold);font-size:12px;padding:1px 7px;font-weight:700;white-space:nowrap}
+.pill.red{background:var(--red);color:#fff}
+canvas.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
+.av{flex:none;width:40px;height:40px;display:grid;place-items:center;background:rgba(255,255,255,.6);box-shadow:var(--px2)}
+.kd{display:flex;gap:10px;align-items:center;padding:8px;background:var(--paper2);box-shadow:var(--px2);margin:2px}
+.kd .crest{width:14px;align-self:stretch;flex:none}
+.kd .members{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px}
+.boss{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:center;padding:10px;background:var(--paper2);box-shadow:var(--px2);margin:2px}
+.boss .kills{display:flex;gap:3px;flex-wrap:wrap;margin-top:4px}
+.empty{padding:20px;text-align:center;color:var(--muted)}
+input{font:inherit;border:0;box-shadow:var(--px2);background:var(--paper2);padding:10px;margin:2px;width:calc(100% - 4px)}
+.login{max-width:380px;margin:10vh auto 0}
+.podium{display:flex;align-items:flex-end;justify-content:center;gap:8px;padding:8px 0 0}
+.podium .p{display:flex;flex-direction:column;align-items:center;gap:4px;width:30%;max-width:140px;text-align:center}
+.podium .blk{width:100%;background:var(--gold);box-shadow:var(--px2);font-family:var(--f-title);font-size:26px;display:grid;place-items:center}
+.podium .p b{font-size:14px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+[hidden]{display:none!important}
+@media (max-width:600px){.title{font-size:28px}.wrap{padding:12px 16px 32px}}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<script>
+(function(){
+const API=String((window.RR_CONFIG||{}).API_URL||'').trim();
+const KINGDOMS = {
+  dopa:{n:'도파밍 왕국',zone:'동부',c:'#E8559A',p:'즉각 보상',d:'퀘스트 완료 시 코인·아이템 드롭률 +20%'},
+  nj:{n:'느좋 공화국',zone:'동부',c:'#C9925E',p:'루틴 스택',d:'연속 출석 1일당 데미지 +2% (최대 +30%)'},
+  gds:{n:'감다살 왕국',zone:'동부',c:'#F07B3F',p:'떼창 시너지',d:'파티원과 같은 날 체크하면 +30%'},
+  ddk:{n:'딸깍 제국',zone:'서부',c:'#3E8EDB',p:'오토 콤보',d:'45분 이하 퀘스트 연속 완료마다 +5% (최대 +25%)'},
+  hc:{n:'하드캐리 연방',zone:'서부',c:'#D64545',p:'에이스 크리티컬',d:'유형 Lv2·N제·암기 인증에 치명타 ×2'},
+  ft:{n:'풀템 제국',zone:'서부',c:'#8D6E4A',p:'파밍 가속',d:'장비·스킨 해금 속도 +25%'},
+  gim:{n:'고인물 요새',zone:'북부',c:'#4C7A5A',p:'장인의 복습',d:'오답 퀘스트 1회마다 +5% (최대 +30%)'},
+  ult:{n:'궁극기 왕국',zone:'북부',c:'#7A4FD0',p:'풀차지 버스트',d:'집중 타이머 완주 시 궁극기 게이지 +40%'},
+  ukk:{n:'억까탈출 공화국',zone:'북부',c:'#2BA7A0',p:'멘탈 보호막',d:'보스 회복 1회 무효, 3일 쉬고 복귀한 날 첫 퀘스트 +50%'}
+};
+const SUBJ={
+  m:{n:'수학',boss:'이차함수·판별식 골렘',hp:750,sk:['허근의 저주','정의역 이탈','그래프 평행이동 함정'],gear:'황금 컴퍼스 대검',title:'수식 파괴자'},
+  k:{n:'국어',boss:'시적화자·역설 안개요정',hp:600,sk:['화자의 정서 숨기기','고전시가 해석 불가','역설과 반어 헷갈리기'],gear:'꿰뚫는 형광펜 지팡이',title:'독해의 신'},
+  e:{n:'영어',boss:'가주어·진주어 포식자',hp:600,sk:['It~that 늪','to부정사·동명사 자리 바꾸기','목적어 잡아먹기'],gear:'원어민의 번역 망토',title:'단어 지배자'},
+  s:{n:'사회',boss:'기회비용·시장균형 미로버섯',hp:360,sk:['외부효과 역전','인권·정의 딜레마','수요·공급 곡선 꼬기'],gear:'보이지 않는 손 장갑',title:'미로 탈출러'},
+  c:{n:'과학',boss:'빅뱅·주기율표 슬라임',hp:390,sk:['전자껍질 붕괴','관성의 법칙 튕겨내기','산화·환원 폭탄'],gear:'무지개 플라스크 백팩',title:'매드 사이언티스트'},
+  h:{n:'한국사',boss:'연표·갑오개혁 드래곤',hp:300,sk:['1894년 동학·갑오 콤보','왕조 계보 셔플','사료 연도 지우기'],gear:'타임머신 갓 & 도포',title:'시간 여행자'}
+};
+const PAL={k:'#2B1D16',w:'#FFFFFF',y:'#F7C531',h:'#4A2A1A',s:'#F6C9A0',p:'#EE7FAE',r:'#E2453C',m:'#B3261E',
+  g:'#4B5563',G:'#9CA3AF',l:'#C9B3F5',L:'#7C4DCC',b:'#BDEBFF',D:'#6CC24A',d:'#3E8E3A',R:'#D7263D',c:'#2FB8B0',C:'#8FE3DB',
+  P:'#F7A1C4',q:'#E26A9A',t:'#7A4A2B',o:'#F7A531',Y:'#FFD84A',a:'#E07A2E',A:'#F2A541',v:'#6B3FA0',W:'#D8EEF7',B:'#3B82F6',
+  n:'#2D1B4E',N:'#5B3B8C',M:'#8A93A6',u:'#444C5C',e:'#3FAF5B',E:'#1F6B35',x:'#F3E3C3'};
+const SPR={
+ hero:["....y.y.y...","....yyyyy...","...hhhhhhh..","..hhhhhhhhh.","..hsksssksh.","..hsssssssh.","..hssspsssh.","..hhssssshh.","...pppppp...","..pppwwppp..",".sppppppppss",".s.pppppp.s.","..pppppppp..",".pppppppppp.","..kk....kk..","..kk....kk.."],
+ m:["....gggggggg....","...gGGGGGGGGg...","...gGrrGGrrGg...","...gGGGGGGGGg...","...gGGggggGGg...","....gGGGGGGg....",".gggggggggggggg.","gGGGGGyyyyGGGGGg","gGGgGGyGGyGGgGGg","gGGgGGGyyGGGgGGg","gGGgGGyGGGGGgGGg","ggg.gGyyyyGg.ggg","....gGGGGGGg....","....gGGggGGg....","...ggGGg.gGGgg..","...gggg..gggg..."],
+ k:["......llll......",".....llllll.....","bb..lwkllkwl..bb","bbb.llllllll.bbb","bbbb.llmmll.bbbb",".bbbb.llll.bbbb.","..bbbLLLLLLbbb..","...bLLLLLLLLb...","....LLLLLLLL....","....LLLLLLLL....","...LLLLLLLLLL...","..LLLLLLLLLLLL..","......L..L......","......L..L......"],
+ e:["....EEEEEEEE....","..EEeeeeeeeeEE..",".EeewkeeeewkeeE.",".EeekkeeeekkeeE.","EeeeeeeeeeeeeeeE","EemmmmmmmmmmmmeE","EemwmwmwmwmwmmeE","EemmmmmmmmmmmmeE","EemmwmwmwmwmwmeE","EeemmmmmmmmmmeeE",".EeeeeeeeeeeeeE.","..EeeeeeeeeeeE..","..EeE.EeeE.EeE..","..EE..EEEE..EE.."],
+ s:[".....RRRRRR.....","...RRwwRRRRRR...","..RRwwwwRRwwRR..",".RRRwwRRRwwwwRR.",".RRRRRRRRRwwRRR.","RRwwRRRRRRRRRwwR","RwwwwRRRwwRRRRwR","RRRRRRRRRRRRRRRR","...xxxxxxxxxx...","...xxkxxxxkxx...","...xxxxmmxxxx...","....xxxxxxxx....","....xxxxxxxx....","...kxxxxxxxxk...","...kkkkkkkkkk..."],
+ c:["......CCCC......","....CCccccCC....","...CccccccccC...","..CcwkcccwkccC..","..CckkcccckkcC..",".CccccccccccccC.",".CccccmmmmccccC.","CccccccccccccccC","CcCccccccccccCcC",".CCCCCCCCCCCCCC."],
+ h:["..........dddd..",".........dDDDDd.",".........dDkDDd.",".........dDDDDDd",".........dDDddd.","...d....dDDDd...","..dd...dDDDDd...",".dDd..dDDDDDDd..",".dDDddDDDDDDDdd.","..dDDDDDDDDDDd..","...dDDDDDDDDd...","....dDDDDDDd....",".....dDd.dDd....",".....dd...dd...."],
+ hidden:["....nnnnnnnn....","...nNNNNNNNNn...","..nNNyNNNNyNNn..","..nNNNNNNNNNNn..","..nNNwwNNwwNNn..","..nNNNNNNNNNNn..","..nNNNNyyNNNNn..",".nnNNNNNNNNNNnn.","nNNnNNNyyNNNnNNn","nNNnNNNyyNNNnNNn","nNNnNNNNNNNNnNNn","nnn.nNNNNNNn.nnn","....nNNnnNNn....","....nNn..nNn....","...nnNn..nNnn..."],
+};
+const HIDDEN_HP=36000,DAILY_CAP=45;
+function sprite(rows,scale,pal){pal=pal||PAL;const w=Math.max(...rows.map(r=>r.length)),h=rows.length;const c=document.createElement('canvas');c.width=w*scale;c.height=h*scale;const g=c.getContext('2d');
+  rows.forEach((r,y)=>{for(let x=0;x<r.length;x++){const ch=r[x];if(ch==='.'||ch===' ')continue;g.fillStyle=pal[ch]||'#f0f';g.fillRect(x*scale,y*scale,scale,scale)}});c.className='px';return c}
+function hydrate(){app.querySelectorAll('[data-spr]').forEach(el=>{if(el.firstChild)return;const pal=el.dataset.hero?{...PAL,p:el.dataset.hero}:PAL;el.appendChild(sprite(SPR[el.dataset.spr],+el.dataset.sc||3,pal))})}
+/* 날짜: 앱과 같이 새벽 2시 마감 */
+function dayKey(d){const t=new Date((d||new Date()).getTime()-2*3600e3);return t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0')}
+function parseDay(k){const [y,m,d]=k.split('-').map(Number);return new Date(y,m-1,d)}
+function key(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function addDays(k,n){const d=parseDay(k);d.setDate(d.getDate()+n);return key(d)}
+function weekStart(k){const d=parseDay(k);return addDays(k,-((d.getDay()+6)%7))}
+function keysOf(t){const k=dayKey();if(t==='today')return [k];if(t==='yesterday')return [addDays(k,-1)];
+  if(t==='week'){const w=weekStart(k);return [...Array(7)].map((_,i)=>addDays(w,i))}
+  const pre=k.slice(0,7);const out=[];let d=pre+'-01';while(d.slice(0,7)===pre){out.push(d);d=addDays(d,1)}return out}
+const esc=t=>String(t??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const app=document.getElementById('app');
+function token(){for(const k of ['rr-auth-v2','rr-admin-v1']){try{const a=JSON.parse(localStorage.getItem(k)||'null');if(a&&a.token)return {t:a.token,k,id:a.id}}catch(e){}}return null}
+let TOK=token(),D=null,ERR='',TAB='char',PER='month',lastAt=0;
+try{TAB=localStorage.getItem('rr-rank-tab')||'char'}catch(e){}
+async function api(action,data){const r=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(Object.assign({action,token:TOK?TOK.t:''},data||{}))});const j=await r.json();if(!j.ok){const e=new Error(j.error);e.code=j.code;throw e}return j}
+async function load(){try{const j=await api('roster');D=j.students||{};ERR='';lastAt=Date.now()}catch(e){if(e.code==='auth'){try{localStorage.removeItem(TOK.k)}catch(x){}TOK=null}ERR=e.message||'인터넷 연결을 확인해 주세요'}render()}
+function sum(p,keys){const d=p.daily||{};return keys.reduce((a,k)=>a+(d[k]?d[k].r||0:0),0)}
+function players(){const mk=keysOf('month');return Object.keys(D||{}).map(id=>({id,...D[id]})).filter(p=>p.char&&sum(p,mk)>0)}
+function av(p,sc){return `<span class="av"><span data-spr="hero" data-sc="${sc||2}" data-hero="${esc(p.char.color)}"></span></span>`}
+function board(p){const mk=dayKey().slice(0,7);return p.board&&p.board.mk===mk?p.board:{boss:{},season:p.board?p.board.season:0}}
+
+function render(){
+  if(!TOK){app.innerHTML=`<div class="card login"><h1 class="title" style="font-size:28px">스터디아 랭킹</h1><p class="small">학생 아이디나 선생님 아이디로 들어와요. 같은 폰에서 학생 앱에 로그인돼 있으면 바로 열려요.</p>
+    ${ERR?`<p class="small" style="color:var(--red)">${esc(ERR)}</p>`:''}
+    <form id="lf" style="display:flex;flex-direction:column;gap:6px"><input id="lid" placeholder="아이디" autocomplete="username" autocapitalize="none"><input id="lpw" type="password" placeholder="비밀번호" autocomplete="current-password"><button class="btn" id="lgo">입장</button></form>
+    <a class="small" href="./">학생 앱으로 가기</a></div>`;
+    app.querySelector('#lf').onsubmit=async e=>{e.preventDefault();const b=app.querySelector('#lgo');b.disabled=true;
+      try{const j=await (await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'login',id:app.querySelector('#lid').value.trim().toLowerCase(),pw:app.querySelector('#lpw').value})})).json();
+        if(!j.ok)throw new Error(j.error);const k=j.role==='admin'?'rr-admin-v1':'rr-auth-v2';localStorage.setItem(k,JSON.stringify({token:j.token,id:j.id,name:j.name}));TOK={t:j.token,k,id:j.id};ERR='';load()}
+      catch(x){ERR=x.message;b.disabled=false;render()}};return}
+  if(!D){app.innerHTML=`<div class="card"><h2>랭킹을 불러오는 중...</h2>${ERR?`<p class="small" style="color:var(--red)">${esc(ERR)}</p>`:''}</div>`;return}
+  const P=players();const today=dayKey();const mo=Number(today.slice(5,7));
+  let h=`<div class="top"><h1 class="title">스터디아 랭킹</h1><span class="sp"></span><span class="tag">${mo}월 시즌</span><span class="tag">${P.length}명 참여</span><a class="btn ghost" href="./">내 앱</a></div>
+  <div class="tabs">${[['char','캐릭터 랭킹'],['kingdom','왕국 대항전'],['boss','보스 현황'],['hidden','히든보스']].map(([k,l])=>`<button data-t="${k}" aria-pressed="${TAB===k}">${l}</button>`).join('')}</div>`;
+  if(!P.length)h+=`<div class="card empty">아직 이번 달에 공부를 체크한 모험가가 없어요. 첫 퀘스트를 완료하면 여기에 나타나요.</div>`;
+  else if(TAB==='char'){
+    const keys=keysOf(PER);const list=P.map(p=>({p,v:sum(p,keys)})).sort((a,b)=>b.v-a.v);
+    const top=list.slice(0,3);const order=[1,0,2].filter(i=>top[i]);
+    h+=`<div class="card"><div class="sub">${[['today','오늘'],['yesterday','어제'],['week','이번 주'],['month','이번 달']].map(([k,l])=>`<button data-p="${k}" aria-pressed="${PER===k}">${l}</button>`).join('')}</div>
+      <div class="podium">${order.map(i=>{const x=top[i];const hgt=[96,70,54][i];return `<div class="p">${av(x.p,3)}<b>${esc(x.p.char.name)}</b><span class="tiny" style="color:${KINGDOMS[x.p.char.kingdom]?KINGDOMS[x.p.char.kingdom].c:'#888'}">${KINGDOMS[x.p.char.kingdom]?KINGDOMS[x.p.char.kingdom].n:''}</span><div class="blk" style="height:${hgt}px">${i+1}</div><span class="pxn">${x.v}점</span></div>`}).join('')}</div>
+      <div>${list.map((x,i)=>{const K=KINGDOMS[x.p.char.kingdom]||{n:'',c:'#888'};return `<div class="rank ${i<3?'top'+(i+1):''}"><span class="no">${i+1}</span>${av(x.p)}<div class="who"><b>${esc(x.p.char.name)}</b><span class="tiny" style="color:${K.c}">● ${K.n}</span>${x.p.char.job?` <span class="tiny muted">${esc(x.p.char.job)}</span>`:''}</div><span class="pxn num">${x.v}</span></div>`}).join('')}</div>
+      <p class="tiny muted">하루 랭킹 점수는 ${DAILY_CAP}점까지. 이번 달에 한 번이라도 공부를 체크한 모든 왕국의 모험가가 함께 겨뤄요. 1분마다 새로 고침.</p></div>`;
+  }
+  else if(TAB==='kingdom'){
+    const keys=keysOf('month');
+    const rows=Object.keys(KINGDOMS).map(k=>{const mem=P.filter(p=>p.char.kingdom===k);const tot=mem.reduce((a,p)=>a+sum(p,keys),0);return {k,mem,tot,avg:mem.length?tot/mem.length:-1}}).sort((a,b)=>b.avg-a.avg||b.mem.length-a.mem.length);
+    const max=Math.max(1,...rows.map(r=>r.avg));
+    h+=`<div class="card"><h2>이달의 왕국 대항전</h2><p class="small muted">총합이 아니라 <b>1인당 평균 점수</b>로 겨뤄요. 1위 왕국은 다음 달 1주일간 '대륙의 패권' 칭호.</p>
+      ${['동부','서부','북부'].map(z=>`<h3 style="margin-top:4px">${z} 권역</h3>${rows.filter(r=>KINGDOMS[r.k].zone===z).map(r=>{const K=KINGDOMS[r.k];const rk=r.mem.length?rows.filter(x=>x.mem.length).indexOf(r)+1:0;
+        return `<div class="kd"><span class="crest" style="background:${K.c}"></span><div style="flex:1;min-width:0"><div style="display:flex;gap:8px;align-items:baseline;flex-wrap:wrap"><b style="font-size:16px">${K.n}</b><span class="tiny muted">[${K.p}]</span>${rk?`<span class="pill ${rk===1?'red':''}">${rk}위</span>`:'<span class="tiny muted">참여자 없음</span>'}</div>
+          <div class="bar gold"><i style="width:${r.mem.length?Math.round(r.avg/max*100):0}%"></i></div>
+          <div class="tiny">${r.mem.length}명 · 총 ${r.tot}점 · 1인당 <b>${r.mem.length?r.avg.toFixed(1):'-'}</b>점</div>
+          <div class="members">${r.mem.map(p=>`<span class="tiny" style="background:#fff;padding:1px 6px;box-shadow:var(--px2);margin:2px">${esc(p.char.name)}</span>`).join('')}</div></div></div>`}).join('')}`).join('')}</div>`;
+  }
+  else if(TAB==='boss'){
+    h+=`<div class="card"><h2>${mo}월 과목 보스 현황</h2><p class="small muted">보스는 모험가마다 한 마리씩 따로 있어요. 모두가 넣은 데미지와, 이달에 처치한 모험가를 보여 줘요.</p>
+      ${Object.keys(SUBJ).map(s=>{const B=SUBJ[s];const dm=P.map(p=>({p,d:board(p).boss[s]||0}));const total=dm.reduce((a,x)=>a+x.d,0);const killers=dm.filter(x=>x.d>=B.hp);const best=dm.sort((a,b)=>b.d-a.d)[0];
+        return `<div class="boss"><span data-spr="${s}" data-sc="4"></span><div style="min-width:0"><div style="display:flex;gap:6px;align-items:baseline;flex-wrap:wrap"><b style="font-size:16px">${B.boss}</b><span class="tiny muted">${B.n} · HP ${B.hp.toLocaleString()}</span></div>
+          <div class="bar"><i style="width:${Math.min(100,Math.round(killers.length/P.length*100))}%"></i></div>
+          <div class="tiny">처치 <b>${killers.length}</b>/${P.length}명 · 모두의 데미지 ${total.toLocaleString()}${best&&best.d?` · 최다 딜러 <b>${esc(best.p.char.name)}</b> ${best.d.toLocaleString()}`:''}</div>
+          <div class="kills">${killers.map(x=>`<span class="pill">${esc(x.p.char.name)}</span>`).join('')}</div></div></div>`}).join('')}</div>
+    <div class="card"><h3>모험가별 처치 현황</h3><div style="overflow-x:auto"><table style="border-collapse:collapse;width:100%;font-size:13px"><thead><tr><th style="text-align:left;padding:6px">모험가</th>${Object.keys(SUBJ).map(s=>`<th style="padding:6px">${SUBJ[s].n}</th>`).join('')}<th style="padding:6px">처치</th></tr></thead><tbody>
+      ${P.map(p=>({p,b:board(p)})).map(x=>({...x,n:Object.keys(SUBJ).filter(s=>(x.b.boss[s]||0)>=SUBJ[s].hp).length})).sort((a,b)=>b.n-a.n).map(x=>`<tr style="border-top:2px dotted #C9B08A"><td style="padding:6px;white-space:nowrap"><b>${esc(x.p.char.name)}</b></td>${Object.keys(SUBJ).map(s=>{const pct=Math.min(100,Math.round((x.b.boss[s]||0)/SUBJ[s].hp*100));return `<td style="padding:6px;text-align:center">${pct>=100?'<span class="pill red">처치</span>':`<span class="tiny num">${pct}%</span>`}</td>`}).join('')}<td style="padding:6px;text-align:center" class="pxn">${x.n}/6</td></tr>`).join('')}
+    </tbody></table></div><p class="tiny muted">% = 이달 그 과목 보스에 넣은 데미지. 매달 1일에 새 보스가 나와요.</p></div>`;
+  }
+  else if(TAB==='hidden'){
+    const list=P.map(p=>({p,d:board(p).season||0})).sort((a,b)=>b.d-a.d);const total=list.reduce((a,x)=>a+x.d,0);
+    h+=`<div class="card dark"><div style="display:flex;gap:12px;align-items:center"><span data-spr="hidden" data-sc="5"></span><div><h2>꿈의 문 수문장</h2><p class="small muted">3월부터 1년 동안 모든 데미지가 쌓이는 히든보스. 한 사람당 HP ${HIDDEN_HP.toLocaleString()}.</p><p class="small">모두가 넣은 데미지 <b class="pxn">${total.toLocaleString()}</b></p></div></div></div>
+    <div class="card">${list.map((x,i)=>`<div class="rank"><span class="no">${i+1}</span>${av(x.p)}<div class="who"><b>${esc(x.p.char.name)}</b><div class="bar purple"><i style="width:${Math.min(100,Math.round(x.d/HIDDEN_HP*100))}%"></i></div></div><span class="tiny num">${Math.min(100,Math.round(x.d/HIDDEN_HP*100))}%</span></div>`).join('')}
+      <p class="tiny muted">수문장을 쓰러뜨리면 꿈의 문이 열리고, 50자 꿈이 새겨진 엔딩 카드를 받아요.</p></div>`;
+  }
+  h+=`<p class="tiny muted" style="text-align:center" id="upd"></p>`;
+  app.innerHTML=h;hydrate();
+  app.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{TAB=b.dataset.t;try{localStorage.setItem('rr-rank-tab',TAB)}catch(e){}render()});
+  app.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>{PER=b.dataset.p;render()});
+  tick();
+}
+function tick(){const u=document.getElementById('upd');if(u&&lastAt){const m=Math.round((Date.now()-lastAt)/60000);u.textContent=(m<1?'방금':m+'분 전')+' 기준'}}
+setInterval(()=>{if(TOK&&!document.hidden)load()},60000);setInterval(tick,20000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&TOK&&Date.now()-lastAt>30000)load()});
+render();if(TOK)load();
+})();
+</script>
+</body>
+</html>

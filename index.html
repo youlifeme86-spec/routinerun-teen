@@ -8,7 +8,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%2346B1D8'/%3E%3Crect x='3' y='9' width='10' height='4' fill='%237CC242'/%3E%3Crect x='6' y='3' width='4' height='6' fill='%23E2453C'/%3E%3C/svg%3E">
 <script src="config.js"></script>
 <script>
-window.RR_VERSION='2026.11.26-2';
+window.RR_VERSION='2026.11.26-3';
 /* 실시간 오류 기록: 학생 폰에서 난 오류를 구글 시트 [오류] 탭으로 보냄 */
 (function(){var n=0;window.RR_REPORT=function(msg,stack,extra){try{var C=window.RR_CONFIG||{};if(!C.API_URL||n>=8)return;n++;var a=null;try{a=JSON.parse(localStorage.getItem('rr-auth-v2')||'null')}catch(e){}
 fetch(C.API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},keepalive:true,body:JSON.stringify({action:'logError',token:a&&a.token||'',msg:String(msg||'').slice(0,1000),stack:String(stack||'').slice(0,3000),page:location.pathname+(location.hash.indexOf('#parent')===0?' (학부모)':''),tab:(window.RR_TAB||'')+(extra?' '+extra:''),ver:window.RR_VERSION||'',ua:navigator.userAgent.slice(0,300)})}).catch(function(){})}catch(e){}};
@@ -616,6 +616,7 @@ const ICONS={
  month:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 17l5-5 4 3 8-8"/><path d="M15 7h5v5"/></svg>',
  raid:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 21V9l7-6 7 6v12"/><path d="M9 21v-6h6v6M3 21h18"/></svg>',
  plan:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h10M4 18h7"/><path d="M17 15v6M14 18h6"/></svg>',
+ study:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 21V5M8 7h7M8 11h5"/></svg>',
  heart:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 10c0 5.5-7 10-7 10z"/></svg>'
 };
 function renderNav(items,cur,on){nav.hidden=false;nav.innerHTML=items.map(([id,label])=>`<button data-id="${id}" ${id===cur?'aria-current="page"':''}>${ICONS[id]}<span>${label}</span></button>`).join('');
@@ -635,7 +636,7 @@ function render(){
   if(UI.mode==='teacher')return renderTeacher();
   if(UI.mode==='parent'){if(PARENT_CODE&&!S.char){nav.hidden=true;scr.innerHTML=`<div class="card"><h2>학부모 분석</h2><p class="muted">${PARENT_ERR?esc(PARENT_ERR)+'. ':''}아이가 아직 캐릭터를 만들지 않았거나, 링크가 바뀌었을 수 있어요. 선생님께 받은 학부모 링크가 맞는지 확인해 주세요.</p></div>`;return}
     if(!S.char){nav.hidden=true;scr.innerHTML=`<div class="card"><h2>학부모 분석</h2><p class="muted">학생이 캐릭터를 만들고 첫 퀘스트를 체크하면 리포트가 열립니다.</p></div>`;return}
-    renderNav([['day','하루'],['week','주간'],['month','월간'],['heart','마음 신호']],UI.parentTab,id=>{UI.parentTab=id;render()});return renderParent()}
+    renderNav([['day','하루'],['study','과목별'],['week','주간'],['month','월간'],['heart','마음 신호']],UI.parentTab,id=>{UI.parentTab=id;render()});return renderParent()}
   if(!S.char){nav.hidden=true;renderOnboarding();hydrate(scr);return}
   if(UI.tab==='emo'){nav.hidden=true;return renderEmotion()}
   renderNav([['today','오늘'],['plan','플랜'],['boss','보스전'],['raid','레이드'],['rank','랭킹'],['me','나']],UI.tab,id=>{UI.tab=id;render();scr.scrollTop=0});
@@ -1030,7 +1031,7 @@ function prevMonthKeys(){const first=TODAY().slice(0,7)+'-01';const last=addDays
 function renderRank(){
   const t=UI.rankTab;const me=MODE_DB?UID:'me';const mkeys=periodKeys('month');
   const people=roster().filter(p=>p.id===me||sumDays(p.d,mkeys)>0); /* 이번 시즌(이달)에 참여한 모든 왕국의 유저 */
-  let h=`<h1>캐릭터 랭킹</h1><div class="tabs">${[['today','오늘'],['yesterday','어제'],['week','주간'],['month','월간'],['war','대항전']].map(([id,l])=>`<button data-t="${id}" aria-pressed="${t===id}">${l}</button>`).join('')}</div>`;
+  let h=`<h1>캐릭터 랭킹</h1>${MODE_DB?'<a class="btn ghost" href="rank.html" style="text-align:center;text-decoration:none">랭킹 사이트 크게 보기 (왕국·보스 현황)</a>':''}<div class="tabs">${[['today','오늘'],['yesterday','어제'],['week','주간'],['month','월간'],['war','대항전']].map(([id,l])=>`<button data-t="${id}" aria-pressed="${t===id}">${l}</button>`).join('')}</div>`;
   if(t==='war'){
     const keys=periodKeys('month');
     const rows=Object.keys(KINGDOMS).map(k=>{const mem=people.filter(p=>p.d.char.kingdom===k);const tot=mem.reduce((a,p)=>a+sumDays(p.d,keys),0);return {k,n:mem.length,tot,avg:mem.length?tot/mem.length:-1}}).sort((a,b)=>b.avg-a.avg||b.n-a.n);
@@ -1134,6 +1135,7 @@ function renderParent(){
       <div><p class="tiny muted">점수</p><p class="num" style="font-size:24px;font-family:var(--f-display)">${sc.raw}</p></div>
       <div><p class="tiny muted">플랜 완료</p><p class="num" style="font-size:24px;font-family:var(--f-display)">${plan?Math.round(done/plan*100):0}%</p></div></div></div>
     ${sent?`<div class="card">${sent.map((s,i)=>`<p class="${i===3?'':'small'}" ${i===3?'style="font-weight:700"':''}>${esc(s)}</p>`).join('')}</div>`:`<div class="card"><p class="small muted">아직 오늘 체크한 퀘스트가 없습니다. 체크는 새벽 2시까지 가능해요.</p></div>`}
+    ${L&&L.q.some(q=>q.done)?`<div class="card"><h3>오늘 한 공부</h3>${L.q.filter(q=>q.done).map(q=>`<div class="row between small"><span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--${q.s});margin-right:6px"></span>${esc(qName(q))}</span><span class="num muted">${actMin(q.a,q.s)}분 · ${qPts(q,L)}점</span></div>`).join('')}${L.hiddenReq?`<p class="tiny muted">외우기 선생님 인증: ${L.hidden?'완료 (외우기 5점)':'확인 기다리는 중'}</p>`:''}</div>`:''}
     ${e?`<div class="card"><h3>몰입 8칸</h3>${flowGrid(e.cell)}${e.share&&e.text?`<p class="small">아이의 한마디: "${esc(e.text)}"</p>`:'<p class="tiny muted">아이의 자유 입력은 아이가 공개를 켰을 때만 보입니다.</p>'}</div>`:''}
     <div class="card"><h3>랭킹</h3><p class="small">이번 주 ${weekScore()}점 · 지난주보다 ${weekScore()-weekScore(addDays(k,-7))>=0?'+':''}${weekScore()-weekScore(addDays(k,-7))}점</p><p class="tiny muted">다른 학생과의 순위는 학부모 화면에 보이지 않습니다.</p></div>`;
   }
@@ -1158,6 +1160,35 @@ function renderParent(){
     <div class="card"><div class="row between"><h3>이달 점수</h3><span class="num" style="font-family:var(--f-display);font-size:24px">${ds.reduce((a,d)=>a+dayScore(d).raw,0)} / ${BASE}점</span></div><div class="bar gauge"><i style="width:${pctOf(ds.reduce((a,d)=>a+dayScore(d).raw,0),BASE)}%"></i></div><p class="small muted">기준치 300점은 평일 하루 2시간입니다. 이달 과목 보스 ${6-Object.keys(SUBJ).filter(x=>bossLeft(x)).length}/6 처치.</p><p class="small muted">기록한 날 ${ds.filter(d=>S.logs[d].q.some(q=>q.done)).length}일 · 연속 출석 ${streak()}일</p></div>
     <div class="card"><h3>몰입 칸 이동 경로</h3>${path.length?`<div class="chips">${path.map(([d,c])=>`<span class="pill">${fmt(d)} ${c}</span>`).join('')}</div>`:'<p class="small muted">마음 체크 기록이 쌓이면 이동 경로가 보입니다.</p>'}</div>
     <div class="card"><h3>시험 전후 비교</h3><p class="small">12/6 인강 마감일 전후의 하루 평균 점수와 몰입 칸을 비교합니다. 12/7부터 채워집니다.</p></div>`;
+  }
+  if(t==='study'){
+    const w=weekKey(k);const days=[...Array(7)].map((_,i)=>addDays(w,i));const mk=k.slice(0,7);
+    const mdays=Object.keys(S.logs).filter(d=>d.startsWith(mk));
+    const GR=[['개념','lec','sum','read'],['유형','lv1','lv2'],['실전','nje'],['오답','wrong'],['암기','mem','word'],['과제','hw']];
+    const st={};Object.keys(SUBJ).forEach(x=>st[x]={g:{},min:0,mmin:0,n:0});
+    const add=(arr,isWeek)=>arr.forEach(d=>{const L=S.logs[d];if(!L)return;L.q.filter(q=>q.done).forEach(q=>{const o=st[q.s];if(!o)return;const g=GR.find(r=>r.includes(q.a))[0];
+      if(isWeek){o.g[g]=(o.g[g]||0)+1;o.min+=actMin(q.a,q.s);o.n++}else o.mmin+=actMin(q.a,q.s)})});
+    add(days,true);add(mdays,false);
+    const memVer=mdays.filter(d=>S.logs[d].hidden).length;
+    const TIP={
+      m:{n:'수학',tip:'개념 강의 → 유형 Lv1 → Lv2 → 오답 순서가 기본이에요. 고1은 이차함수·판별식, 다항식, 방정식과 부등식이 핵심이라 강의만 듣고 넘어가지 않게 같은 날 유형 문제로 확인하는지가 중요해요.',need:['유형','오답']},
+      k:{n:'국어',tip:'문학은 시적 화자·정서·표현법(역설·반어), 비문학은 문단 요지 정리가 핵심이에요. 단권화로 작품별 핵심을 정리하고 기출 지문을 꾸준히 읽는지 봐 주세요.',need:['개념','유형']},
+      e:{n:'영어',tip:'단어는 매일 조금씩, 문법은 가주어·진주어, to부정사·동명사처럼 구문 단위로 정리해야 독해 속도가 붙어요. 교과서 본문 암기는 내신에 직결돼요.',need:['암기','유형']},
+      s:{n:'사회',tip:'통합사회는 개념 용어(기회비용, 시장 균형, 인권, 정의)를 정확히 설명할 수 있어야 해요. 교과서 정독 → 외우기 → 선생님 인증 순서가 좋아요.',need:['개념','암기']},
+      c:{n:'과학',tip:'통합과학은 주기율표·화학 결합, 운동과 힘, 산화·환원처럼 원리 이해 후 계산·자료 해석 문제로 확인해야 해요.',need:['개념','유형']},
+      h:{n:'한국사',tip:'연표 흐름(왕조·개혁·사건 순서)과 사료 해석이 핵심이에요. 정독으로 흐름을 잡고, 외우기 인증으로 연도·인물을 확실히 해 두면 좋아요.',need:['개념','암기']}};
+    const lecNo=S.lecNo||{};const allR=RAIDS.map(r=>raidInst(r)).sort((a,b)=>a.openStart<b.openStart?-1:1);const nextRaid=allR.find(x=>x.openStart>k)||allR[0];
+    h+=`<h1>과목별 학습</h1><p class="small muted">${fmt(w)} ~ ${fmt(days[6])} · 중고등 과목별 공부 단계 점검</p></div>
+    <div class="card"><h3>시험 일정</h3><p class="small">${dday()>=0?`시험 전 마지막 인강 마감일 <b>12/6</b>까지 D-${dday()}. `:''}다음 시험: <b>${esc(nextRaid.r.exam)}</b> (${fmt(nextRaid.openStart)}부터 시험 기간).</p><p class="tiny muted">시험 기간에는 새 진도보다 오답·암기·기출 반복 비중을 늘리는 게 좋아요.</p></div>
+    <div class="card"><h3>이번 주 과목 × 공부 단계</h3><div class="tscroll"><table class="table"><thead><tr><th>과목</th>${GR.map(g=>`<th class="r">${g[0]}</th>`).join('')}<th class="r">시간</th></tr></thead><tbody>
+      ${Object.keys(SUBJ).map(x=>`<tr><td><span style="color:var(--${x})">●</span> ${SUBJ[x].n}</td>${GR.map(g=>`<td class="r">${st[x].g[g[0]]||'<span class="muted">·</span>'}</td>`).join('')}<td class="r">${Math.round(st[x].min/6)/10}h</td></tr>`).join('')}
+    </tbody></table></div><p class="tiny muted">개념 = 강의·단권화·교과서 정독 · 유형 = 유형 Lv1·Lv2 · 실전 = N제 · 암기 = 외우기·영어단어. 숫자는 이번 주 완료한 퀘스트 수.</p></div>
+    ${Object.keys(SUBJ).map(x=>{const o=st[x],T=TIP[x];const miss=T.need.filter(g=>!o.g[g]);const steps=['개념','유형','실전','오답'];const reached=steps.filter(g=>o.g[g]);
+      const msg=!o.n?`이번 주 ${T.n} 공부 기록이 없어요. 플랜에 ${T.n}이 들어 있는지 함께 확인해 주세요.`:miss.length?`이번 주는 <b>${miss.join('·')}</b> 단계가 비어 있어요.`:`이번 주 ${T.n}은 필요한 단계를 고르게 했어요.`;
+      return `<div class="card"><div class="row between"><h3><span style="color:var(--${x})">●</span> ${T.n}</h3><span class="small muted num">이번 주 ${Math.round(o.min/6)/10}시간 · 이달 ${Math.round(o.mmin/6)/10}시간${lecNo[x]>1?` · 인강 ${lecNo[x]-1}강까지`:''}</span></div>
+        <div class="row" style="gap:4px">${steps.map(g=>`<span class="pill" style="${o.g[g]?'background:var(--'+x+');color:#fff':'opacity:.45'}">${g}</span>`).join('<span class="muted">→</span>')}</div>
+        <p class="small">${msg}</p><p class="tiny muted">${T.tip}</p></div>`}).join('')}
+    <div class="card"><h3>이달 외우기 선생님 인증</h3><p class="small">${memVer}일 인증받았어요. 인증받은 날의 외우기는 3점 대신 5점으로 계산돼요.</p></div>`;
   }
   if(t==='heart'){
     const last=[0,1,2].map(i=>S.emo[addDays(k,-i)]);const streakBad=last.every(e=>e&&['불안','무관심'].includes(e.cell));
