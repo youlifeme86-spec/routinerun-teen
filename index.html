@@ -8,7 +8,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%2346B1D8'/%3E%3Crect x='3' y='9' width='10' height='4' fill='%237CC242'/%3E%3Crect x='6' y='3' width='4' height='6' fill='%23E2453C'/%3E%3C/svg%3E">
 <script src="config.js"></script>
 <script>
-window.RR_VERSION='2026.11.26-1';
+window.RR_VERSION='2026.11.26-2';
 /* 실시간 오류 기록: 학생 폰에서 난 오류를 구글 시트 [오류] 탭으로 보냄 */
 (function(){var n=0;window.RR_REPORT=function(msg,stack,extra){try{var C=window.RR_CONFIG||{};if(!C.API_URL||n>=8)return;n++;var a=null;try{a=JSON.parse(localStorage.getItem('rr-auth-v2')||'null')}catch(e){}
 fetch(C.API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},keepalive:true,body:JSON.stringify({action:'logError',token:a&&a.token||'',msg:String(msg||'').slice(0,1000),stack:String(stack||'').slice(0,3000),page:location.pathname+(location.hash.indexOf('#parent')===0?' (학부모)':''),tab:(window.RR_TAB||'')+(extra?' '+extra:''),ver:window.RR_VERSION||'',ua:navigator.userAgent.slice(0,300)})}).catch(function(){})}catch(e){}};
@@ -376,6 +376,13 @@ const ACT={
   room:{n:'방청소 스스로 하기',pt:2,life:true},gym:{n:'운동하기',pt:2,life:true},meal:{n:'세끼 건강식 먹기',pt:3,life:true}
 };
 const LECTURE_DEADLINE='2026-12-06';
+/* 11/26 확정 규칙: 외우기 3점(선생님 인증 5점) · 유형 Lv2 국영수 60분 · 같은 과목 하루 3회, 같은 과목·같은 활동 2회 */
+const MEM_VERIFIED=5,SUBJ_DAY_MAX=3,SAME_ACT_MAX=2;
+function actMin(a,s){return a==='lv2'&&['k','e','m'].includes(s)?60:(ACT[a].min||0)}
+function qPts(q,L){return questPts(q)+(q.a==='mem'&&L&&L.hidden?MEM_VERIFIED-ACT.mem.pt:0)}
+function dayLimit(L,q){if(q.a==='word')return '';const sub=L.q.filter(x=>x.done&&x.s===q.s&&x.a!=='word');
+  if(sub.length>=SUBJ_DAY_MAX)return SUBJ[q.s].n+'은(는) 하루 '+SUBJ_DAY_MAX+'회까지만 점수가 돼요';
+  if(q.a!=='lec'&&sub.filter(x=>x.a===q.a).length>=SAME_ACT_MAX)return '같은 과목·같은 활동은 하루 '+SAME_ACT_MAX+'회까지만 점수가 돼요';return ''}
 const DAILY_CAP=45;
 
 /* ---------- 시즌 설계: 한 달 기준 300점(평일 하루 2시간) = 3,000 데미지 ---------- */
@@ -495,7 +502,7 @@ async function flush(){
     retryTimer=setTimeout(flush,Math.min(60000,5000*failCount))}
   finally{flushing=false;if(flushAgain){flushAgain=false;flush()}}}
 function mergeApprovals(dates){let ch=false;(dates||[]).forEach(d=>{const L=S.logs&&S.logs[d];if(L&&!L.hidden){L.hidden=1;ch=true}});
-  if(ch){S.daily=computeDaily(S);cacheLocal();toast('선생님이 암기 인증을 승인했어요! +10점');if(canRerender())render()}}
+  if(ch){S.daily=computeDaily(S);cacheLocal();toast('선생님이 외우기를 인증했어요! 오늘 외우기 5점');if(canRerender())render()}}
 function savePrivate(){try{localStorage.setItem(KEY()+':priv',JSON.stringify(PRIV))}catch(e){}
   if(!MODE_DB)return;api('savePrivate',{priv:PRIV}).catch(e=>{if(e.code==='auth')forceLogout(e.message)})}
 function newCode(){const a='abcdefghjkmnpqrstuvwxyz23456789';let c='';for(let i=0;i<6;i++)c+=a[Math.floor(Math.random()*a.length)];return c}
@@ -565,10 +572,9 @@ function questPts(q){return q.pts||ACT[q.a].pt}
 function dayScore(k){return dayScoreOf(S,k)}
 function dayScoreOf(st,k){const L=(st.logs||{})[k];if(!L)return {raw:0,rank:0,min:0,subjects:0};
   let raw=0,min=0;const subs=new Set();
-  L.q.forEach(q=>{if(q.done){raw+=questPts(q);min+=q.min||ACT[q.a].min||0;subs.add(q.s)}});
+  L.q.forEach(q=>{if(q.done){raw+=qPts(q,L);min+=q.min||actMin(q.a,q.s);subs.add(q.s)}});
   Object.keys(L.life).forEach(a=>{if(L.life[a])raw+=ACT[a].pt});
-  const hidden=(L.hidden||0)*10;
-  return {raw:raw+hidden,rank:Math.min(raw,DAILY_CAP)+hidden,min,subjects:subs.size}}
+  return {raw,rank:Math.min(raw,DAILY_CAP),min,subjects:subs.size}}
 function streak(){let n=0,k=TODAY();if(!(S.logs[k]&&S.logs[k].q.some(q=>q.done)))k=addDays(k,-1);
   while(S.logs[k]&&S.logs[k].q.some(q=>q.done)){n++;k=addDays(k,-1)}return n}
 function weekScore(k){const w=weekKey(k||TODAY());let t=0;for(let i=0;i<7;i++)t+=dayScore(addDays(w,i)).rank;return t}
@@ -581,7 +587,7 @@ function lectureBonusAvailable(s,k){if(k>LECTURE_DEADLINE)return false;const w=w
 function damageFor(q,L){
   const base=questPts(q)*10;const kd=S.char.kingdom;let bonus=0,crit=1;const why=[];
   if(kd==='nj'){const b=Math.min(30,2*streak());if(b){bonus+=b;why.push('루틴 스택 +'+b+'%')}}
-  if(kd==='ddk'){const done=L.q.filter(x=>x.done&&(ACT[x.a].min||0)<=45).length;const b=Math.min(25,5*Math.max(0,done-1));if(b&&(ACT[q.a].min||0)<=45){bonus+=b;why.push('오토 콤보 +'+b+'%')}}
+  if(kd==='ddk'){const done=L.q.filter(x=>x.done&&actMin(x.a,x.s)<=45).length;const b=Math.min(25,5*Math.max(0,done-1));if(b&&actMin(q.a,q.s)<=45){bonus+=b;why.push('오토 콤보 +'+b+'%')}}
   if(kd==='gim'&&q.a==='wrong'){const n=Object.values(S.logs).reduce((a,l)=>a+l.q.filter(x=>x.done&&x.a==='wrong').length,0);const b=Math.min(30,5*n);bonus+=b;why.push('장인의 복습 +'+b+'%')}
   if(kd==='hc'&&(q.a==='lv2'||q.a==='nje')){crit=2;why.push('에이스 크리티컬 ×2')}
   const pot=S.potion[TODAY()];if(pot&&pot.until>Date.now()){bonus+=15;why.push('포션 +15%')}
@@ -752,27 +758,26 @@ function renderToday(){
     const willBonus=q.a==='lec'&&!q.done&&lectureBonusAvailable(q.s,k);
     const label=q.a==='word'?a.n:`${SUBJ[q.s].n} ${a.n}${q.a==='lec'?' '+(q.no||S.lecNo[q.s])+'강':''}`;
     h+=`<div class="quest ${q.done?'done':''} ${locked?'locked':''}"><span class="dot" style="background:${subjDot(q.s)}"></span>
-      <div class="body"><div class="t">${esc(label)}</div><div class="tiny muted">${a.min}분 · ${q.done?questPts(q):a.pt+(willBonus?1:0)}점${q.a==='hw'?' <span class="pill purple">가호 +'+BLESS_PCT+'%</span>':''}${willBonus?' <span class="pill">베네핏 +1</span>':''}${q.done&&q.pts>a.pt?' <span class="pill">베네핏 적용</span>':''}${locked?' · 같은 과목 Lv1 먼저':''}${q.extra?' · 즉석 추가':''}</div></div>
+      <div class="body"><div class="t">${esc(label)}</div><div class="tiny muted">${actMin(q.a,q.s)}분 · ${q.done?qPts(q,L):a.pt+(willBonus?1:0)}점${q.a==='mem'?(L.hidden?' <span class="pill">인증 5점</span>':' <span class="pill">인증하면 5점</span>'):''}${q.a==='hw'?' <span class="pill purple">가호 +'+BLESS_PCT+'%</span>':''}${willBonus?' <span class="pill">베네핏 +1</span>':''}${q.done&&q.pts>a.pt?' <span class="pill">베네핏 적용</span>':''}${locked?' · 같은 과목 Lv1 먼저':''}${q.extra?' · 즉석 추가':''}</div></div>
       <button class="check" data-i="${i}" aria-label="${esc(label)} ${q.done?'완료 취소':'완료하고 공격'}" ${locked?'disabled':''}>${q.done?'✓':'공격!'}</button></div>`});
   h+=`<button class="btn ghost" id="add">+ 즉석 추가 (플랜에 없던 공부)</button></div>`;
   h+=`<div class="card" style="gap:8px"><div class="row between"><h3>생활 미션</h3><span class="tiny muted">궁극기 게이지 +20%</span></div>${['room','gym','meal'].map(a=>`<div class="quest ${L.life[a]?'done':''}"><span class="dot" style="background:var(--gold)"></span><div class="body"><div class="t">${ACT[a].n}</div><div class="tiny muted">+${ACT[a].pt}점 · 하루 1회</div></div><button class="check" data-life="${a}" aria-label="${ACT[a].n} 완료">${L.life[a]?'✓':'완료'}</button></div>`).join('')}</div>`;
-  h+=`<div class="card" style="gap:8px"><div class="row between"><h3>히든 미션: 암기 인증</h3><span class="pill">+10점</span></div><p class="small muted">선생님이 승인해야 점수가 들어가요. 우리 외우기 점수와 따로 쌓입니다.</p>
-    <button class="btn ghost" id="hid" ${L.hiddenReq?'disabled':''}>${L.hiddenReq?(L.hidden?'승인 완료 +10점':'선생님 승인 기다리는 중'):'인증 요청 보내기'}</button>${L.hiddenReq&&!L.hidden&&!MODE_DB?'<button class="chip" id="hidok" style="align-self:flex-start">이 기기에서 승인하기 (오프라인)</button>':''}</div>`;
+  h+=`<div class="card" style="gap:8px"><div class="row between"><h3>외우기 선생님 인증</h3><span class="pill">3점 → 5점</span></div><p class="small muted">오늘 외운 걸 선생님께 확인받으면 오늘 외우기 퀘스트가 하나에 3점 대신 5점이 돼요.</p>
+    <button class="btn ghost" id="hid" ${L.hiddenReq||!L.q.some(q=>q.a==='mem'&&q.done)?'disabled':''}>${L.hiddenReq?(L.hidden?'인증 완료 · 외우기 5점':'선생님 인증 기다리는 중'):L.q.some(q=>q.a==='mem'&&q.done)?'인증 요청 보내기':'외우기 퀘스트를 먼저 완료해 주세요'}</button>${L.hiddenReq&&!L.hidden&&!MODE_DB?'<button class="chip" id="hidok" style="align-self:flex-start">이 기기에서 승인하기 (오프라인)</button>':''}</div>`;
   const emoDone=S.emo[k]&&!S.emo[k].demo;
-  h+=`<button class="btn" id="finish">${emoDone?'마음 체크 다시 하기':'오늘 끝! 마음 체크하러 가기'}</button><p class="tiny muted" style="text-align:center">같은 과목·같은 활동은 하루 2회까지 점수가 쌓여요. 체크 취소는 오늘만.</p>`;
+  h+=`<button class="btn" id="finish">${emoDone?'마음 체크 다시 하기':'오늘 끝! 마음 체크하러 가기'}</button><p class="tiny muted" style="text-align:center">한 과목은 하루 3회, 같은 과목·같은 활동은 2회까지 점수가 쌓여요. 체크 취소는 오늘만.</p>`;
   scr.innerHTML=h;
   scr.querySelectorAll('.check[data-i]').forEach(b=>b.onclick=()=>toggleQuest(+b.dataset.i));
   scr.querySelectorAll('.check[data-life]').forEach(b=>b.onclick=()=>{const a=b.dataset.life;L.life[a]=!L.life[a];if(L.life[a]){S.gauge=Math.min(100,S.gauge+20);toast(`+${ACT[a].pt}점 · 궁극기 게이지 ${S.gauge}%`)}else S.gauge=Math.max(0,S.gauge-20);save();render()});
   $('#add').onclick=addSheet;
   $('#hid').onclick=()=>{L.hiddenReq=true;save();toast('선생님께 인증 요청을 보냈어요');render()};
-  if($('#hidok'))$('#hidok').onclick=()=>{L.hidden=1;save();toast('승인! +10점');render()};
+  if($('#hidok'))$('#hidok').onclick=()=>{L.hidden=1;save();toast('인증 완료! 외우기 5점');render()};
   $('#finish').onclick=()=>{UI.tab='emo';UI.emo={i:0,a:{}};render();scr.scrollTop=0};
 }
 function toggleQuest(i){
   const k=TODAY(),L=log(k),q=L.q[i];
   if(!q.done){
-    const same=L.q.filter(x=>x.done&&x.s===q.s&&x.a===q.a).length;
-    if(same>=2&&q.a!=='lec'){toast('같은 과목·같은 활동은 하루 2회까지만 점수가 돼요');return}
+    const lim=dayLimit(L,q);if(lim){toast(lim);return}
     if(q.a==='lec'){q.no=S.lecNo[q.s]++;if(lectureBonusAvailable(q.s,k)){q.pts=6;(S.bonus[weekKey(k)]=S.bonus[weekKey(k)]||{})[q.s]=1}else q.pts=5}
     const mk=monthKeyOf(k);const before=monthBossDmg(q.s,mk);
     q.done=true;q.at=Date.now();
@@ -808,7 +813,7 @@ const PLAN_ACTS=['lec','sum','lv1','lv2','nje','wrong','read','mem','hw','word']
 function renderPlan(){
   const P=getPlan();if(UI.planDay==null)UI.planDay=parseDay(TODAY()).getDay();if(!UI.planAdd)UI.planAdd={s:'m',a:'lec'};
   const d=UI.planDay,items=P[d]||(P[d]=[]);const order=[1,2,3,4,5,6,0];
-  const dayMin=x=>(P[x]||[]).reduce((a,q)=>a+ACT[q.a].min,0),dayPt=x=>(P[x]||[]).reduce((a,q)=>a+ACT[q.a].pt,0);
+  const dayMin=x=>(P[x]||[]).reduce((a,q)=>a+actMin(q.a,q.s),0),dayPt=x=>(P[x]||[]).reduce((a,q)=>a+ACT[q.a].pt,0);
   const wkMin=order.reduce((a,x)=>a+dayMin(x),0),wkPt=order.reduce((a,x)=>a+dayPt(x),0);
   const subjCount={};order.forEach(x=>(P[x]||[]).forEach(q=>{subjCount[q.s]=(subjCount[q.s]||0)+1}));
   const m=dayMin(d),hm=`${Math.floor(m/60)}시간${m%60?' '+m%60+'분':''}`;
@@ -816,7 +821,7 @@ function renderPlan(){
   <div class="tabs">${order.map(x=>`<button data-d="${x}" aria-pressed="${x===d}">${'일월화수목금토'[x]}<br><span class="tiny num">${dayPt(x)}점</span></button>`).join('')}</div>
   <div class="card" style="gap:8px"><div class="row between"><h3>${'일월화수목금토'[d]}요일 퀘스트</h3><span class="small num">${hm} · ${dayPt(d)}점</span></div>
    ${m>240?'<p class="small" style="color:var(--bad)">오늘은 너무 빡빡해. 하루 4시간을 넘었어요.</p>':''}
-   ${items.length?items.map((q,i)=>`<div class="quest"><span class="dot" style="background:${subjDot(q.s)}"></span><div class="body"><div class="t">${q.a==='word'?ACT.word.n:SUBJ[q.s].n+' '+ACT[q.a].n}${q.a==='lec'?' <span class="tiny muted">강 번호 자동</span>':''}</div><div class="tiny muted">${ACT[q.a].min}분 · ${ACT[q.a].pt}점</div></div><button class="check" data-del="${i}" aria-label="빼기" style="font-size:16px">✕</button></div>`).join(''):'<p class="small muted">비어 있어요. 쉬는 날이면 그대로 두세요.</p>'}
+   ${items.length?items.map((q,i)=>`<div class="quest"><span class="dot" style="background:${subjDot(q.s)}"></span><div class="body"><div class="t">${q.a==='word'?ACT.word.n:SUBJ[q.s].n+' '+ACT[q.a].n}${q.a==='lec'?' <span class="tiny muted">강 번호 자동</span>':''}</div><div class="tiny muted">${actMin(q.a,q.s)}분 · ${ACT[q.a].pt}점</div></div><button class="check" data-del="${i}" aria-label="빼기" style="font-size:16px">✕</button></div>`).join(''):'<p class="small muted">비어 있어요. 쉬는 날이면 그대로 두세요.</p>'}
   </div>
   <div class="card" style="gap:8px"><h3>퀘스트 넣기</h3>
    <div class="chips">${Object.keys(SUBJ).map(x=>`<button class="chip" data-s="${x}" aria-pressed="${UI.planAdd.s===x}">${SUBJ[x].n}</button>`).join('')}</div>
@@ -833,7 +838,7 @@ function renderPlan(){
   scr.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{UI.planAdd.s=b.dataset.s;render()});
   scr.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>{UI.planAdd.a=b.dataset.a;render()});
   $('#padd').onclick=()=>{const a=UI.planAdd.a;if(a==='word'&&items.some(q=>q.a==='word')){toast('영어단어는 하루 1회예요');return}
-    if(items.filter(q=>q.s===UI.planAdd.s&&q.a===a).length>=2&&a!=='lec'){toast('같은 과목·같은 활동은 하루 2회까지 점수가 돼요');return}
+    {const lim=dayLimit({q:items.map(x=>({...x,done:true}))},{s:a==='word'?'e':UI.planAdd.s,a});if(lim){toast(lim);return}}
     items.push({s:a==='word'?'e':UI.planAdd.s,a});toast('넣었어요');save2()};
   $('#pcopy').onclick=e=>{const b=e.target;if(!b.dataset.c){b.dataset.c=1;b.textContent='한 번 더 누르면 월~금이 이 플랜으로 바뀌어요';return}
     [1,2,3,4,5].forEach(x=>{if(x!==d)P[x]=items.map(q=>({...q}))});const today=parseDay(TODAY()).getDay();if(today>=1&&today<=5)syncTodayWithPlan();save();toast('월~금에 복사했어요');render()};
@@ -1023,7 +1028,8 @@ function periodKeys(t){const k=TODAY();if(t==='today')return [k];if(t==='yesterd
   const pre=k.slice(0,7);const out=[];let d=pre+'-01';while(d.slice(0,7)===pre){out.push(d);d=addDays(d,1)}return out}
 function prevMonthKeys(){const first=TODAY().slice(0,7)+'-01';const last=addDays(first,-1);const pre=last.slice(0,7);const out=[];let d=pre+'-01';while(d.slice(0,7)===pre){out.push(d);d=addDays(d,1)}return out}
 function renderRank(){
-  const t=UI.rankTab;const people=roster();const me=MODE_DB?UID:'me';
+  const t=UI.rankTab;const me=MODE_DB?UID:'me';const mkeys=periodKeys('month');
+  const people=roster().filter(p=>p.id===me||sumDays(p.d,mkeys)>0); /* 이번 시즌(이달)에 참여한 모든 왕국의 유저 */
   let h=`<h1>캐릭터 랭킹</h1><div class="tabs">${[['today','오늘'],['yesterday','어제'],['week','주간'],['month','월간'],['war','대항전']].map(([id,l])=>`<button data-t="${id}" aria-pressed="${t===id}">${l}</button>`).join('')}</div>`;
   if(t==='war'){
     const keys=periodKeys('month');
