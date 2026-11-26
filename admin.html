@@ -103,12 +103,12 @@ function sumRange(daily,from,to,f){let s=0;Object.keys(daily||{}).forEach(k=>{if
 
 const SCHOOLS={mid:'중학생',high:'고등학생'};
 const schoolPill=v=>v?`<span class="pill ${v}">${v==='mid'?'중등':'고등'}</span>`:'<span class="pill off">미정</span>';
-function studentLinkText(s,pw){return `[루틴런 중고등] 스터디아 입장 안내\n\n접속 주소: ${BASE}\n아이디: ${s.id}\n비밀번호: ${pw||'(선생님께 받은 비밀번호)'}${s.school?'\n학교: '+SCHOOLS[s.school]+' (시험 레이드 보스가 '+(s.school==='mid'?'중간·기말·방학 보스':'중간·기말·모의고사 보스')+'로 나와요)':''}\n\n처음 들어가면 성향 테스트로 왕국을 정하고 캐릭터를 만들어요. 홈 화면에 추가해 두면 앱처럼 쓸 수 있어요.\n비밀번호는 [나] 탭에서 바꿀 수 있어요.`}
-function parentText(s){return `[루틴런 중고등] ${s.name} 학부모 리포트\n${parentLink(s)}\n\n로그인 없이 열리는 읽기 전용 화면이에요. 오늘 공부·이번 주 점수·감정 체크를 볼 수 있고, 다른 학생과의 순위는 보이지 않아요. 이 링크는 다른 분께 전달하지 말아 주세요.`}
+function studentLinkText(s,pw){return `[루틴런 중고등] 스터디아 입장 안내\n\n접속 주소: ${BASE}\n아이디: ${s.id}\n비밀번호: ${pw||'(선생님께 받은 비밀번호)'}${s.school?'\n학교: '+SCHOOLS[s.school]+' (시험 레이드 보스가 '+(s.school==='mid'?'중간·기말·방학 보스':'중간·기말·모의고사 보스')+'로 나와요)':''}\n\n처음 들어가면 성향 테스트로 왕국을 정하고 캐릭터를 만들어요. 홈 화면에 추가해 두면 앱처럼 쓸 수 있어요.\n비밀번호는 [나] 탭에서 바꿀 수 있어요.\n\n사용 가이드(점수 규칙·보스전): ${BASE}support/student.html\n궁금할 때 지원센터: ${BASE}support/`}
+function parentText(s){return `[루틴런 중고등] ${s.name} 학부모 리포트\n${parentLink(s)}\n\n로그인 없이 열리는 읽기 전용 화면이에요. 오늘 공부·이번 주 점수·감정 체크를 볼 수 있고, 다른 학생과의 순위는 보이지 않아요. 이 링크는 다른 분께 전달하지 말아 주세요.\n\n학부모 가이드(리포트 보는 법): ${BASE}support/parent.html\n지원센터: ${BASE}support/`}
 function bothText(s,pw){return studentLinkText(s,pw)+'\n\n──────────\n\n'+parentText(s)}
 function issueCard(s,pw,title){const st=studentLinkText(s,pw),pt=parentText(s),bt=bothText(s,pw);const c=t=>`<button class="btn ghost sm" data-copy="${encodeURIComponent(t)}">복사</button>`;
   return `<div class="card issue"><div class="row"><h3 style="flex:1">${esc(title||s.name+' 계정을 만들었어요')}</h3>${schoolPill(s.school)}</div>
-  <dl class="kv"><dt>접속 주소</dt><dd class="link">${esc(BASE)}</dd>${c(BASE)}<dt>아이디</dt><dd>${esc(s.id)}</dd>${c(s.id)}${pw?`<dt>비밀번호</dt><dd>${esc(pw)}</dd>${c(pw)}`:''}<dt>학부모 리포트</dt><dd class="link">${esc(parentLink(s))}</dd>${c(parentLink(s))}</dl>
+  <dl class="kv"><dt>접속 주소</dt><dd class="link">${esc(BASE)}</dd>${c(BASE)}<dt>아이디</dt><dd>${esc(s.id)}</dd>${c(s.id)}${pw?`<dt>비밀번호</dt><dd>${esc(pw)}</dd>${c(pw)}`:''}<dt>학부모 리포트</dt><dd class="link">${esc(parentLink(s))}</dd>${c(parentLink(s))}<dt>지원센터</dt><dd class="link">${esc(BASE+'support/')}</dd>${c(BASE+'support/')}</dl>
   ${pw?'<p class="small muted">비밀번호는 지금만 보여요. 이 화면을 닫기 전에 안내문을 보내 주세요.</p>':''}
   <div class="two"><div class="card" style="box-shadow:none"><div class="row"><b style="flex:1">학생에게 보낼 안내문</b><button class="btn sm" data-copy="${encodeURIComponent(st)}">복사</button></div><div class="note">${esc(st)}</div></div>
   <div class="card" style="box-shadow:none"><div class="row"><b style="flex:1">학부모님께 보낼 안내문</b><button class="btn sm" data-copy="${encodeURIComponent(pt)}">복사</button></div><div class="note">${esc(pt)}</div></div></div>
