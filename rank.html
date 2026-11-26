@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Press+Start+2P&family=Noto+Sans+KR:wght@400;500;700&display=swap">
 <script src="config.js"></script>
+<script src="art.js?v=2026.11.26-6"></script>
 <style>
 :root{--sky:#46B1D8;--sky2:#86D9F0;--paper:#FFF4D6;--paper2:#FFFBEA;--ink:#2B1D16;--muted:#6E5844;--red:#E2453C;--gold:#F7C531;--night:#2E2440;--night2:#3A2A20;--blue:#5BC0EB;--purple:#8C5BD6;--green:#3E9B4B;
   --px:0 -3px 0 0 #2B1D16,0 3px 0 0 #2B1D16,-3px 0 0 0 #2B1D16,3px 0 0 0 #2B1D16,0 7px 0 0 rgba(43,29,22,.3);--px2:0 -2px 0 #2B1D16,0 2px 0 #2B1D16,-2px 0 0 #2B1D16,2px 0 0 #2B1D16;
@@ -109,7 +110,8 @@ const SPR={
 const HIDDEN_HP=36000,DAILY_CAP=45;
 function sprite(rows,scale,pal){pal=pal||PAL;const w=Math.max(...rows.map(r=>r.length)),h=rows.length;const c=document.createElement('canvas');c.width=w*scale;c.height=h*scale;const g=c.getContext('2d');
   rows.forEach((r,y)=>{for(let x=0;x<r.length;x++){const ch=r[x];if(ch==='.'||ch===' ')continue;g.fillStyle=pal[ch]||'#f0f';g.fillRect(x*scale,y*scale,scale,scale)}});c.className='px';return c}
-function hydrate(){app.querySelectorAll('[data-spr]').forEach(el=>{if(el.firstChild)return;const pal=el.dataset.hero?{...PAL,p:el.dataset.hero}:PAL;el.appendChild(sprite(SPR[el.dataset.spr],+el.dataset.sc||3,pal))})}
+function hydrate(){app.querySelectorAll('[data-spr]').forEach(el=>{if(el.firstChild)return;let cv=null;try{cv=window.RRART&&RRART.make(el.dataset.spr,+el.dataset.sc||3,el.dataset)}catch(e){cv=null}
+  if(!cv){if(!SPR[el.dataset.spr])return;const pal=el.dataset.hero?{...PAL,p:el.dataset.hero}:PAL;cv=sprite(SPR[el.dataset.spr],+el.dataset.sc||3,pal)}el.appendChild(cv)})}
 /* 날짜: 앱과 같이 새벽 2시 마감 */
 function dayKey(d){const t=new Date((d||new Date()).getTime()-2*3600e3);return t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0')}
 function parseDay(k){const [y,m,d]=k.split('-').map(Number);return new Date(y,m-1,d)}
@@ -128,7 +130,7 @@ async function api(action,data){const r=await fetch(API,{method:'POST',headers:{
 async function load(){try{const j=await api('roster');D=j.students||{};ERR='';lastAt=Date.now()}catch(e){if(e.code==='auth'){try{localStorage.removeItem(TOK.k)}catch(x){}TOK=null}ERR=e.message||'인터넷 연결을 확인해 주세요'}render()}
 function sum(p,keys){const d=p.daily||{};return keys.reduce((a,k)=>a+(d[k]?d[k].r||0:0),0)}
 function players(){const mk=keysOf('month');return Object.keys(D||{}).map(id=>({id,...D[id]})).filter(p=>p.char&&sum(p,mk)>0)}
-function av(p,sc){return `<span class="av"><span data-spr="${p.char.gender==='남'?'heroM':'hero'}" data-sc="${sc||2}" data-hero="${esc(p.char.color)}"></span></span>`}
+function av(p,sc){return `<span class="av"><span data-spr="${p.char.gender==='남'?'heroM':'hero'}" data-sc="${sc||2}" data-hero="${esc(p.char.color)}" data-job="${esc(p.char.job||'')}"></span></span>`}
 function board(p){const mk=dayKey().slice(0,7);return p.board&&p.board.mk===mk?p.board:{boss:{},season:p.board?p.board.season:0}}
 
 function render(){
