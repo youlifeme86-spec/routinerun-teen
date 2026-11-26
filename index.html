@@ -8,7 +8,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%2346B1D8'/%3E%3Crect x='3' y='9' width='10' height='4' fill='%237CC242'/%3E%3Crect x='6' y='3' width='4' height='6' fill='%23E2453C'/%3E%3C/svg%3E">
 <script src="config.js"></script>
 <script>
-window.RR_VERSION='2026.11.26-12';
+window.RR_VERSION='2026.11.26-13';
 /* 실시간 오류 기록: 학생 폰에서 난 오류를 구글 시트 [오류] 탭으로 보냄 */
 (function(){var n=0;window.RR_REPORT=function(msg,stack,extra){try{var C=window.RR_CONFIG||{};if(!C.API_URL||n>=8)return;n++;var a=null;try{a=JSON.parse(localStorage.getItem('rr-auth-v2')||'null')}catch(e){}
 fetch(C.API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},keepalive:true,body:JSON.stringify({action:'logError',token:a&&a.token||'',msg:String(msg||'').slice(0,1000),stack:String(stack||'').slice(0,3000),page:location.pathname+(location.hash.indexOf('#parent')===0?' (학부모)':''),tab:(window.RR_TAB||'')+(extra?' '+extra:''),ver:window.RR_VERSION||'',ua:navigator.userAgent.slice(0,300)})}).catch(function(){})}catch(e){}};
@@ -728,7 +728,7 @@ const SCROLL=(()=>{const bar=document.createElement('div');bar.className='sbar';
   window.addEventListener('load',kick);
   hint.onclick=()=>{const s=m();const by=Math.round(s.v*.7);if(s.el)s.el.scrollBy({top:by,behavior:'smooth'});else window.scrollBy({top:by,behavior:'smooth'})};
   return {kick}})();
-function toTop(){toTop();try{window.scrollTo(0,0)}catch(e){}SCROLL.kick()}
+function toTop(){scr.scrollTop=0;try{window.scrollTo(0,0)}catch(e){}SCROLL.kick()}
 function esc(t){return String(t??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
 function toast(t){const el=document.createElement('div');el.className='toast';el.textContent=t;phone.appendChild(el);setTimeout(()=>el.remove(),2200)}
 function subjDot(s){return `var(--${s})`}
