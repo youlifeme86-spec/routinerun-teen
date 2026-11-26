@@ -12,7 +12,7 @@
  *   오류  : 학생 폰에서 난 오류가 실시간으로 쌓이는 곳
  */
 
-var SERVER_VERSION = '2026.11.26-3';
+var SERVER_VERSION = '2026.11.26-4';
 var TZ = 'Asia/Seoul';
 var CHUNK = 45000;            // 시트 한 칸 최대 50,000자라 45,000자씩 나눠 저장
 var MAX_CHUNKS = 40;          // 학생 한 명 최대 약 1.8MB
@@ -21,12 +21,12 @@ var TOKEN_DAYS = 60;
 var ERROR_ROWS_MAX = 5000;
 
 var SHEETS = {
-  acc:  { name: '계정', head: ['아이디', '이름', '역할', 'salt', 'hash', '학부모코드', '사용', '만든날', '마지막접속', '토큰버전', '메모'] },
+  acc:  { name: '계정', head: ['아이디', '이름', '역할', 'salt', 'hash', '학부모코드', '사용', '만든날', '마지막접속', '토큰버전', '메모', '학교'] },
   st:   { name: '기록', head: ['아이디', 'rev', '저장시각', '요약', '비공개', '상태1'] },
   ap:   { name: '승인', head: ['아이디', '날짜', '승인시각', '승인자'] },
   err:  { name: '오류', head: ['시각', '아이디', '버전', '화면', '탭', '내용', '스택', '기기'] }
 };
-var A = { id: 0, name: 1, role: 2, salt: 3, hash: 4, code: 5, active: 6, created: 7, last: 8, tv: 9, memo: 10 };
+var A = { id: 0, name: 1, role: 2, salt: 3, hash: 4, code: 5, active: 6, created: 7, last: 8, tv: 9, memo: 10, school: 11 };
 
 /* ===================== 시트 메뉴 ===================== */
 function onOpen() {
@@ -114,6 +114,7 @@ var ROUTES = {
   adminRename: adminRename_,
   adminApprove: adminApprove_,
   adminStudent: adminStudent_,
+  adminDelete: adminDelete_,
   adminClearErrors: function (b) { auth_(b, 'admin'); clearErrorsMenu(); return {}; }
 };
 
@@ -139,7 +140,7 @@ function load_(b) {
   var u = auth_(b);
   var rec = readState_(u.id);
   return {
-    id: u.id, name: u.row[A.name], parentCode: u.row[A.code],
+    id: u.id, name: u.row[A.name], parentCode: u.row[A.code], school: normSchool_(u.row[A.school]),
     state: rec ? rec.state : null, rev: rec ? rec.rev : 0,
     priv: rec ? rec.priv : null, approved: approvedDates_(u.id)
   };
@@ -251,6 +252,7 @@ function adminOverview_(b) {
     });
     students.push({
       id: r[A.id], name: r[A.name], role: r[A.role], active: isActive_(r), parentCode: r[A.code],
+      school: normSchool_(sum.school) || normSchool_(r[A.school]), schoolPreset: normSchool_(r[A.school]),
       created: iso_(r[A.created]), lastLogin: iso_(r[A.last]), savedAt: s.savedAt || '', memo: r[A.memo] || '',
       char: sum.char || null, daily: daily, bless: sum.bless || null, monthPts: sum.monthPts || 0
     });
@@ -276,10 +278,13 @@ function adminCreate_(b) {
   lock.waitLock(20000);
   try {
     if (findAccount_(id)) fail_('이미 있는 아이디예요', 'dup');
+    var accSh = sheet_('acc');
+    if (accSh.getRange(1, A.school + 1).getValue() !== '학교') accSh.getRange(1, A.school + 1).setValue('학교').setFontWeight('bold');
     var pw = String(b.pw || '') || randomPw_();
     if (pw.length < 6) fail_('비밀번호는 6자 이상으로 해 주세요', 'weak');
-    var code = addAccount_(id, name, 'student', pw, String(b.memo || '').slice(0, 100));
-    return { id: id, name: name, pw: pw, parentCode: code };
+    var school = normSchool_(b.school);
+    var code = addAccount_(id, name, 'student', pw, String(b.memo || '').slice(0, 100), school);
+    return { id: id, name: name, pw: pw, parentCode: code, school: school };
   } finally { lock.releaseLock(); }
 }
 
@@ -312,6 +317,30 @@ function adminRename_(b) {
   if (b.name != null) sh.getRange(f.rowNo, A.name + 1).setValue(String(b.name).trim().slice(0, 20));
   if (b.memo != null) sh.getRange(f.rowNo, A.memo + 1).setValue(String(b.memo).slice(0, 100));
   if (b.newCode) sh.getRange(f.rowNo, A.code + 1).setValue(randomCode_());
+  if (b.school != null) sh.getRange(f.rowNo, A.school + 1).setValue(normSchool_(b.school));
+  return {};
+}
+
+/** 학생 계정 완전히 지우기: 계정 줄 + 기록 줄 + 승인 내역. 아이디를 한 번 더 받아야 지움 */
+function adminDelete_(b) {
+  var me = auth_(b, 'admin');
+  var id = normId_(b.id);
+  if (!id || normId_(b.confirm) !== id) fail_('확인용 아이디가 달라서 지우지 않았어요', 'confirm');
+  if (id === me.id) fail_('내 관리자 계정은 지울 수 없어요', 'self');
+  var lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try {
+    var f = findAccount_(id);
+    if (!f) fail_('계정을 찾지 못했어요', 'no_account');
+    if (f.row[A.role] === 'admin') fail_('관리자 계정은 여기서 지울 수 없어요', 'admin');
+    sheet_('acc').deleteRow(f.rowNo);
+    var rec = readState_(id, true);
+    if (rec) sheet_('st').deleteRow(rec.rowNo);
+    var ap = sheet_('ap');
+    var rs = rows_('ap');
+    for (var i = rs.length - 1; i >= 0; i--) if (String(rs[i][0]) === id) ap.deleteRow(i + 2);
+    CacheService.getScriptCache().remove('roster');
+  } finally { lock.releaseLock(); }
   return {};
 }
 
@@ -412,7 +441,7 @@ function summary_(st) {
   });
   return {
     char: c ? { name: c.name, color: c.color, kingdom: c.kingdom, job: c.job, gender: c.gender || '' } : null,
-    daily: daily, bless: st.bless || null, monthPts: pts, hiddenReq: hiddenReq,
+    daily: daily, bless: st.bless || null, monthPts: pts, hiddenReq: hiddenReq, school: st.school || '',
     board: { mk: mk, boss: boss, season: season, items: (st.items || []).length, memOk: memOk }
   };
 }
@@ -427,10 +456,10 @@ function approvedDates_(id) {
 }
 
 /* ===================== 계정·비밀번호·토큰 ===================== */
-function addAccount_(id, name, role, pw, memo) {
+function addAccount_(id, name, role, pw, memo, school) {
   var salt = Utilities.getUuid();
   var code = role === 'student' ? randomCode_() : '';
-  sheet_('acc').appendRow([id, name, role, salt, hash_(pw, salt), code, 'Y', new Date(), '', 0, memo || '']);
+  sheet_('acc').appendRow([id, name, role, salt, hash_(pw, salt), code, 'Y', new Date(), '', 0, memo || '', school || '']);
   return code;
 }
 
@@ -498,6 +527,8 @@ function findAccount_(id) {
   return null;
 }
 
+function normSchool_(v) { v = String(v || '').trim(); return v === 'mid' || v === '중등' ? 'mid' : v === 'high' || v === '고등' ? 'high' : ''; }
+
 function isActive_(row) { return String(row[A.active]) !== 'N'; }
 
 /* ===================== 도우미 ===================== */
@@ -512,6 +543,9 @@ function ensureSheets_() {
       // 아이디·날짜·코드가 숫자나 날짜로 바뀌지 않게 글자 형식으로 고정
       var textCols = { acc: 'A:G', st: 'A:A', ap: 'A:B', err: 'B:B' }[k];
       if (textCols) sh.getRange(textCols).setNumberFormat('@');
+    } else if (sh.getLastColumn() < def.head.length) {
+      // 예전 시트에 새 칸(예: 학교)이 없으면 머리글만 채워 줌
+      sh.getRange(1, 1, 1, def.head.length).setValues([def.head]).setFontWeight('bold');
     }
   });
   var first = ss.getSheetByName('시트1') || ss.getSheetByName('Sheet1');

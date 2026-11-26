@@ -56,6 +56,16 @@ td.wrapcell{white-space:normal;min-width:220px}
 .err pre{white-space:pre-wrap;word-break:break-all;font-size:11px;color:var(--muted);margin:4px 0 0;max-height:120px;overflow:auto}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:999px;font-size:14px;z-index:9;max-width:90%}
 .login{max-width:380px;margin:12vh auto 0}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button{flex:1;min-width:90px;border:1.5px solid var(--line);background:#fff;border-radius:12px;padding:9px 10px;color:var(--muted)}
+.seg button[aria-pressed="true"]{border-color:var(--accent);background:var(--soft);color:var(--ink);font-weight:700}
+.issue{border-color:var(--accent)}
+.kv{display:grid;grid-template-columns:auto 1fr auto;gap:6px 10px;align-items:center;font-size:14px}
+.kv dt{color:var(--muted);font-size:13px}.kv dd{margin:0;font-weight:700;word-break:break-all}
+.kv dd.link{font-weight:500;font-size:13px}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px}
+.two .note{flex:1}
+.pill.mid{background:#DDF0E5;color:#23663F}.pill.high{background:#DCE8FA;color:#234E8C}
 [hidden]{display:none!important}
 @media (max-width:600px){.wrap{padding:12px}th,td{padding:7px 4px}}
 </style>
@@ -69,7 +79,7 @@ const BASE=location.origin+location.pathname.replace(/admin\.html$/,'');
 const KEY='rr-admin-v1';
 const KINGDOM={dopa:['도파밍 왕국','#E8559A'],nj:['느좋 공화국','#C9925E'],gds:['감다살 왕국','#F07B3F'],ddk:['딸깍 제국','#3E8EDB'],hc:['하드캐리 연방','#D64545'],ft:['풀템 제국','#8D6E4A'],gim:['고인물 요새','#4C7A5A'],ult:['궁극기 왕국','#7A4FD0'],ukk:['억까탈출 공화국','#2BA7A0']};
 let AUTH=null;try{AUTH=JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){}
-let D=null,TAB='home',LAST_ERR_SEEN=+(localStorage.getItem(KEY+':errseen')||0),timer=null,busy=false;
+let NEW_SCHOOL='mid',BULK_SCHOOL='mid',D=null,TAB='home',LAST_ERR_SEEN=+(localStorage.getItem(KEY+':errseen')||0),timer=null,busy=false;
 const app=document.getElementById('app');
 const esc=t=>String(t??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const $=s=>app.querySelector(s);
@@ -91,7 +101,18 @@ function fmt(k){const d=parse(k);return (d.getMonth()+1)+'/'+d.getDate()+'('+'�
 function ago(iso){if(!iso)return '-';const t=new Date(iso);if(isNaN(t))return '-';const m=Math.round((Date.now()-t)/60000);if(m<1)return '방금';if(m<60)return m+'분 전';if(m<1440)return Math.round(m/60)+'시간 전';return Math.round(m/1440)+'일 전'}
 function sumRange(daily,from,to,f){let s=0;Object.keys(daily||{}).forEach(k=>{if(k>=from&&k<=to)s+=(daily[k][f||'r']||0)});return s}
 
-function studentLinkText(s,pw){return `[루틴런 중고등] 스터디아 입장 안내\n\n접속 주소: ${BASE}\n아이디: ${s.id}\n비밀번호: ${pw||'(선생님께 받은 비밀번호)'}\n\n처음 들어가면 성향 테스트로 왕국을 정하고 캐릭터를 만들어요. 홈 화면에 추가해 두면 앱처럼 쓸 수 있어요.\n비밀번호는 [나] 탭에서 바꿀 수 있어요.`}
+const SCHOOLS={mid:'중학생',high:'고등학생'};
+const schoolPill=v=>v?`<span class="pill ${v}">${v==='mid'?'중등':'고등'}</span>`:'<span class="pill off">미정</span>';
+function studentLinkText(s,pw){return `[루틴런 중고등] 스터디아 입장 안내\n\n접속 주소: ${BASE}\n아이디: ${s.id}\n비밀번호: ${pw||'(선생님께 받은 비밀번호)'}${s.school?'\n학교: '+SCHOOLS[s.school]+' (시험 레이드 보스가 '+(s.school==='mid'?'중간·기말·방학 보스':'중간·기말·모의고사 보스')+'로 나와요)':''}\n\n처음 들어가면 성향 테스트로 왕국을 정하고 캐릭터를 만들어요. 홈 화면에 추가해 두면 앱처럼 쓸 수 있어요.\n비밀번호는 [나] 탭에서 바꿀 수 있어요.`}
+function parentText(s){return `[루틴런 중고등] ${s.name} 학부모 리포트\n${parentLink(s)}\n\n로그인 없이 열리는 읽기 전용 화면이에요. 오늘 공부·이번 주 점수·감정 체크를 볼 수 있고, 다른 학생과의 순위는 보이지 않아요. 이 링크는 다른 분께 전달하지 말아 주세요.`}
+function bothText(s,pw){return studentLinkText(s,pw)+'\n\n──────────\n\n'+parentText(s)}
+function issueCard(s,pw,title){const st=studentLinkText(s,pw),pt=parentText(s),bt=bothText(s,pw);const c=t=>`<button class="btn ghost sm" data-copy="${encodeURIComponent(t)}">복사</button>`;
+  return `<div class="card issue"><div class="row"><h3 style="flex:1">${esc(title||s.name+' 계정을 만들었어요')}</h3>${schoolPill(s.school)}</div>
+  <dl class="kv"><dt>접속 주소</dt><dd class="link">${esc(BASE)}</dd>${c(BASE)}<dt>아이디</dt><dd>${esc(s.id)}</dd>${c(s.id)}${pw?`<dt>비밀번호</dt><dd>${esc(pw)}</dd>${c(pw)}`:''}<dt>학부모 리포트</dt><dd class="link">${esc(parentLink(s))}</dd>${c(parentLink(s))}</dl>
+  ${pw?'<p class="small muted">비밀번호는 지금만 보여요. 이 화면을 닫기 전에 안내문을 보내 주세요.</p>':''}
+  <div class="two"><div class="card" style="box-shadow:none"><div class="row"><b style="flex:1">학생에게 보낼 안내문</b><button class="btn sm" data-copy="${encodeURIComponent(st)}">복사</button></div><div class="note">${esc(st)}</div></div>
+  <div class="card" style="box-shadow:none"><div class="row"><b style="flex:1">학부모님께 보낼 안내문</b><button class="btn sm" data-copy="${encodeURIComponent(pt)}">복사</button></div><div class="note">${esc(pt)}</div></div></div>
+  <div class="row"><button class="btn sm" data-copy="${encodeURIComponent(bt)}">학생 + 학부모 안내 한 번에 복사</button><a class="btn ghost sm" href="${esc(parentLink(s))}" target="_blank" rel="noopener" style="text-decoration:none">학부모 화면 열어 보기</a></div></div>`}
 function parentLink(s){return BASE+'#parent-'+s.parentCode}
 
 function render(){
@@ -125,19 +146,25 @@ function render(){
     <div class="card"><h2>오늘 몰입 분포</h2><div class="row">${['몰입','각성','통제','이완','지루함','무관심','걱정','불안'].map(c=>`<span class="pill ${['불안','무관심','걱정'].includes(c)&&cells[c]?'bad':''}">${c} ${cells[c]||0}명</span>`).join('')}</div></div>`;
   }
   if(TAB==='students'){
-    h+=`<div class="card"><h2>학생 계정</h2><p class="small muted">비밀번호는 시트에 암호화돼 저장되어 선생님도 원래 비밀번호를 볼 수 없어요. 잊었다면 [새 비밀번호]로 다시 발급하세요.</p>
-    <div class="tscroll"><table><thead><tr><th>이름</th><th>아이디</th><th>상태</th><th>캐릭터</th><th>마지막 접속</th><th>메모</th><th></th></tr></thead><tbody>
+    h+=`<div class="card"><h2>학생 계정</h2><p class="small muted">비밀번호는 시트에 암호화돼 저장되어 선생님도 원래 비밀번호를 볼 수 없어요. 잊었다면 [새 비밀번호]로 다시 발급하세요. [삭제]는 계정과 기록을 모두 지우고 되돌릴 수 없어요. 잠깐 쉬게 하려면 [멈추기]를 쓰세요. 학교(중등/고등)는 학생이 [나] 탭에서 바꿀 수 있어요.</p>
+    <div class="tscroll"><table><thead><tr><th>이름</th><th>아이디</th><th>상태</th><th>학교</th><th>캐릭터</th><th>마지막 접속</th><th>메모</th><th></th></tr></thead><tbody>
     ${D.students.map(s=>`<tr><td>${esc(s.name)}</td><td>${esc(s.id)}</td><td>${s.role==='admin'?'<span class="pill p">관리자</span>':s.active?'<span class="pill">사용</span>':'<span class="pill off">멈춤</span>'}</td>
-      <td>${s.char?esc(s.char.name):'-'}</td><td class="tiny">${ago(s.lastLogin)}</td><td class="tiny">${esc(s.memo)}</td>
-      <td>${s.role==='student'?`<div class="row"><button class="btn ghost sm" data-rs="${esc(s.id)}">새 비밀번호</button><button class="btn ghost sm" data-pl="${esc(s.id)}">학부모 링크</button><button class="btn ghost sm" data-in="${esc(s.id)}">입장 안내</button><button class="btn ghost sm" data-ac="${esc(s.id)}">${s.active?'멈추기':'다시 사용'}</button></div>`:''}</td></tr>`).join('')}
+      <td>${s.role==='student'?schoolPill(s.school):''}</td><td>${s.char?esc(s.char.name):'-'}</td><td class="tiny">${ago(s.lastLogin)}</td><td class="tiny">${esc(s.memo)}</td>
+      <td>${s.role==='student'?`<div class="row"><button class="btn ghost sm" data-rs="${esc(s.id)}">새 비밀번호</button><button class="btn ghost sm" data-pl="${esc(s.id)}">학부모 링크</button><button class="btn ghost sm" data-in="${esc(s.id)}">입장 안내</button><button class="btn ghost sm" data-ac="${esc(s.id)}">${s.active?'멈추기':'다시 사용'}</button><button class="btn ghost sm" data-del="${esc(s.id)}" style="color:var(--bad)">삭제</button></div>`:''}</td></tr>`).join('')}
     </tbody></table></div></div><div id="out"></div>`;
   }
   if(TAB==='new'){
-    h+=`<div class="card"><h2>학생 계정 한 명 만들기</h2>
-      <form class="form" id="nf"><label>아이디 (영문·숫자 3~20자)<input id="nid" autocapitalize="none" placeholder="예: kim01"></label><label>이름 (관리용, 학생에게 안 보임)<input id="nnm" placeholder="예: 김가나"></label>
-      <label>비밀번호 (비우면 자동)<input id="npw" placeholder="자동 8자리"></label><label>메모<input id="nmemo" placeholder="예: 고1 2반"></label><button class="btn" id="ngo">만들기</button></form></div>
-    <div class="card"><h2>여러 명 한 번에</h2><p class="small muted">한 줄에 한 명씩 <b>아이디, 이름</b> (메모는 세 번째 칸). 비밀번호는 자동으로 만들어져요.</p>
-      <textarea id="bulk" placeholder="kim01, 김가나, 고1 2반&#10;lee02, 이다라"></textarea><button class="btn" id="bgo" style="align-self:flex-start">모두 만들기</button></div>
+    const seg=(name,v)=>`<div class="seg">${[['mid','중학생'],['high','고등학생'],['','학생이 고르기']].map(([k,l])=>`<button type="button" data-${name}="${k}" aria-pressed="${v===k}">${l}</button>`).join('')}</div>`;
+    h+=`<div class="card"><h2>학생 계정 한 명 만들기</h2><p class="small muted">만들면 바로 접속 주소·아이디·비밀번호·학부모 리포트 링크가 담긴 안내문이 나와요. 복사해서 카톡이나 문자로 보내면 돼요.</p>
+      <form id="nf" style="display:flex;flex-direction:column;gap:10px">
+      <div><label>학교 (시험 레이드 보스가 달라져요)</label>${seg('ns',NEW_SCHOOL)}</div>
+      <div class="form"><label>아이디 (영문·숫자 3~20자)<input id="nid" autocapitalize="none" autocomplete="off" placeholder="예: kim01"></label><label>이름 (관리용, 학생에게 안 보임)<input id="nnm" autocomplete="off" placeholder="예: 김가나"></label>
+      <label>비밀번호 (비우면 자동 8자리)<input id="npw" autocomplete="off" placeholder="자동"></label><label>메모<input id="nmemo" autocomplete="off" placeholder="예: 중2 3반"></label></div>
+      <button class="btn" id="ngo" style="align-self:flex-start">계정 만들고 안내문 받기</button></form></div>
+    <div class="card"><h2>여러 명 한 번에</h2><p class="small muted">한 줄에 한 명씩 <b>아이디, 이름</b> (메모는 세 번째 칸, 학교는 네 번째 칸에 <b>중</b> 또는 <b>고</b>). 엑셀에서 복사해 붙여 넣어도 돼요. 비밀번호는 자동으로 만들어져요.</p>
+      <div><label>학교 (네 번째 칸이 비어 있으면 이걸로)</label>${seg('bs',BULK_SCHOOL)}</div>
+      <textarea id="bulk" placeholder="kim01, 김가나, 중2 3반&#10;lee02, 이다라, , 고"></textarea><button class="btn" id="bgo" style="align-self:flex-start">모두 만들기</button></div>
+    <p class="tiny muted">만 14세 미만(대개 중1~중2) 학생은 계정을 만들기 전에 보호자 동의를 받아 두세요.</p>
     <div id="out"></div>`;
   }
   if(TAB==='errors'){
@@ -157,18 +184,24 @@ function bind(){
     try{await api('adminApprove',{id:p.id,date:p.date});toast(p.name+' 승인 완료');refresh()}catch(e){toast(e.message);b.disabled=false;b.textContent='인증 (외우기 5점)'}});
   const find=id=>D.students.find(s=>s.id===id);
   app.querySelectorAll('[data-rs]').forEach(b=>b.onclick=async()=>{const s=find(b.dataset.rs);if(!b.dataset.c){b.dataset.c=1;b.textContent='한 번 더 누르면 발급';return}b.disabled=true;
-    try{const j=await api('adminReset',{id:s.id});const t=studentLinkText(s,j.pw);showOut(`<div class="card"><h3>${esc(s.name)} 새 비밀번호: <b>${esc(j.pw)}</b></h3><p class="small muted">이 창을 닫으면 다시 볼 수 없어요. 예전 기기의 로그인은 풀려요.</p><div class="note">${esc(t)}</div><button class="btn sm" data-copy="${encodeURIComponent(t)}">안내문 복사</button></div>`);b.textContent='발급 완료'}catch(e){toast(e.message);b.disabled=false}});
-  app.querySelectorAll('[data-pl]').forEach(b=>b.onclick=()=>{const s=find(b.dataset.pl);const t=`[루틴런] ${s.name} 학부모 리포트\n${parentLink(s)}\n\n로그인 없이 열리는 읽기 전용 화면이에요. 다른 학생과의 순위는 보이지 않아요.`;showOut(`<div class="card"><h3>${esc(s.name)} 학부모 링크</h3><div class="note">${esc(t)}</div><div class="row"><button class="btn sm" data-copy="${encodeURIComponent(t)}">복사</button><a class="btn ghost sm" href="${esc(parentLink(s))}" target="_blank" rel="noopener">열어 보기</a></div><p class="tiny muted">링크가 새어 나갔다면 시트 [계정] 탭의 학부모코드를 지우고 새로 넣으면 예전 링크는 막혀요.</p></div>`)});
-  app.querySelectorAll('[data-in]').forEach(b=>b.onclick=()=>{const s=find(b.dataset.in);const t=studentLinkText(s,'');showOut(`<div class="card"><h3>${esc(s.name)} 입장 안내</h3><div class="note">${esc(t)}</div><button class="btn sm" data-copy="${encodeURIComponent(t)}">복사</button></div>`)});
+    try{const j=await api('adminReset',{id:s.id});showOut(issueCard(s,j.pw,s.name+' 새 비밀번호를 만들었어요 (예전 기기의 로그인은 풀려요)'));b.textContent='발급 완료'}catch(e){toast(e.message);b.disabled=false}});
+  app.querySelectorAll('[data-pl]').forEach(b=>b.onclick=()=>{const s=find(b.dataset.pl);const t=parentText(s);showOut(`<div class="card"><h3>${esc(s.name)} 학부모 링크</h3><div class="note">${esc(t)}</div><div class="row"><button class="btn sm" data-copy="${encodeURIComponent(t)}">복사</button><a class="btn ghost sm" href="${esc(parentLink(s))}" target="_blank" rel="noopener">열어 보기</a></div><p class="tiny muted">링크가 새어 나갔다면 시트 [계정] 탭의 학부모코드를 지우고 새로 넣으면 예전 링크는 막혀요.</p></div>`)});
+  app.querySelectorAll('[data-in]').forEach(b=>b.onclick=()=>{const s=find(b.dataset.in);showOut(issueCard(s,'',s.name+' 입장 안내'))});
   app.querySelectorAll('[data-ac]').forEach(b=>b.onclick=async()=>{const s=find(b.dataset.ac);b.disabled=true;try{await api('adminSetActive',{id:s.id,active:!s.active});toast(s.active?'멈췄어요. 그 학생은 로그인이 풀려요':'다시 쓸 수 있어요');refresh()}catch(e){toast(e.message);b.disabled=false}});
   if($('#nf'))$('#nf').onsubmit=async e=>{e.preventDefault();const b=$('#ngo');b.disabled=true;
-    try{const j=await api('adminCreate',{id:$('#nid').value,name:$('#nnm').value,pw:$('#npw').value,memo:$('#nmemo').value});const t=studentLinkText(j,j.pw);
-      showOut(`<div class="card"><h3>${esc(j.name)} 계정을 만들었어요</h3><p class="small">아이디 <b>${esc(j.id)}</b> · 비밀번호 <b>${esc(j.pw)}</b></p><p class="small muted">비밀번호는 지금만 보여요. 아래 안내문을 학생에게 보내 주세요.</p><div class="note">${esc(t)}</div><button class="btn sm" data-copy="${encodeURIComponent(t)}">안내문 복사</button></div>`);
+    try{const j=await api('adminCreate',{id:$('#nid').value,name:$('#nnm').value,pw:$('#npw').value,memo:$('#nmemo').value,school:NEW_SCHOOL});
+      showOut(issueCard({...j,school:j.school||NEW_SCHOOL},j.pw));
       $('#nf').reset();refresh()}catch(x){toast(x.message)}b.disabled=false};
+  app.querySelectorAll('[data-ns]').forEach(b=>b.onclick=()=>{NEW_SCHOOL=b.dataset.ns;app.querySelectorAll('[data-ns]').forEach(x=>x.setAttribute('aria-pressed',x===b))});
+  app.querySelectorAll('[data-bs]').forEach(b=>b.onclick=()=>{BULK_SCHOOL=b.dataset.bs;app.querySelectorAll('[data-bs]').forEach(x=>x.setAttribute('aria-pressed',x===b))});
+  app.querySelectorAll('[data-del]').forEach(b=>b.onclick=async()=>{const s=find(b.dataset.del);const t=prompt(`${s.name}(${s.id}) 계정을 완전히 지울까요?\n점수·체크 기록도 모두 지워지고 되돌릴 수 없어요.\n지우려면 아이디 ${s.id} 를 똑같이 입력하세요.`);if(t===null)return;if(t.trim().toLowerCase()!==s.id){toast('아이디가 달라서 지우지 않았어요');return}b.disabled=true;try{await api('adminDelete',{id:s.id,confirm:t.trim()});toast(`${s.id} 계정을 지웠어요`);refresh()}catch(e){toast(e.message);b.disabled=false}});
   if($('#bgo'))$('#bgo').onclick=async e=>{const lines=$('#bulk').value.split('\n').map(x=>x.split(/[,\t]/).map(y=>y.trim())).filter(x=>x[0]);if(!lines.length)return;const b=e.target;b.disabled=true;const res=[];
-    for(const [id,name,memo] of lines){b.textContent=`만드는 중 ${res.length+1}/${lines.length}`;try{const j=await api('adminCreate',{id,name:name||id,memo:memo||''});res.push({ok:1,...j})}catch(x){res.push({ok:0,id,name,err:x.message})}}
-    const txt=res.filter(r=>r.ok).map(r=>`${r.name}\t${r.id}\t${r.pw}`).join('\n');
-    showOut(`<div class="card"><h3>${res.filter(r=>r.ok).length}명 만들었어요</h3><p class="small muted">비밀번호는 지금만 보여요. 복사해서 따로 보관하거나 학생마다 보내 주세요.</p><div class="tscroll"><table><thead><tr><th>이름</th><th>아이디</th><th>비밀번호</th><th></th></tr></thead><tbody>${res.map(r=>`<tr><td>${esc(r.name)}</td><td>${esc(r.id)}</td><td>${r.ok?'<b>'+esc(r.pw)+'</b>':'<span style="color:var(--bad)">'+esc(r.err)+'</span>'}</td><td>${r.ok?`<button class="btn ghost sm" data-copy="${encodeURIComponent(studentLinkText(r,r.pw))}">안내문 복사</button>`:''}</td></tr>`).join('')}</tbody></table></div><button class="btn sm" data-copy="${encodeURIComponent(txt)}" style="align-self:flex-start">표 전체 복사 (엑셀에 붙여넣기)</button></div>`);
+    const sc=v=>{v=String(v||'').trim();return /^(중|중등|중학생|mid|m)$/i.test(v)?'mid':/^(고|고등|고등학생|high|h)$/i.test(v)?'high':BULK_SCHOOL};
+    for(const [id,name,memo,school] of lines){b.textContent=`만드는 중 ${res.length+1}/${lines.length}`;const want=sc(school);try{const j=await api('adminCreate',{id,name:name||id,memo:memo||'',school:want});res.push({ok:1,...j,school:j.school||want})}catch(x){res.push({ok:0,id,name,err:x.message})}}
+    const ok=res.filter(r=>r.ok);
+    const txt=['이름\t아이디\t비밀번호\t학교\t학부모 리포트'].concat(ok.map(r=>`${r.name}\t${r.id}\t${r.pw}\t${r.school?SCHOOLS[r.school]:''}\t${parentLink(r)}`)).join('\n');
+    const all=ok.map(r=>bothText(r,r.pw)).join('\n\n══════════\n\n');
+    showOut(`<div class="card issue"><h3>${ok.length}명 만들었어요${res.length>ok.length?` · ${res.length-ok.length}명 실패`:''}</h3><p class="small muted">비밀번호는 지금만 보여요. 학생마다 안내문을 복사해 보내거나, 표를 엑셀에 붙여 보관하세요.</p><div class="tscroll"><table><thead><tr><th>이름</th><th>아이디</th><th>비밀번호</th><th>학교</th><th></th></tr></thead><tbody>${res.map(r=>`<tr><td>${esc(r.name)}</td><td>${esc(r.id)}</td><td>${r.ok?'<b>'+esc(r.pw)+'</b>':'<span style="color:var(--bad)">'+esc(r.err)+'</span>'}</td><td>${r.ok?schoolPill(r.school):''}</td><td>${r.ok?`<div class="row"><button class="btn ghost sm" data-copy="${encodeURIComponent(studentLinkText(r,r.pw))}">학생 안내</button><button class="btn ghost sm" data-copy="${encodeURIComponent(parentText(r))}">학부모 안내</button></div>`:''}</td></tr>`).join('')}</tbody></table></div><div class="row"><button class="btn sm" data-copy="${encodeURIComponent(all)}">모든 안내문 한 번에 복사</button><button class="btn ghost sm" data-copy="${encodeURIComponent(txt)}">표 전체 복사 (엑셀에 붙여넣기)</button></div></div>`);
     b.disabled=false;b.textContent='모두 만들기';$('#bulk').value='';refresh()};
   if($('#ce'))$('#ce').onclick=async e=>{const b=e.target;if(!b.dataset.c){b.dataset.c=1;b.textContent='한 번 더 누르면 모두 지워요';return}try{await api('adminClearErrors');toast('지웠어요');refresh()}catch(x){toast(x.message)}};
 }
