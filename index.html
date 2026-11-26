@@ -8,7 +8,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%2346B1D8'/%3E%3Crect x='3' y='9' width='10' height='4' fill='%237CC242'/%3E%3Crect x='6' y='3' width='4' height='6' fill='%23E2453C'/%3E%3C/svg%3E">
 <script src="config.js"></script>
 <script>
-window.RR_VERSION='2026.11.26-4';
+window.RR_VERSION='2026.11.26-5';
 /* 실시간 오류 기록: 학생 폰에서 난 오류를 구글 시트 [오류] 탭으로 보냄 */
 (function(){var n=0;window.RR_REPORT=function(msg,stack,extra){try{var C=window.RR_CONFIG||{};if(!C.API_URL||n>=8)return;n++;var a=null;try{a=JSON.parse(localStorage.getItem('rr-auth-v2')||'null')}catch(e){}
 fetch(C.API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},keepalive:true,body:JSON.stringify({action:'logError',token:a&&a.token||'',msg:String(msg||'').slice(0,1000),stack:String(stack||'').slice(0,3000),page:location.pathname+(location.hash.indexOf('#parent')===0?' (학부모)':''),tab:(window.RR_TAB||'')+(extra?' '+extra:''),ver:window.RR_VERSION||'',ua:navigator.userAgent.slice(0,300)})}).catch(function(){})}catch(e){}};
@@ -656,7 +656,7 @@ function renderLogin(){
   `<h1>로그인</h1><form class="card" id="lf" autocomplete="on"><label for="lid"><h3>아이디</h3></label><input type="text" id="lid" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" value="${esc(last)}">
    <label for="lpw"><h3>비밀번호</h3></label><input type="password" id="lpw" name="password" autocomplete="current-password">
    <p class="small" id="lerr" style="color:#B3261E" hidden></p><button class="btn" id="lgo" type="submit">입장하기</button></form>
-   <p class="tiny muted" style="text-align:center">아이디나 비밀번호를 잊으면 선생님께 말해 주세요.</p>`;
+   <p class="tiny muted" style="text-align:center">아이디나 비밀번호를 잊으면 선생님께 말해 주세요. · <a href="support/student.html">사용 가이드</a></p>`;
   const f=$('#lf'),er=$('#lerr'),go=$('#lgo');if(!last)setTimeout(()=>{const x=$('#lid');if(x)x.focus()},50);
   f.onsubmit=async ev=>{ev.preventDefault();const id=$('#lid').value.trim().toLowerCase(),pw=$('#lpw').value;if(!id||!pw){er.hidden=false;er.textContent='아이디와 비밀번호를 넣어 주세요';return}
     go.disabled=true;go.textContent='확인 중...';er.hidden=true;
@@ -1099,6 +1099,7 @@ function renderMe(){
    <details><summary class="small">비밀번호 바꾸기</summary><div style="display:flex;flex-direction:column;gap:6px;margin-top:8px"><input type="password" id="opw" placeholder="지금 비밀번호" autocomplete="current-password"><input type="password" id="npw" placeholder="새 비밀번호 (6자 이상)" autocomplete="new-password"><button class="btn ghost" id="cpw">바꾸기</button></div></details>
    <details><summary class="small">오류·불편한 점 알리기</summary><div style="display:flex;flex-direction:column;gap:6px;margin-top:8px"><textarea id="rep" maxlength="500" placeholder="예: 공격 버튼을 눌렀는데 점수가 안 올라가요"></textarea><button class="btn ghost" id="repgo">선생님께 보내기</button></div></details>
    <button class="btn ghost" id="lout">로그아웃</button></div>`:''}
+  <a class="btn ghost" href="support/student.html" style="text-align:center;text-decoration:none">사용 가이드 · 규칙 도감</a>
   <p class="tiny muted" style="text-align:center">버전 ${esc(APP_VERSION)}</p>
   `;
   scr.innerHTML=h;UI.justMade=false;

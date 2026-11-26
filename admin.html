@@ -109,7 +109,7 @@ function render(){
   const doneToday=stu.filter(s=>s.daily[today]&&s.daily[today].raw>0).length;
   const newErr=D.errors.filter(e=>new Date(e.time).getTime()>LAST_ERR_SEEN).length;
   let h=`<div class="top"><h1>루틴런 관리자</h1><span class="pill">${fmt(today)}</span><span class="sp"></span>
-    <span class="tiny muted" id="upd">방금 새로 고침</span><a class="btn ghost sm" href="rank.html" target="_blank" rel="noopener" style="text-decoration:none">랭킹 사이트</a><button class="btn ghost sm" id="rf">새로 고침</button><button class="btn ghost sm" id="lo">로그아웃</button></div>
+    <span class="tiny muted" id="upd">방금 새로 고침</span><a class="btn ghost sm" href="support/" target="_blank" rel="noopener" style="text-decoration:none">지원센터</a><a class="btn ghost sm" href="rank.html" target="_blank" rel="noopener" style="text-decoration:none">랭킹 사이트</a><button class="btn ghost sm" id="rf">새로 고침</button><button class="btn ghost sm" id="lo">로그아웃</button></div>
   <div class="tabs">${[['home','오늘'],['students','학생 계정'],['new','계정 만들기'],['errors','오류 기록'+(newErr?' ('+newErr+')':'')]].map(([k,l])=>`<button data-t="${k}" aria-pressed="${TAB===k}">${l}</button>`).join('')}</div>`;
   if(TAB==='home'){
     const cells={};stu.forEach(s=>{const e=s.daily[today];if(e&&e.cell)cells[e.cell]=(cells[e.cell]||0)+1});
