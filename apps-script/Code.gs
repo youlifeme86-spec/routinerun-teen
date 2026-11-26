@@ -79,7 +79,7 @@ function clearErrorsMenu() {
 
 /* ===================== AI 동기부여 헬퍼 =====================
  * 실제 학생이 적을 때 랭킹·대항전이 비어 보이지 않게 넣은 가상 학생 6명.
- * 매시간 트리거(helperTick)가 오후 3시~밤 11시 사이에 가끔 퀘스트 하나씩 완료 처리해서
+ * 매시간 트리거(helperTick)가 오후 4시~밤 11시 사이에 가끔 퀘스트 하나씩 완료 처리해서
  * 하루에 조금씩 자연스럽게 점수가 쌓여요. 기준 학생(HELPER_REF)의 이달 점수를 보고
  * 상위권은 조금 위, 중위권은 비슷하게, 하위권은 한참 아래로 따라갑니다.
  *   ratio: 기준 학생 이달 점수 × ratio (+plus) 를 목표로
@@ -103,7 +103,7 @@ var H_SUBJ = ['m', 'k', 'e', 's', 'c', 'h'];
 function helperOnMenu() {
   helperOffMenu(true);
   ScriptApp.newTrigger('helperTick').timeBased().everyHours(1).create();
-  SpreadsheetApp.getUi().alert('AI 헬퍼 자동 공부를 켰어요.\n매일 오후 3시~밤 11시 사이에 조금씩 점수가 쌓여요.');
+  SpreadsheetApp.getUi().alert('AI 헬퍼 자동 공부를 켰어요.\n매일 오후 4시~밤 11시 사이에 조금씩 점수가 쌓여요.');
 }
 
 function helperOffMenu(silent) {
@@ -113,7 +113,7 @@ function helperOffMenu(silent) {
 
 function helperTick() {
   var hour = Number(Utilities.formatDate(new Date(), TZ, 'H'));
-  if (hour < 15 || hour > 23) return;
+  if (hour < 16 || hour > 23) return;
   var today = dayKey_(0), mk = today.slice(0, 7), dom = Number(today.slice(8, 10));
   var lock = LockService.getScriptLock();
   if (!lock.tryLock(20000)) return;
