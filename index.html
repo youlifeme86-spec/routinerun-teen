@@ -8,7 +8,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%2346B1D8'/%3E%3Crect x='3' y='9' width='10' height='4' fill='%237CC242'/%3E%3Crect x='6' y='3' width='4' height='6' fill='%23E2453C'/%3E%3C/svg%3E">
 <script src="config.js"></script>
 <script>
-window.RR_VERSION='2026.11.26-3';
+window.RR_VERSION='2026.11.26-4';
 /* 실시간 오류 기록: 학생 폰에서 난 오류를 구글 시트 [오류] 탭으로 보냄 */
 (function(){var n=0;window.RR_REPORT=function(msg,stack,extra){try{var C=window.RR_CONFIG||{};if(!C.API_URL||n>=8)return;n++;var a=null;try{a=JSON.parse(localStorage.getItem('rr-auth-v2')||'null')}catch(e){}
 fetch(C.API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},keepalive:true,body:JSON.stringify({action:'logError',token:a&&a.token||'',msg:String(msg||'').slice(0,1000),stack:String(stack||'').slice(0,3000),page:location.pathname+(location.hash.indexOf('#parent')===0?' (학부모)':''),tab:(window.RR_TAB||'')+(extra?' '+extra:''),ver:window.RR_VERSION||'',ua:navigator.userAgent.slice(0,300)})}).catch(function(){})}catch(e){}};
@@ -425,6 +425,7 @@ function sprite(rows,scale,pal){pal=pal||PAL;const w=Math.max(...rows.map(r=>r.l
   rows.forEach((r,y)=>{for(let x=0;x<r.length;x++){const ch=r[x];if(ch==='.'||ch===' ')continue;g.fillStyle=pal[ch]||'#f0f';g.fillRect(x*scale,y*scale,scale,scale)}});c.className='px';return c}
 const SPR={
  hero:["....y.y.y...","....yyyyy...","...hhhhhhh..","..hhhhhhhhh.","..hsksssksh.","..hsssssssh.","..hssspsssh.","..hhssssshh.","...pppppp...","..pppwwppp..",".sppppppppss",".s.pppppp.s.","..pppppppp..",".pppppppppp.","..kk....kk..","..kk....kk.."],
+ heroM:["............","...hhhhhh...","..hhhhhhhh..","..hhhhhhhhh.","..hsksssks..","..hsssssss..","...sssmsss..","...sssssss..","...pppppp...","..pppwwppp..",".sppppppppss",".s.pppppp.s.","...pppppp...","...uu..uu...","...uu..uu...","..kkk..kkk.."],
  m:["....gggggggg....","...gGGGGGGGGg...","...gGrrGGrrGg...","...gGGGGGGGGg...","...gGGggggGGg...","....gGGGGGGg....",".gggggggggggggg.","gGGGGGyyyyGGGGGg","gGGgGGyGGyGGgGGg","gGGgGGGyyGGGgGGg","gGGgGGyGGGGGgGGg","ggg.gGyyyyGg.ggg","....gGGGGGGg....","....gGGggGGg....","...ggGGg.gGGgg..","...gggg..gggg..."],
  k:["......llll......",".....llllll.....","bb..lwkllkwl..bb","bbb.llllllll.bbb","bbbb.llmmll.bbbb",".bbbb.llll.bbbb.","..bbbLLLLLLbbb..","...bLLLLLLLLb...","....LLLLLLLL....","....LLLLLLLL....","...LLLLLLLLLL...","..LLLLLLLLLLLL..","......L..L......","......L..L......"],
  e:["....EEEEEEEE....","..EEeeeeeeeeEE..",".EeewkeeeewkeeE.",".EeekkeeeekkeeE.","EeeeeeeeeeeeeeeE","EemmmmmmmmmmmmeE","EemwmwmwmwmwmmeE","EemmmmmmmmmmmmeE","EemmwmwmwmwmwmeE","EeemmmmmmmmmmeeE",".EeeeeeeeeeeeeE.","..EeeeeeeeeeeE..","..EeE.EeeE.EeE..","..EE..EEEE..EE.."],
@@ -459,7 +460,8 @@ function sceneHTML(inner,opts){opts=opts||{};
    ${opts.deco===false?'':'<div data-spr="tree" data-sc="5" style="position:absolute;bottom:58px;left:-14px"></div><div data-spr="mush" data-sc="4" style="position:absolute;bottom:60px;left:120px"></div>'}
    <div class="ground" style="background-image:url(${GROUND})"></div>${inner}
    <div class="fx" id="fx"></div><canvas class="fx" id="pfx" width="420" height="250"></canvas><div class="flash" id="flash"></div></div>`}
-function heroHTML(){const c=S.char?S.char.color:'#EE7FAE';return `<div class="hero" id="hero"><div class="aura" style="background:${esc(c)}"></div><div data-spr="hero" data-sc="5" data-hero="${esc(c)}"></div><div data-spr="sword" data-sc="4" style="position:absolute;right:-22px;top:34px"></div></div>`}
+function heroSpr(c){c=c||S.char;return c&&c.gender==='남'?'heroM':'hero'}
+function heroHTML(){const c=S.char?S.char.color:'#EE7FAE';return `<div class="hero" id="hero"><div class="aura" style="background:${esc(c)}"></div><div data-spr="${heroSpr()}" data-sc="5" data-hero="${esc(c)}"></div><div data-spr="sword" data-sc="4" style="position:absolute;right:-22px;top:34px"></div></div>`}
 const FIRE=['#FFE066','#F7A531','#E2453C','#FFF3B0','#D7263D'];
 function burst(x,y,colors,n){const cv=document.getElementById('pfx');if(!cv||matchMedia('(prefers-reduced-motion: reduce)').matches)return;const g=cv.getContext('2d');const sx=cv.width/(cv.clientWidth||420);
   const P=[...Array(n||28)].map(()=>({x:x*sx,y:y*sx,vx:(Math.random()-.5)*9,vy:(Math.random()-.8)*8,s:4+Math.floor(Math.random()*3)*3,c:colors[Math.floor(Math.random()*colors.length)],l:26+Math.random()*16}));
@@ -714,8 +716,8 @@ function renderOnboarding(){
   const head=`${stepsBar(st+1)}<div class="story" style="padding:16px 18px"><p class="q" style="font-size:21px">${OB_TITLES[st]}</p></div>`;
   let body='',ok=()=>true;
   if(st===1){body=`<div class="card"><label for="nm"><h3>캐릭터 이름</h3></label><input type="text" id="nm" maxlength="10" placeholder="예: 조가나디" value="${esc(d.name||'')}"><p class="tiny muted">그룹 랭킹에 보이는 이름이에요. 실명은 쓰지 마세요.</p></div>`;ok=()=>d.name&&d.name.length>=1}
-  if(st===2){body=`<div class="card"><h3>직업</h3>${chipGroup('job',JOBS,d.job,true)}</div>
-    <div class="card"><h3>오라 색 <span class="tiny muted">타격 이펙트·그래프 색</span></h3><div class="swatches">${COLORS.map(([n,c])=>`<button class="sw" style="background:${c}" data-c="${c}" data-n="${n}" aria-label="${n}" aria-pressed="${d.color===c}"></button>`).join('')}</div><p class="small" id="cn">${d.colorName||'색을 골라줘'}</p></div>`;ok=()=>d.job&&d.color}
+  if(st===2){body=`<div class="card"><h3>성별 <span class="tiny muted">캐릭터 모습</span></h3><div class="row" style="gap:10px">${['여','남'].map(g=>`<button class="opt" data-gd="${g}" aria-pressed="${d.gender===g}" style="flex:1;justify-content:center;align-items:center"><span data-spr="${g==='남'?'heroM':'hero'}" data-sc="3" data-hero="${esc(d.color||'#EE7FAE')}"></span><b style="color:var(--ink)">${g==='여'?'여학생':'남학생'}</b></button>`).join('')}</div></div><div class="card"><h3>직업</h3>${chipGroup('job',JOBS,d.job,true)}</div>
+    <div class="card"><h3>오라 색 <span class="tiny muted">타격 이펙트·그래프 색</span></h3><div class="swatches">${COLORS.map(([n,c])=>`<button class="sw" style="background:${c}" data-c="${c}" data-n="${n}" aria-label="${n}" aria-pressed="${d.color===c}"></button>`).join('')}</div><p class="small" id="cn">${d.colorName||'색을 골라줘'}</p></div>`;ok=()=>d.gender&&d.job&&d.color}
   if(st===3){body=`<div class="card"><h3>성격 <span class="tiny muted">캐릭터 말투</span></h3>${chipGroup('per',PERS,d.per,true)}</div>
     <div class="card"><h3>좋아하는 음식 <span class="tiny muted">전투 포션 · 30분 +15%</span></h3>${chipGroup('food',FOODS,d.food,true)}</div>
     <div class="card"><h3>취미 <span class="tiny muted">쉬는시간 15분 연출</span></h3>${chipGroup('hob',HOBBY,d.hob,true)}</div>`;ok=()=>d.per&&d.food&&d.hob}
@@ -724,7 +726,7 @@ function renderOnboarding(){
   scr.innerHTML=head+body+`<div class="row"><button class="btn ghost" id="prev" style="width:auto">이전</button><button class="btn" id="next">${st===5?'캐릭터 카드 만들기':'다음'}</button></div>`;
   syncNext=()=>{$('#next').disabled=!ok()};syncNext();
   if(st===1)$('#nm').oninput=e=>{d.name=e.target.value.trim();syncNext()};
-  if(st===2){bindChips('job','job');scr.querySelectorAll('.sw').forEach(b=>b.onclick=()=>{d.color=b.dataset.c;d.colorName=b.dataset.n;scr.querySelectorAll('.sw').forEach(x=>x.setAttribute('aria-pressed',x===b));$('#cn').textContent=d.colorName;syncNext()})}
+  if(st===2){scr.querySelectorAll('[data-gd]').forEach(b=>b.onclick=()=>{d.gender=b.dataset.gd;scr.querySelectorAll('[data-gd]').forEach(x=>x.setAttribute('aria-pressed',x===b));syncNext()});bindChips('job','job');scr.querySelectorAll('.sw').forEach(b=>b.onclick=()=>{d.color=b.dataset.c;d.colorName=b.dataset.n;scr.querySelectorAll('.sw').forEach(x=>x.setAttribute('aria-pressed',x===b));$('#cn').textContent=d.colorName;syncNext()})}
   if(st===3){bindChips('per','per');bindChips('food','food');bindChips('hob','hob')}
   if(st===4)scr.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{d.goal=GOALS[+b.dataset.g];scr.querySelectorAll('.opt').forEach(x=>x.setAttribute('aria-pressed',x===b));syncNext()});
   if(st===5)$('#dr').oninput=e=>{d.dream=e.target.value.trim();$('#cnt').textContent=e.target.value.length+' / 50';syncNext()};
@@ -732,7 +734,7 @@ function renderOnboarding(){
   $('#next').onclick=()=>{if(st<5){ob.step++;render();scr.scrollTop=0}else{S.char={...d,created:TODAY()};S.code=S.code||newCode();S.season=S.season||monthKeyOf(TODAY());save();UI.tab='me';UI.justMade=true;render();scr.scrollTop=0}};
 }
 function makeDemo(){
-  S.code=S.code||newCode();S.char={name:'조가나디',kingdom:'nj',job:'공주',color:'#EE7FAE',colorName:'벚꽃 핑크',per:'갓생러',food:'마라탕',hob:'쇼츠',goal:'꿈의 문 열고 꿈 이루기',dream:'멋진 선배들이 있는 곳에서 맥북을 들고 홍대에서 영상편집하기',created:TODAY(),demo:true};
+  S.code=S.code||newCode();S.char={name:'조가나디',gender:'여',kingdom:'nj',job:'공주',color:'#EE7FAE',colorName:'벚꽃 핑크',per:'갓생러',food:'마라탕',hob:'쇼츠',goal:'꿈의 문 열고 꿈 이루기',dream:'멋진 선배들이 있는 곳에서 맥북을 들고 홍대에서 영상편집하기',created:TODAY(),demo:true};
   const t=TODAY();const w=weekKey(t);
   for(let k=w;k<t;k=addDays(k,1)){const L=log(k);L.demo=true;L.q.forEach((q,i)=>{q.done=i<2||Math.random()<.5;if(q.done&&q.a==='lec'){q.no=S.lecNo[q.s]++;if(lectureBonusAvailable(q.s,k)){q.pts=6;(S.bonus[weekKey(k)]=S.bonus[weekKey(k)]||{})[q.s]=1}}});L.life={gym:true};
     const sx=[3.8,3.2,2.4,3.6,4.1][Math.floor(Math.random()*5)],cx=[3.9,3.0,3.7,2.3,3.4][Math.floor(Math.random()*5)];S.emo[k]=judge(sx,cx,3.6,{anx:2,wor:2,bor:2,apa:1,dream:4});S.emo[k].cond=3;S.emo[k].demo=true;
@@ -862,7 +864,7 @@ function renderBoss(){
   <div class="bossgrid">${Object.keys(SUBJ).map(x=>`<button class="bcell ${bossLeft(x,mk)?'':'kill'}" data-b="${x}" aria-pressed="${x===s}"><span data-spr="${x}" data-sc="2"></span><span class="nm">${SUBJ[x].n}</span><div class="bar"><i style="width:${pctOf(bossLeft(x,mk),SUBJ[x].hp)}%"></i></div></button>`).join('')}</div>
   ${hp>0?(openQ>=0?`<button class="btn" id="atk">${esc(qName(L.q[openQ]))} 완료로 공격!</button>`:`<div class="card"><p class="small">오늘 ${B.n} 퀘스트가 없어요. 오늘 탭의 '즉석 추가'로 넣을 수 있어요.</p></div>`)
     :`<div class="card"><h3>처치 완료!</h3><p class="small">장비 [${esc(B.gear)}] · 칭호 [${esc(B.title)}]. 월말에 장비 카드로 받아 시험 레이드에서 쓸 수 있어요. 이번 달 남은 ${B.n} 공부는 레이드와 히든보스로 들어가요.</p></div>`}
-  <div class="card"><div class="row"><span data-spr="hero" data-sc="3" data-hero="${esc(S.char.color)}"></span><div style="min-width:0"><b>${esc(S.char.name)}</b> <span class="tiny muted">${esc(S.char.job)}</span><p class="small" style="color:${K.c}">${K.n} · [${K.p}] ${K.d}</p></div></div>
+  <div class="card"><div class="row"><span data-spr="${heroSpr()}" data-sc="3" data-hero="${esc(S.char.color)}"></span><div style="min-width:0"><b>${esc(S.char.name)}</b> <span class="tiny muted">${esc(S.char.job)}</span><p class="small" style="color:${K.c}">${K.n} · [${K.p}] ${K.d}</p></div></div>
     ${blessActive()?`<p class="small"><span class="pill purple">마스터의 가호</span> ${fmt(S.bless.until)}까지 데미지 +${BLESS_PCT}%</p>`:''}
     <div><div class="row between small"><span>궁극기 게이지</span><span class="num px">${S.gauge}%</span></div><div class="bar gauge"><i style="width:${S.gauge}%"></i></div><p class="tiny muted">100%가 되면 다음 공격 데미지 3배</p></div>
     <div class="row"><button class="btn ghost" id="pot" ${pot.n>=2||potOn?'disabled':''} style="font-size:15px">${potOn?`${esc(S.char.food)} 포션 효과 중`:`${esc(S.char.food)} 포션 (${2-pot.n}/2)`}</button><button class="btn ghost" id="tm" style="font-size:15px">25분 집중 공격</button></div>
@@ -1078,7 +1080,7 @@ function renderMe(){
   const titles=['떨어진 자','견습 모험가','숙련 모험가','왕국의 기사','대륙의 주인'];
   let h=`${UI.justMade?'<h1>캐릭터 카드 완성!</h1>':''}
   <div class="charcard" style="background:linear-gradient(150deg,${c.color},${K.c})">
-    <div class="row"><span data-spr="hero" data-sc="4" data-hero="${esc(c.color)}" style="background:rgba(255,255,255,.25);padding:4px"></span><div style="min-width:0"><h2>${esc(c.name)}</h2><p class="small">${K.n} 소속 · Lv.${lv} ${titles[Math.min(4,lv-1)]}</p></div></div>
+    <div class="row"><span data-spr="${heroSpr(c)}" data-sc="4" data-hero="${esc(c.color)}" style="background:rgba(255,255,255,.25);padding:4px"></span><div style="min-width:0"><h2>${esc(c.name)}</h2><p class="small">${K.n} 소속 · Lv.${lv} ${titles[Math.min(4,lv-1)]}</p></div></div>
     <p>${esc(c.food)}을(를) 좋아하는 ${esc(c.per)} ${esc(c.job)}.</p>
     <div class="dream"><span class="tiny" style="opacity:.8">나의 꿈</span><br>${esc(c.dream)}</div>
     <p class="tiny" style="opacity:.85">여정의 목표: ${esc(c.goal)} · 오라 ${esc(c.colorName||'')}</p></div>
@@ -1090,6 +1092,7 @@ function renderMe(){
     ${(S.items||[]).length?(S.items||[]).map(it=>`<div class="item"><span data-spr="${it.kind==='chest'?'chest':it.s}" data-sc="${it.kind==='chest'?3:2}"></span><div style="flex:1"><b class="small">${esc(it.name)}</b><div class="tiny muted">${esc(it.from)} 획득 · 레이드 ${it.dmg} 데미지</div></div></div>`).join(''):'<p class="small muted">한 달을 마치면 처치한 과목 보스마다 장비 카드 1장(레이드 100 데미지), 기준치 300점을 채우면 시즌 보물상자(300 데미지)를 받아요. 시험 레이드가 열리면 꺼내 쓰세요.</p>'}</div>
   ${S.seasons&&Object.keys(S.seasons).length?`<div class="card"><h3>지난 시즌</h3>${Object.keys(S.seasons).sort().reverse().map(mk=>{const r=S.seasons[mk];return `<div class="row between small"><span>${Number(mk.slice(5))}월 · ${esc(r.name)} · ${esc(KINGDOMS[r.kingdom]?KINGDOMS[r.kingdom].n:'')}</span><span class="num px">${r.pts}점 ${r.killed.length}/6</span></div>`}).join('')}</div>`:''}
   <div class="card"><h3>연속 출석 <span class="num">${streak()}</span>일</h3><p class="small muted">7일이면 펫 [알람 부엉이], 30일이면 [황금 마라탕 펫]. 출석은 퀘스트 1개 이상 체크한 날.</p></div>
+  <div class="card"><div class="row between"><h3>캐릭터 성별</h3><div class="row">${['여','남'].map(g=>`<button class="chip" data-sg="${g}" aria-pressed="${(c.gender||'여')===g}">${g==='여'?'여학생':'남학생'}</button>`).join('')}</div></div></div>
   <div class="card"><h3>학부모 링크</h3><p class="small muted">부모님께 이 링크를 보내면 분석 화면만 열려요. 다른 친구와의 순위는 보이지 않아요.</p>
     <input type="text" id="plink" readonly value="${BASE_URL}#parent-${esc(S.code||'')}"><button class="btn ghost" id="pcopy2">링크 복사</button></div>
   ${MODE_DB?`<div class="card"><h3>내 계정</h3><p class="small muted">아이디 <b>${esc(UID)}</b> · ${{ok:'기록이 서버에 저장됐어요',saving:'저장 중...',wait:'곧 저장돼요',fail:'저장 대기 중 (인터넷 되면 자동으로 올라가요)',offline:'서버 연결 안 됨 (이 기기에 보관 중)',loading:'불러오는 중'}[SYNC]||''}</p>
@@ -1100,6 +1103,7 @@ function renderMe(){
   `;
   scr.innerHTML=h;UI.justMade=false;
   $('#pcopy2').onclick=()=>{const v=$('#plink').value;navigator.clipboard.writeText(v).then(()=>toast('복사했어요')).catch(()=>{$('#plink').select();toast('선택된 링크를 복사해 주세요')})};
+  scr.querySelectorAll('[data-sg]').forEach(b=>b.onclick=()=>{S.char.gender=b.dataset.sg;save();render()});
   if(!MODE_DB)return;
   $('#cpw').onclick=async e=>{const b=e.target,o=$('#opw').value,n=$('#npw').value;if(n.length<6){toast('새 비밀번호는 6자 이상');return}b.disabled=true;
     try{const j=await api('changePassword',{oldPw:o,newPw:n});AUTH.token=j.token;localStorage.setItem(AUTH_KEY,JSON.stringify(AUTH));toast('비밀번호를 바꿨어요');render()}catch(x){toast(x.message);b.disabled=false}};

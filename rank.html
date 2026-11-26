@@ -97,6 +97,7 @@ const PAL={k:'#2B1D16',w:'#FFFFFF',y:'#F7C531',h:'#4A2A1A',s:'#F6C9A0',p:'#EE7FA
   n:'#2D1B4E',N:'#5B3B8C',M:'#8A93A6',u:'#444C5C',e:'#3FAF5B',E:'#1F6B35',x:'#F3E3C3'};
 const SPR={
  hero:["....y.y.y...","....yyyyy...","...hhhhhhh..","..hhhhhhhhh.","..hsksssksh.","..hsssssssh.","..hssspsssh.","..hhssssshh.","...pppppp...","..pppwwppp..",".sppppppppss",".s.pppppp.s.","..pppppppp..",".pppppppppp.","..kk....kk..","..kk....kk.."],
+ heroM:["............","...hhhhhh...","..hhhhhhhh..","..hhhhhhhhh.","..hsksssks..","..hsssssss..","...sssmsss..","...sssssss..","...pppppp...","..pppwwppp..",".sppppppppss",".s.pppppp.s.","...pppppp...","...uu..uu...","...uu..uu...","..kkk..kkk.."],
  m:["....gggggggg....","...gGGGGGGGGg...","...gGrrGGrrGg...","...gGGGGGGGGg...","...gGGggggGGg...","....gGGGGGGg....",".gggggggggggggg.","gGGGGGyyyyGGGGGg","gGGgGGyGGyGGgGGg","gGGgGGGyyGGGgGGg","gGGgGGyGGGGGgGGg","ggg.gGyyyyGg.ggg","....gGGGGGGg....","....gGGggGGg....","...ggGGg.gGGgg..","...gggg..gggg..."],
  k:["......llll......",".....llllll.....","bb..lwkllkwl..bb","bbb.llllllll.bbb","bbbb.llmmll.bbbb",".bbbb.llll.bbbb.","..bbbLLLLLLbbb..","...bLLLLLLLLb...","....LLLLLLLL....","....LLLLLLLL....","...LLLLLLLLLL...","..LLLLLLLLLLLL..","......L..L......","......L..L......"],
  e:["....EEEEEEEE....","..EEeeeeeeeeEE..",".EeewkeeeewkeeE.",".EeekkeeeekkeeE.","EeeeeeeeeeeeeeeE","EemmmmmmmmmmmmeE","EemwmwmwmwmwmmeE","EemmmmmmmmmmmmeE","EemmwmwmwmwmwmeE","EeemmmmmmmmmmeeE",".EeeeeeeeeeeeeE.","..EeeeeeeeeeeE..","..EeE.EeeE.EeE..","..EE..EEEE..EE.."],
@@ -127,7 +128,7 @@ async function api(action,data){const r=await fetch(API,{method:'POST',headers:{
 async function load(){try{const j=await api('roster');D=j.students||{};ERR='';lastAt=Date.now()}catch(e){if(e.code==='auth'){try{localStorage.removeItem(TOK.k)}catch(x){}TOK=null}ERR=e.message||'인터넷 연결을 확인해 주세요'}render()}
 function sum(p,keys){const d=p.daily||{};return keys.reduce((a,k)=>a+(d[k]?d[k].r||0:0),0)}
 function players(){const mk=keysOf('month');return Object.keys(D||{}).map(id=>({id,...D[id]})).filter(p=>p.char&&sum(p,mk)>0)}
-function av(p,sc){return `<span class="av"><span data-spr="hero" data-sc="${sc||2}" data-hero="${esc(p.char.color)}"></span></span>`}
+function av(p,sc){return `<span class="av"><span data-spr="${p.char.gender==='남'?'heroM':'hero'}" data-sc="${sc||2}" data-hero="${esc(p.char.color)}"></span></span>`}
 function board(p){const mk=dayKey().slice(0,7);return p.board&&p.board.mk===mk?p.board:{boss:{},season:p.board?p.board.season:0}}
 
 function render(){

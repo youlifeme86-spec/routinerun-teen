@@ -12,7 +12,7 @@
  *   오류  : 학생 폰에서 난 오류가 실시간으로 쌓이는 곳
  */
 
-var SERVER_VERSION = '2026.11.26-2';
+var SERVER_VERSION = '2026.11.26-3';
 var TZ = 'Asia/Seoul';
 var CHUNK = 45000;            // 시트 한 칸 최대 50,000자라 45,000자씩 나눠 저장
 var MAX_CHUNKS = 40;          // 학생 한 명 최대 약 1.8MB
@@ -198,7 +198,7 @@ function roster_(b) {
     if (!sum || !sum.char) return;
     var daily = {};
     Object.keys(sum.daily || {}).forEach(function (k) { if (k >= since) daily[k] = { r: sum.daily[k].r || 0 }; });
-    out[id] = { char: { name: sum.char.name, color: sum.char.color, kingdom: sum.char.kingdom, job: sum.char.job }, daily: daily, board: sum.board || null };
+    out[id] = { char: { name: sum.char.name, color: sum.char.color, kingdom: sum.char.kingdom, job: sum.char.job, gender: sum.char.gender || '' }, daily: daily, board: sum.board || null };
   });
   try { cache.put('roster', JSON.stringify(out), 30); } catch (x) {}
   return { students: out, approved: mine };
@@ -411,7 +411,7 @@ function summary_(st) {
     });
   });
   return {
-    char: c ? { name: c.name, color: c.color, kingdom: c.kingdom, job: c.job } : null,
+    char: c ? { name: c.name, color: c.color, kingdom: c.kingdom, job: c.job, gender: c.gender || '' } : null,
     daily: daily, bless: st.bless || null, monthPts: pts, hiddenReq: hiddenReq,
     board: { mk: mk, boss: boss, season: season, items: (st.items || []).length, memOk: memOk }
   };
