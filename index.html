@@ -8,7 +8,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%2346B1D8'/%3E%3Crect x='3' y='9' width='10' height='4' fill='%237CC242'/%3E%3Crect x='6' y='3' width='4' height='6' fill='%23E2453C'/%3E%3C/svg%3E">
 <script src="config.js"></script>
 <script>
-window.RR_VERSION='2026.11.26-13';
+window.RR_VERSION='2026.11.26-14';
 /* 실시간 오류 기록: 학생 폰에서 난 오류를 구글 시트 [오류] 탭으로 보냄 */
 (function(){var n=0;window.RR_REPORT=function(msg,stack,extra){try{var C=window.RR_CONFIG||{};if(!C.API_URL||n>=8)return;n++;var a=null;try{a=JSON.parse(localStorage.getItem('rr-auth-v2')||'null')}catch(e){}
 fetch(C.API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},keepalive:true,body:JSON.stringify({action:'logError',token:a&&a.token||'',msg:String(msg||'').slice(0,1000),stack:String(stack||'').slice(0,3000),page:location.pathname+(location.hash.indexOf('#parent')===0?' (학부모)':''),tab:(window.RR_TAB||'')+(extra?' '+extra:''),ver:window.RR_VERSION||'',ua:navigator.userAgent.slice(0,300)})}).catch(function(){})}catch(e){}};
@@ -683,7 +683,14 @@ function dayScoreOf(st,k){const L=(st.logs||{})[k];if(!L)return {raw:0,rank:0,mi
   let raw=0,min=0;const subs=new Set();
   L.q.forEach(q=>{if(q.done){raw+=qPts(q,L);min+=q.min||actMin(q.a,q.s);subs.add(q.s)}});
   Object.keys(L.life).forEach(a=>{if(L.life[a])raw+=ACT[a].pt});
-  return {raw,rank:Math.min(raw,DAILY_CAP),min,subjects:subs.size}}
+  const eb=L.early&&L.early.pts||0;
+  return {raw:raw+eb,rank:Math.min(raw,DAILY_CAP)+eb,min,subjects:subs.size,early:eb}}
+/* 자정 전 마감 보너스: 그날 퀘스트를 다 끝내고 밤 12시 전에 '오늘 끝!'을 누르면 그날 점수의 1% (올림, 최소 1점) */
+const EARLY_PCT=1;
+function calToday(){const d=new Date();return ymd(d.getFullYear(),d.getMonth()+1,d.getDate())}
+function earlyPts(k){const s=dayScore(k);return Math.max(1,Math.ceil((s.raw-(s.early||0))*EARLY_PCT/100))}
+function earlyOpen(k){const L=S.logs[k];return !!L&&!L.early&&calToday()===k}
+function allDone(k){const L=S.logs[k];return !!L&&L.q.length>0&&L.q.every(q=>q.done)}
 function streak(){let n=0,k=TODAY();if(!(S.logs[k]&&S.logs[k].q.some(q=>q.done)))k=addDays(k,-1);
   while(S.logs[k]&&S.logs[k].q.some(q=>q.done)){n++;k=addDays(k,-1)}return n}
 function weekScore(k){const w=weekKey(k||TODAY());let t=0;for(let i=0;i<7;i++)t+=dayScore(addDays(w,i)).rank;return t}
@@ -914,6 +921,8 @@ function renderToday(){
   h+=`<div class="card" style="gap:8px"><div class="row between"><h3>외우기 선생님 인증</h3><span class="pill">3점 → 5점</span></div><p class="small muted">오늘 외운 걸 선생님께 확인받으면 오늘 외우기 퀘스트가 하나에 3점 대신 5점이 돼요.</p>
     <button class="btn ghost" id="hid" ${L.hiddenReq||!L.q.some(q=>q.a==='mem'&&q.done)?'disabled':''}>${L.hiddenReq?(L.hidden?'인증 완료 · 외우기 5점':'선생님 인증 기다리는 중'):L.q.some(q=>q.a==='mem'&&q.done)?'인증 요청 보내기':'외우기 퀘스트를 먼저 완료해 주세요'}</button>${L.hiddenReq&&!L.hidden&&!MODE_DB?'<button class="chip" id="hidok" style="align-self:flex-start">이 기기에서 승인하기 (오프라인)</button>':''}</div>`;
   const emoDone=S.emo[k]&&!S.emo[k].demo;
+  {const Lx=S.logs[k];if(Lx&&Lx.early)h+=`<div class="card" style="gap:4px;background:#E7F3D6"><b>자정 전 마감 보너스 +${Lx.early.pts}점 획득!</b><p class="tiny muted">오늘 12시 전에 공부를 끝냈어요. 랭킹·리포트 점수에 들어가요.</p></div>`;
+   else if(earlyOpen(k))h+=`<div class="card" style="gap:4px"><div class="row between"><b>자정 전 마감 보너스</b><span class="pill">+${earlyPts(k)}점</span></div><p class="tiny muted">오늘 퀘스트를 전부 끝내고 밤 12시 전에 '오늘 끝!'을 누르면 그날 점수의 ${EARLY_PCT}%(올림, 최소 1점)를 더 줘요.${allDone(k)?'':` 남은 퀘스트 ${Lx?Lx.q.filter(q=>!q.done).length:0}개!`}</p></div>`}
   h+=`<button class="btn" id="finish">${emoDone?'마음 체크 다시 하기':'오늘 끝! 마음 체크하러 가기'}</button><p class="tiny muted" style="text-align:center">한 과목은 하루 3회, 같은 과목·같은 활동은 2회까지 점수가 쌓여요. 체크 취소는 오늘만.</p>`;
   scr.innerHTML=h;
   scr.querySelectorAll('.check[data-i]').forEach(b=>b.onclick=()=>toggleQuest(+b.dataset.i));
@@ -921,7 +930,8 @@ function renderToday(){
   $('#add').onclick=addSheet;
   $('#hid').onclick=()=>{L.hiddenReq=true;save();toast('선생님께 인증 요청을 보냈어요');render()};
   if($('#hidok'))$('#hidok').onclick=()=>{L.hidden=1;save();toast('인증 완료! 외우기 5점');render()};
-  $('#finish').onclick=()=>{UI.tab='emo';UI.emo={i:0,a:{}};render();toTop()};
+  $('#finish').onclick=()=>{const Lk=S.logs[k];if(earlyOpen(k)&&allDone(k)){const pts=earlyPts(k);Lk.early={pts,at:Date.now()};save();SND.play('item');toast(`자정 전 마감 보너스 +${pts}점!`)}
+    UI.tab='emo';UI.emo={i:0,a:{}};render();toTop()};
   if($('#gift'))$('#gift').onclick=openGift;
 }
 function toggleQuest(i){
