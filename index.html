@@ -8,7 +8,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%2346B1D8'/%3E%3Crect x='3' y='9' width='10' height='4' fill='%237CC242'/%3E%3Crect x='6' y='3' width='4' height='6' fill='%23E2453C'/%3E%3C/svg%3E">
 <script src="config.js"></script>
 <script>
-window.RR_VERSION='2026.11.26-5';
+window.RR_VERSION='2026.11.26-6';
 /* 실시간 오류 기록: 학생 폰에서 난 오류를 구글 시트 [오류] 탭으로 보냄 */
 (function(){var n=0;window.RR_REPORT=function(msg,stack,extra){try{var C=window.RR_CONFIG||{};if(!C.API_URL||n>=8)return;n++;var a=null;try{a=JSON.parse(localStorage.getItem('rr-auth-v2')||'null')}catch(e){}
 fetch(C.API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},keepalive:true,body:JSON.stringify({action:'logError',token:a&&a.token||'',msg:String(msg||'').slice(0,1000),stack:String(stack||'').slice(0,3000),page:location.pathname+(location.hash.indexOf('#parent')===0?' (학부모)':''),tab:(window.RR_TAB||'')+(extra?' '+extra:''),ver:window.RR_VERSION||'',ua:navigator.userAgent.slice(0,300)})}).catch(function(){})}catch(e){}};
@@ -215,7 +215,10 @@ img.px,canvas.px{image-rendering:pixelated;image-rendering:crisp-edges}
 .scene{position:relative;height:250px;flex:none;overflow:hidden;margin:-16px -14px 0;background:linear-gradient(#46B1D8 0 40%,#86D9F0 40% 100%)}
 @media (max-width:699px){.scene{margin:-16px 0 0}}
 .scene .saw{position:absolute;left:0;right:0;top:38%;height:12px;background-repeat:repeat-x;background-size:24px 12px}
-.scene .ground{position:absolute;left:0;right:0;bottom:0;height:64px;background-repeat:repeat-x;background-size:48px 64px}
+.scene .ground{position:absolute;left:0;right:0;bottom:0;height:64px;background-repeat:repeat-x;background-size:64px 64px;image-rendering:pixelated}
+.scene .mtn{position:absolute;left:0;right:0;bottom:92px;height:96px;background-repeat:repeat-x;background-size:240px 96px;image-rendering:pixelated}
+.scene .hills{position:absolute;left:0;right:0;bottom:62px;height:60px;background-repeat:repeat-x;background-size:128px 60px;background-position:-20px 0;image-rendering:pixelated}
+.scene .isle{position:absolute;top:56px;left:38%;animation:float 4.5s ease-in-out infinite}
 .cloud{position:absolute;animation:drift linear infinite}
 @keyframes drift{from{transform:translateX(-140px)}to{transform:translateX(480px)}}
 .tw{position:absolute;animation:twinkle 1.6s steps(2) infinite}
@@ -287,6 +290,7 @@ details summary{cursor:pointer;padding:4px 0}
   <p class="tiny muted" id="foot" style="max-width:420px;text-align:center">연결 중...</p>
 </div>
 
+<script src="art.js?v=2026.11.26-6"></script>
 <script>
 (function(){
 /* ---------- 데이터 ---------- */
@@ -453,15 +457,18 @@ try{GROUND=tileURL(24,32,g=>{g.fillStyle='#7CC242';g.fillRect(0,0,24,9);g.fillSt
   g.fillStyle='#8A5A3B';g.fillRect(0,9,24,23);g.fillStyle='#6B4329';[[0,12,6,4],[10,14,8,4],[4,20,8,4],[16,22,6,4],[0,27,4,4],[12,28,8,3]].forEach(a=>g.fillRect(...a));
   g.fillStyle='#A06C47';[[6,16,4,3],[18,12,4,3],[20,27,4,3]].forEach(a=>g.fillRect(...a))});
  SAW=tileURL(12,6,g=>{g.fillStyle='#B9ECF8';g.fillRect(4,0,4,2);g.fillRect(2,2,8,2);g.fillRect(0,4,12,2)})}catch(e){}
-function hydrate(root){(root||document).querySelectorAll('[data-spr]').forEach(el=>{if(el.firstChild)return;const pal=el.dataset.hero?{...PAL,p:el.dataset.hero}:PAL;el.appendChild(sprite(SPR[el.dataset.spr],+el.dataset.sc||4,pal))})}
-function sceneHTML(inner,opts){opts=opts||{};
-  const clouds=[[14,26],[40,34],[22,30]].map(([y,d],i)=>`<div class="cloud" data-spr="cloud" data-sc="4" style="top:${y}px;left:0;animation-duration:${d}s;animation-delay:-${i*9}s"></div>`).join('');
-  return `<div class="scene" id="scene">${clouds}<div class="saw" style="background-image:url(${SAW})"></div>
-   ${opts.deco===false?'':'<div data-spr="tree" data-sc="5" style="position:absolute;bottom:58px;left:-14px"></div><div data-spr="mush" data-sc="4" style="position:absolute;bottom:60px;left:120px"></div>'}
-   <div class="ground" style="background-image:url(${GROUND})"></div>${inner}
+function hydrate(root){(root||document).querySelectorAll('[data-spr]').forEach(el=>{if(el.firstChild)return;let cv=null;try{cv=window.RRART&&RRART.make(el.dataset.spr,+el.dataset.sc||4,el.dataset)}catch(e){cv=null}
+  if(!cv){if(!SPR[el.dataset.spr])return;const pal=el.dataset.hero?{...PAL,p:el.dataset.hero}:PAL;cv=sprite(SPR[el.dataset.spr],+el.dataset.sc||4,pal)}el.appendChild(cv)})}
+function sceneHTML(inner,opts){opts=opts||{};const A=(window.RRART&&RRART.scene())||{};
+  const clouds=[[14,26],[40,34],[22,30]].map(([y,d],i)=>`<div class="cloud" data-spr="cloud" data-sc="${A.mtn?3:4}" style="top:${y}px;left:0;animation-duration:${d}s;animation-delay:-${i*9}s"></div>`).join('');
+  const back=A.mtn?`<div class="mtn" style="background-image:url(${A.mtn})"></div><div class="isle" data-spr="island" data-sc="2"></div>${clouds}<div class="hills" style="background-image:url(${A.hills})"></div>`:`${clouds}<div class="saw" style="background-image:url(${SAW})"></div>`;
+  const deco=opts.deco===false?'':(A.mtn?'<div data-spr="tree" data-sc="3" style="position:absolute;bottom:58px;left:-22px"></div><div data-spr="bush" data-sc="3" style="position:absolute;bottom:58px;left:128px"></div>':'<div data-spr="tree" data-sc="5" style="position:absolute;bottom:58px;left:-14px"></div><div data-spr="mush" data-sc="4" style="position:absolute;bottom:60px;left:120px"></div>');
+  return `<div class="scene" id="scene">${back}${deco}
+   <div class="ground" style="background-image:url(${A.ground||GROUND})"></div>${inner}
    <div class="fx" id="fx"></div><canvas class="fx" id="pfx" width="420" height="250"></canvas><div class="flash" id="flash"></div></div>`}
 function heroSpr(c){c=c||S.char;return c&&c.gender==='남'?'heroM':'hero'}
-function heroHTML(){const c=S.char?S.char.color:'#EE7FAE';return `<div class="hero" id="hero"><div class="aura" style="background:${esc(c)}"></div><div data-spr="${heroSpr()}" data-sc="5" data-hero="${esc(c)}"></div><div data-spr="sword" data-sc="4" style="position:absolute;right:-22px;top:34px"></div></div>`}
+function heroAttr(c){c=c||S.char||{};return `data-spr="${heroSpr(c)}" data-hero="${esc(c.color||'#EE7FAE')}" data-job="${esc(c.job||'')}"`}
+function heroHTML(){const c=S.char?S.char.color:'#EE7FAE';const art=!!window.RRART;return `<div class="hero" id="hero"><div class="aura" style="background:${esc(c)}"></div><div ${heroAttr()} data-sc="5"></div>${art?'':'<div data-spr="sword" data-sc="4" style="position:absolute;right:-22px;top:34px"></div>'}</div>`}
 const FIRE=['#FFE066','#F7A531','#E2453C','#FFF3B0','#D7263D'];
 function burst(x,y,colors,n){const cv=document.getElementById('pfx');if(!cv||matchMedia('(prefers-reduced-motion: reduce)').matches)return;const g=cv.getContext('2d');const sx=cv.width/(cv.clientWidth||420);
   const P=[...Array(n||28)].map(()=>({x:x*sx,y:y*sx,vx:(Math.random()-.5)*9,vy:(Math.random()-.8)*8,s:4+Math.floor(Math.random()*3)*3,c:colors[Math.floor(Math.random()*colors.length)],l:26+Math.random()*16}));
@@ -716,7 +723,7 @@ function renderOnboarding(){
   const head=`${stepsBar(st+1)}<div class="story" style="padding:16px 18px"><p class="q" style="font-size:21px">${OB_TITLES[st]}</p></div>`;
   let body='',ok=()=>true;
   if(st===1){body=`<div class="card"><label for="nm"><h3>캐릭터 이름</h3></label><input type="text" id="nm" maxlength="10" placeholder="예: 조가나디" value="${esc(d.name||'')}"><p class="tiny muted">그룹 랭킹에 보이는 이름이에요. 실명은 쓰지 마세요.</p></div>`;ok=()=>d.name&&d.name.length>=1}
-  if(st===2){body=`<div class="card"><h3>성별 <span class="tiny muted">캐릭터 모습</span></h3><div class="row" style="gap:10px">${['여','남'].map(g=>`<button class="opt" data-gd="${g}" aria-pressed="${d.gender===g}" style="flex:1;justify-content:center;align-items:center"><span data-spr="${g==='남'?'heroM':'hero'}" data-sc="3" data-hero="${esc(d.color||'#EE7FAE')}"></span><b style="color:var(--ink)">${g==='여'?'여학생':'남학생'}</b></button>`).join('')}</div></div><div class="card"><h3>직업</h3>${chipGroup('job',JOBS,d.job,true)}</div>
+  if(st===2){body=`<div class="card"><h3>성별 <span class="tiny muted">캐릭터 모습</span></h3><div class="row" style="gap:10px">${['여','남'].map(g=>`<button class="opt" data-gd="${g}" aria-pressed="${d.gender===g}" style="flex:1;justify-content:center;align-items:center"><span ${heroAttr({gender:g,color:d.color,job:d.job})} data-sc="3"></span><b style="color:var(--ink)">${g==='여'?'여학생':'남학생'}</b></button>`).join('')}</div></div><div class="card"><h3>직업</h3>${chipGroup('job',JOBS,d.job,true)}</div>
     <div class="card"><h3>오라 색 <span class="tiny muted">타격 이펙트·그래프 색</span></h3><div class="swatches">${COLORS.map(([n,c])=>`<button class="sw" style="background:${c}" data-c="${c}" data-n="${n}" aria-label="${n}" aria-pressed="${d.color===c}"></button>`).join('')}</div><p class="small" id="cn">${d.colorName||'색을 골라줘'}</p></div>`;ok=()=>d.gender&&d.job&&d.color}
   if(st===3){body=`<div class="card"><h3>성격 <span class="tiny muted">캐릭터 말투</span></h3>${chipGroup('per',PERS,d.per,true)}</div>
     <div class="card"><h3>좋아하는 음식 <span class="tiny muted">전투 포션 · 30분 +15%</span></h3>${chipGroup('food',FOODS,d.food,true)}</div>
@@ -726,7 +733,7 @@ function renderOnboarding(){
   scr.innerHTML=head+body+`<div class="row"><button class="btn ghost" id="prev" style="width:auto">이전</button><button class="btn" id="next">${st===5?'캐릭터 카드 만들기':'다음'}</button></div>`;
   syncNext=()=>{$('#next').disabled=!ok()};syncNext();
   if(st===1)$('#nm').oninput=e=>{d.name=e.target.value.trim();syncNext()};
-  if(st===2){scr.querySelectorAll('[data-gd]').forEach(b=>b.onclick=()=>{d.gender=b.dataset.gd;scr.querySelectorAll('[data-gd]').forEach(x=>x.setAttribute('aria-pressed',x===b));syncNext()});bindChips('job','job');scr.querySelectorAll('.sw').forEach(b=>b.onclick=()=>{d.color=b.dataset.c;d.colorName=b.dataset.n;scr.querySelectorAll('.sw').forEach(x=>x.setAttribute('aria-pressed',x===b));$('#cn').textContent=d.colorName;syncNext()})}
+  if(st===2){scr.querySelectorAll('[data-gd]').forEach(b=>b.onclick=()=>{d.gender=b.dataset.gd;scr.querySelectorAll('[data-gd]').forEach(x=>x.setAttribute('aria-pressed',x===b));syncNext()});bindChips('job','job');const reHero=()=>scr.querySelectorAll('[data-gd] [data-spr]').forEach(el=>{el.dataset.job=d.job||'';if(d.color)el.dataset.hero=d.color;el.innerHTML='';hydrate(el.parentNode)});scr.querySelectorAll('#job .chip').forEach(b=>b.addEventListener('click',reHero));const ji=$('#job-in');if(ji)ji.addEventListener('input',reHero);scr.querySelectorAll('.sw').forEach(b=>b.onclick=()=>{d.color=b.dataset.c;d.colorName=b.dataset.n;scr.querySelectorAll('.sw').forEach(x=>x.setAttribute('aria-pressed',x===b));$('#cn').textContent=d.colorName;reHero();syncNext()})}
   if(st===3){bindChips('per','per');bindChips('food','food');bindChips('hob','hob')}
   if(st===4)scr.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{d.goal=GOALS[+b.dataset.g];scr.querySelectorAll('.opt').forEach(x=>x.setAttribute('aria-pressed',x===b));syncNext()});
   if(st===5)$('#dr').oninput=e=>{d.dream=e.target.value.trim();$('#cnt').textContent=e.target.value.length+' / 50';syncNext()};
@@ -864,7 +871,7 @@ function renderBoss(){
   <div class="bossgrid">${Object.keys(SUBJ).map(x=>`<button class="bcell ${bossLeft(x,mk)?'':'kill'}" data-b="${x}" aria-pressed="${x===s}"><span data-spr="${x}" data-sc="2"></span><span class="nm">${SUBJ[x].n}</span><div class="bar"><i style="width:${pctOf(bossLeft(x,mk),SUBJ[x].hp)}%"></i></div></button>`).join('')}</div>
   ${hp>0?(openQ>=0?`<button class="btn" id="atk">${esc(qName(L.q[openQ]))} 완료로 공격!</button>`:`<div class="card"><p class="small">오늘 ${B.n} 퀘스트가 없어요. 오늘 탭의 '즉석 추가'로 넣을 수 있어요.</p></div>`)
     :`<div class="card"><h3>처치 완료!</h3><p class="small">장비 [${esc(B.gear)}] · 칭호 [${esc(B.title)}]. 월말에 장비 카드로 받아 시험 레이드에서 쓸 수 있어요. 이번 달 남은 ${B.n} 공부는 레이드와 히든보스로 들어가요.</p></div>`}
-  <div class="card"><div class="row"><span data-spr="${heroSpr()}" data-sc="3" data-hero="${esc(S.char.color)}"></span><div style="min-width:0"><b>${esc(S.char.name)}</b> <span class="tiny muted">${esc(S.char.job)}</span><p class="small" style="color:${K.c}">${K.n} · [${K.p}] ${K.d}</p></div></div>
+  <div class="card"><div class="row"><span ${heroAttr()} data-sc="3"></span><div style="min-width:0"><b>${esc(S.char.name)}</b> <span class="tiny muted">${esc(S.char.job)}</span><p class="small" style="color:${K.c}">${K.n} · [${K.p}] ${K.d}</p></div></div>
     ${blessActive()?`<p class="small"><span class="pill purple">마스터의 가호</span> ${fmt(S.bless.until)}까지 데미지 +${BLESS_PCT}%</p>`:''}
     <div><div class="row between small"><span>궁극기 게이지</span><span class="num px">${S.gauge}%</span></div><div class="bar gauge"><i style="width:${S.gauge}%"></i></div><p class="tiny muted">100%가 되면 다음 공격 데미지 3배</p></div>
     <div class="row"><button class="btn ghost" id="pot" ${pot.n>=2||potOn?'disabled':''} style="font-size:15px">${potOn?`${esc(S.char.food)} 포션 효과 중`:`${esc(S.char.food)} 포션 (${2-pot.n}/2)`}</button><button class="btn ghost" id="tm" style="font-size:15px">25분 집중 공격</button></div>
@@ -1080,7 +1087,7 @@ function renderMe(){
   const titles=['떨어진 자','견습 모험가','숙련 모험가','왕국의 기사','대륙의 주인'];
   let h=`${UI.justMade?'<h1>캐릭터 카드 완성!</h1>':''}
   <div class="charcard" style="background:linear-gradient(150deg,${c.color},${K.c})">
-    <div class="row"><span data-spr="${heroSpr(c)}" data-sc="4" data-hero="${esc(c.color)}" style="background:rgba(255,255,255,.25);padding:4px"></span><div style="min-width:0"><h2>${esc(c.name)}</h2><p class="small">${K.n} 소속 · Lv.${lv} ${titles[Math.min(4,lv-1)]}</p></div></div>
+    <div class="row"><span ${heroAttr(c)} data-sc="4" style="background:rgba(255,255,255,.25);padding:4px"></span><div style="min-width:0"><h2>${esc(c.name)}</h2><p class="small">${K.n} 소속 · Lv.${lv} ${titles[Math.min(4,lv-1)]}</p></div></div>
     <p>${esc(c.food)}을(를) 좋아하는 ${esc(c.per)} ${esc(c.job)}.</p>
     <div class="dream"><span class="tiny" style="opacity:.8">나의 꿈</span><br>${esc(c.dream)}</div>
     <p class="tiny" style="opacity:.85">여정의 목표: ${esc(c.goal)} · 오라 ${esc(c.colorName||'')}</p></div>
