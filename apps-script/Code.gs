@@ -12,7 +12,7 @@
  *   오류  : 학생 폰에서 난 오류가 실시간으로 쌓이는 곳
  */
 
-var SERVER_VERSION = '2026.11.26-6';
+var SERVER_VERSION = '2026.11.27-1';
 var TZ = 'Asia/Seoul';
 var CHUNK = 45000;            // 시트 한 칸 최대 50,000자라 45,000자씩 나눠 저장
 var MAX_CHUNKS = 40;          // 학생 한 명 최대 약 1.8MB
@@ -381,7 +381,10 @@ function logError_(b) {
 /* ===================== 관리자 ===================== */
 function adminOverview_(b) {
   auth_(b, 'admin');
-  var today = dayKey_(0), since = dayKey_(-13);
+  // 관리자 '오늘' 탭 기간 고르기: 이번 달 + 지난 3달 치 기록을 내려줌
+  var today = dayKey_(0), ty = Number(today.slice(0, 4)), tm = Number(today.slice(5, 7)) - 3;
+  if (tm < 1) { tm += 12; ty -= 1; }
+  var since = ty + '-' + (tm < 10 ? '0' : '') + tm + '-01';
   var states = {};
   eachState_(function (id, sum, rev, savedAt, rowNo) { states[id] = { sum: sum, rev: rev, savedAt: savedAt }; });
   var approved = {};
@@ -400,7 +403,7 @@ function adminOverview_(b) {
       id: r[A.id], name: r[A.name], role: r[A.role], active: isActive_(r), parentCode: r[A.code],
       school: normSchool_(sum.school) || normSchool_(r[A.school]), schoolPreset: normSchool_(r[A.school]),
       created: iso_(r[A.created]), lastLogin: iso_(r[A.last]), savedAt: s.savedAt || '', memo: r[A.memo] || '',
-      char: sum.char || null, daily: daily, bless: sum.bless || null, monthPts: sum.monthPts || 0,
+      char: sum.char || null, daily: daily, dd: sum.dd || null, bless: sum.bless || null, monthPts: sum.monthPts || 0,
       helper: HELPERS.hasOwnProperty(String(r[A.id]))
     });
   });
@@ -415,7 +418,7 @@ function adminOverview_(b) {
   var links = {};
   try { links.sheet = SpreadsheetApp.getActiveSpreadsheet().getUrl(); } catch (x) {}
   try { links.script = 'https://script.google.com/home/projects/' + ScriptApp.getScriptId() + '/edit'; } catch (x) {}
-  return { today: today, students: students, pending: pending, errors: errors, errorCount: Math.max(0, last - 1), serverVersion: SERVER_VERSION,
+  return { today: today, since: since, students: students, pending: pending, errors: errors, errorCount: Math.max(0, last - 1), serverVersion: SERVER_VERSION,
     helperOn: helperIsOn_(), helperRef: HELPER_REF, links: links };
 }
 
@@ -579,6 +582,7 @@ function summary_(st) {
   var y = Number(mk.slice(0, 4)), m = Number(mk.slice(5, 7));
   var seasonStart = (m >= 3 ? y : y - 1) + '-03-01';
   var boss = { m: 0, e: 0, k: 0, s: 0, c: 0, h: 0 }, season = 0, memOk = 0;
+  var dd = {}, ddFrom = dayKey_(-125);   // 관리자 화면 기간별 데미지 (최근 약 4달)
   Object.keys(st.logs || {}).forEach(function (k) {
     var L = st.logs[k];
     if (!L || !L.q) return;
@@ -586,13 +590,14 @@ function summary_(st) {
     L.q.forEach(function (q) {
       if (!q.done) return;
       var d = q.dmg != null ? Number(q.dmg) : Number(q.pts || 0) * 10;
+      if (k >= ddFrom) dd[k] = (dd[k] || 0) + d;
       if (k >= seasonStart) season += d;
       if (k.slice(0, 7) === mk && boss[q.s] != null) boss[q.s] += d;
     });
   });
   return {
     char: c ? { name: c.name, color: c.color, kingdom: c.kingdom, job: c.job, gender: c.gender || '' } : null,
-    daily: daily, bless: st.bless || null, monthPts: pts, hiddenReq: hiddenReq, school: st.school || '',
+    daily: daily, dd: dd, bless: st.bless || null, monthPts: pts, hiddenReq: hiddenReq, school: st.school || '',
     board: { mk: mk, boss: boss, season: season, items: (st.items || []).length, memOk: memOk }
   };
 }
