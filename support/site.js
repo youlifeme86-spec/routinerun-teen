@@ -27,7 +27,7 @@
   document.body.insertBefore(head, document.body.firstChild);
 
   var foot = document.createElement('footer');
-  foot.innerHTML = '<div class="wrap"><div><b style="color:var(--ink)">스터디아왕국 지원센터</b><br>루틴런 중고등 · 공부가 게임이 되는 곳</div>'+
+  foot.innerHTML = '<div class="wrap"><div><b style="color:var(--ink)">스터디아왕국 지원센터</b><br>스터디아왕국-teen · 공부가 게임이 되는 곳</div>'+
     '<nav aria-label="바로 가기"><a href="'+APP+'">스터디아 입장</a><a href="'+APP+'rank.html">랭킹</a><a href="student.html">학생 가이드</a><a href="parent.html">학부모 가이드</a><a href="faq.html">자주 묻는 질문</a></nav>'+
     '<div class="tiny" style="flex-basis:100%">아이디·비밀번호·학부모 링크는 이 사이트에 없어요. 선생님께 직접 받아 주세요. 다른 사람에게 보내지 마세요.</div></div>';
   document.body.appendChild(foot);
