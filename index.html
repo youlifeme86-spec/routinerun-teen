@@ -16,7 +16,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%2346B1D8'/%3E%3Crect x='3' y='9' width='10' height='4' fill='%237CC242'/%3E%3Crect x='6' y='3' width='4' height='6' fill='%23E2453C'/%3E%3C/svg%3E">
 <script src="config.js"></script>
 <script>
-window.RR_VERSION='2026.11.27-3';
+window.RR_VERSION='2026.11.27-4';
 /* 실시간 오류 기록: 학생 폰에서 난 오류를 구글 시트 [오류] 탭으로 보냄 */
 (function(){var n=0;window.RR_REPORT=function(msg,stack,extra){try{var C=window.RR_CONFIG||{};if(!C.API_URL||n>=8)return;n++;var a=null;try{a=JSON.parse(localStorage.getItem('rr-auth-v2')||'null')}catch(e){}
 fetch(C.API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},keepalive:true,body:JSON.stringify({action:'logError',token:a&&a.token||'',msg:String(msg||'').slice(0,1000),stack:String(stack||'').slice(0,3000),page:location.pathname+(location.hash.indexOf('#parent')===0?' (학부모)':''),tab:(window.RR_TAB||'')+(extra?' '+extra:''),ver:window.RR_VERSION||'',ua:navigator.userAgent.slice(0,300)})}).catch(function(){})}catch(e){}};
@@ -157,6 +157,12 @@ textarea{resize:vertical;min-height:72px}
 .wkbars{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;text-align:center}.wkbars>div{display:flex;flex-direction:column;align-items:center;gap:3px}.wb{height:110px;width:100%;background:var(--bg);border-radius:8px;display:flex;align-items:flex-end;overflow:hidden}.wb i{display:block;width:100%;background:#F2A65A;border-radius:8px 8px 0 0}
 .plist{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px}.pask{background:rgba(44,75,224,.07);border-radius:12px;padding:10px 12px;margin-top:8px}
 @media print{.nav,.modebar,.noprint,#foot,.sbar,.shint{display:none!important}body,#phone,#screen{background:#fff!important;overflow:visible!important;height:auto!important}}
+.corecard{border:2px solid var(--line)}
+.coregrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.corebtn{display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 6px;border:2px solid var(--line);border-radius:14px;background:var(--paper,#fff);color:inherit;font:inherit;text-align:center}
+.corebtn[aria-pressed="true"]{border-color:var(--cc);box-shadow:0 0 0 3px color-mix(in srgb,var(--cc) 30%,transparent)}
+.coresp.awake canvas,.partner.awake canvas{filter:drop-shadow(0 0 6px #FFE680) drop-shadow(0 0 2px #F7C531)}
+.partner{position:absolute;bottom:60px;left:132px;z-index:2;animation:bob .9s steps(2) infinite .2s}
 .flowgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
 .flowgrid div{border-radius:10px;padding:8px 4px;text-align:center;font-size:12px;background:var(--bg);border:1px solid var(--line)}
 .flowgrid div.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:700}
@@ -371,7 +377,7 @@ details summary{cursor:pointer;padding:4px 0}
   <p class="tiny muted" id="foot" style="max-width:420px;text-align:center">연결 중...</p>
 </div>
 
-<script src="art.js?v=2026.11.26-10"></script>
+<script src="art.js?v=2026.11.27-4"></script>
 <script>
 (function(){
 /* ---------- 데이터 ---------- */
@@ -504,10 +510,10 @@ function dayBossDmg(s,k,st){const L=(st||S).logs[k];let t=0;if(L)L.q.forEach(q=>
 const HEAL_DAYS=3,HEAL_PCT=5;
 function bossTrack(s,mk,st){st=st||S;const hp=SUBJ[s].hp,y=+mk.slice(0,4),m=+mk.slice(5,7),last=new Date(y,m,0).getDate(),today=TODAY();
   const E=st.event2,gift=E&&E.mk===mk&&E.boss?(E.boss[s]||0):0,jd=joinedDay(st)||'';
-  let eff=gift,streak=0,heals=[],shield=(st.char&&st.char.kingdom==='ukk')?1:0,blocked=0;
+  let eff=gift,streak=0,heals=[],shield=(st.char&&st.char.kingdom==='ukk')?1:0,blocked=0;const hk=1-.5*coreBuffFor('ever',st,mk);
   for(let d=1;d<=last;d++){const k=ymd(y,m,d);if(k>today)break;const dm=dayBossDmg(s,k,st);eff+=dm;
     if(k===today)break;if(k<jd)continue;
-    if(dm>0)streak=0;else{streak++;if(streak%HEAL_DAYS===0&&eff>0&&eff<hp){if(shield){shield=0;blocked++}else{const h=Math.min(eff,Math.round(hp*HEAL_PCT/100));eff-=h;heals.push({k,h})}}}}
+    if(dm>0)streak=0;else{streak++;if(streak%HEAL_DAYS===0&&eff>0&&eff<hp){if(shield){shield=0;blocked++}else{const h=Math.min(eff,Math.round(hp*HEAL_PCT/100*hk));eff-=h;heals.push({k,h})}}}}
   return {eff,heals,blocked,streak}}
 function monthBossDmg(s,mk,st){return bossTrack(s,mk,st).eff}
 function bossLeft(s,mk){return Math.max(0,SUBJ[s].hp-monthBossDmg(s,mk||monthKeyOf(TODAY())))}
@@ -735,6 +741,57 @@ function monthScore(){const k=TODAY();const pre=k.slice(0,7);return Object.keys(
 /* 강의 보너스: 12/6까지, 과목마다 주 1회 +1 */
 function lectureBonusAvailable(s,k){if(k>LECTURE_DEADLINE)return false;const w=weekKey(k);return !(S.bonus[w]&&S.bonus[w][s])}
 
+/* ---------- 가디언 코어(알): 매달 하나 골라 이달 점수(원점수)로 키워요. 30점 부화 · 150점 성장(버프 1.5배) · 300점 각성 ---------- */
+const CORES={
+  blaze:{n:'블레이즈 코어',egg:'불꽃알',c:'#E2453C',st:['미각성 코어','아기 드레이크','드레이크','이그니스 드래곤'],buff:'랜덤 크리티컬 확률 +5%',buff2:'랜덤 크리티컬 확률 +7.5%',who:'크리티컬 손맛을 노리는 타입'},
+  ever:{n:'에버그린 코어',egg:'비취알',c:'#2E9E6B',st:['미각성 코어','아기 숲부엉이','숲부엉이','가디언 아울'],buff:'보스 반격(3일 쉬면 HP 회복) 회복량 절반',buff2:'보스 반격 회복량 75% 감소',who:'가끔 쉬는 날이 생기는 타입',later:'12월: 스트릭 방패 조건 5일 → 4일'},
+  aegis:{n:'이지스 코어',egg:'강철알',c:'#7C8799',st:['미각성 코어','미니 메카봇','메카봇','이지스 나이트'],buff:'힘든 날(마음 체크 컨디션 1~2) 데미지 +20%',buff2:'힘든 날 데미지 +30%',who:'컨디션이 들쭉날쭉한 타입',later:'12월: 최소 시동 퀘스트 데미지 2배'},
+  tidal:{n:'타이달 코어',egg:'심해알',c:'#2F6FD6',st:['미각성 코어','아기 수정여우','수정여우','아쿠아 울프'],buff:'내가 고른 약점 과목 데미지 +20%',buff2:'약점 과목 데미지 +30%',who:'싫은 과목을 잡고 싶은 타입'}};
+const CORE_TH=[0,30,150,300];
+function coreOf(st,mk){st=st||S;mk=mk||monthKeyOf(TODAY());const c=st.core;return c&&c.m===mk&&CORES[c.type]?c:null}
+function coreXP(st,mk){st=st||S;mk=mk||monthKeyOf(TODAY());return Object.keys(st.logs||{}).filter(x=>x.startsWith(mk)).reduce((a,x)=>a+dayScoreOf(st,x).raw,0)}
+function coreStage(xp){return xp>=300?3:xp>=150?2:xp>=30?1:0}
+/* 버프 세기: 부화 전 0, 부화 1, 성장·각성 1.5 */
+function coreLv(st,mk){const c=coreOf(st,mk);if(!c)return 0;const s=coreStage(coreXP(st,mk));return s>=2?1.5:s>=1?1:0}
+function coreBuffFor(type,st,mk){const c=coreOf(st,mk);return c&&c.type===type?coreLv(st,mk):0}
+function coreCard(){
+  const mk=monthKeyOf(TODAY());const c=coreOf();
+  if(!c){const last=S.core&&CORES[S.core.type]?S.core:null;
+    return `<div class="card corecard" style="gap:8px"><div class="row between"><h3>가디언 코어</h3><span class="pill">${Number(mk.slice(5))}월</span></div>
+      <div class="row" style="gap:6px;justify-content:space-around">${Object.keys(CORES).map(t=>`<span data-spr="core-${t}-0" data-sc="3"></span>`).join('')}</div>
+      <p class="small">${last?'새 달이 시작됐어! 이번 달 함께할 코어를 골라 줘. 지난달 코어를 그대로 골라도 돼.':'이번 달 함께 성장할 알을 하나 골라 줘. 공부 점수 30점이면 부화하고, 300점이면 최종 각성해.'}</p>
+      <button class="btn" id="corepick">알 고르기</button></div>`}
+  const T=CORES[c.type],xp=coreXP(),s=coreStage(xp),nx=CORE_TH[s+1];
+  return `<div class="card corecard" style="gap:6px;border-color:${T.c}"><div class="row" style="gap:12px"><span class="coresp ${s===3?'awake':''}" data-spr="core-${c.type}-${s}" data-sc="${s?4:4}"></span>
+    <div style="min-width:0;flex:1"><div class="row between"><b>${esc(T.st[s])}</b><span class="tiny muted">${T.n}</span></div>
+    <div class="bar gauge" style="margin:4px 0"><i style="width:${nx?pctOf(xp-CORE_TH[s],nx-CORE_TH[s]):100}%;background:${T.c}"></i></div>
+    <p class="tiny muted num">${nx?`이달 ${xp}점 · ${['부화','성장','각성'][s]}까지 ${nx-xp}점`:`이달 ${xp}점 · 최종 각성! 도감에 등록됐어`}</p></div></div>
+    <p class="small">${s?`<b style="color:${T.c}">버프</b> ${s>=2?T.buff2:T.buff}${c.type==='tidal'?` (약점: ${SUBJ[c.weak||'m'].n})`:''}`:`<span class="muted">부화하면 버프가 켜져요: ${T.buff}${c.type==='tidal'?` (약점: ${SUBJ[c.weak||'m'].n})`:''}</span>`}</p>
+    ${T.later?`<p class="tiny muted">${T.later}</p>`:''}</div>`}
+function corePickSheet(){if(READONLY)return;const sh=document.createElement('div');sh.className='sheet';let sel=(S.core&&S.core.type)||'blaze',weak=(S.core&&S.core.weak)||'m';
+  const draw=()=>{sh.innerHTML=`<div class="in" role="dialog" aria-label="알 고르기"><div class="row between"><h2>이번 달 알 고르기</h2><button class="chip" id="x">닫기</button></div>
+    <p class="small muted">한 달 동안 함께해요. 실제 공부 점수로만 자라고(크리티컬로는 안 자라요), 다음 달 1일에 다시 고를 수 있어요.</p>
+    <div class="coregrid">${Object.keys(CORES).map(t=>{const T=CORES[t];return `<button class="corebtn" data-c="${t}" aria-pressed="${t===sel}" style="--cc:${T.c}"><span data-spr="core-${t}-${t===sel?1:0}" data-sc="3"></span><b>${T.egg}</b><span class="tiny">${T.n}</span><span class="tiny muted">${T.who}</span></button>`}).join('')}</div>
+    <div class="card" style="gap:4px;background:var(--bg)"><b>${CORES[sel].st[1]} → ${CORES[sel].st[3]}</b><p class="small">버프: ${CORES[sel].buff} · 성장하면 ${CORES[sel].buff2}</p>${CORES[sel].later?`<p class="tiny muted">${CORES[sel].later}</p>`:''}
+      ${sel==='tidal'?`<p class="small" style="margin-top:4px">약점 과목</p><div class="chips">${Object.keys(SUBJ).map(s=>`<button class="chip" data-w="${s}" aria-pressed="${s===weak}">${SUBJ[s].n}</button>`).join('')}</div>`:''}</div>
+    <button class="btn" id="ok">${CORES[sel].egg}로 할래!</button></div>`;hydrate(sh);
+    sh.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{sel=b.dataset.c;draw()});sh.querySelectorAll('[data-w]').forEach(b=>b.onclick=()=>{weak=b.dataset.w;draw()});
+    sh.querySelector('#x').onclick=()=>sh.remove();
+    sh.querySelector('#ok').onclick=()=>{const mk=monthKeyOf(TODAY());S.core={m:mk,type:sel,weak:sel==='tidal'?weak:undefined,seen:0};save();sh.remove();SND.play('item');toast(CORES[sel].egg+'을(를) 품었어!');render()}};
+  draw();phone.appendChild(sh)}
+/* 단계가 올라가면 부화·성장·각성 연출 + 도감 기록 */
+function coreCheck(){if(READONLY||!S.char)return;const c=coreOf();if(!c)return;const s=coreStage(coreXP());if(s<=(c.seen||0))return;c.seen=s;
+  if(s===3){S.coreDex=S.coreDex||[];if(!S.coreDex.some(d=>d.m===c.m))S.coreDex.push({m:c.m,type:c.type})}save();
+  if(document.querySelector('.modal'))return;const T=CORES[c.type];const m=document.createElement('div');m.className='modal';
+  m.innerHTML=`<div class="card" role="dialog" aria-label="코어 성장" style="text-align:center"><h1>${['','부화!','성장!','최종 각성!'][s]}</h1>
+    <div class="row" style="justify-content:center;gap:10px;align-items:flex-end"><span data-spr="core-${c.type}-${s-1}" data-sc="4" style="opacity:.45"></span><span style="font-size:22px">→</span><span class="coresp ${s===3?'awake':''}" data-spr="core-${c.type}-${s}" data-sc="6"></span></div>
+    <p><b>${esc(T.st[s])}</b>${s===1?'(이)가 알을 깨고 나왔어!':s===2?'(으)로 자랐어!':'(으)로 각성했어! 도감에 등록됐어.'}</p>
+    <p class="small">${s===1?'버프 ON: '+T.buff:s===2?'버프 강화: '+T.buff2:'이번 달 300점 달성. 다음 달엔 새 알을 고를 수 있어.'}</p>
+    <button class="btn gold" id="ok">좋아!</button></div>`;phone.appendChild(m);hydrate(m);SND.play(s===3?'kill':'item');m.querySelector('#ok').onclick=()=>m.remove()}
+function coreDexCard(){const dex=S.coreDex||[];return `<div class="card"><div class="row between"><h3>코어 도감</h3><span class="num small">${dex.length}마리 각성</span></div>
+  ${dex.length?`<div class="row" style="flex-wrap:wrap;gap:10px">${dex.map(d=>`<div style="text-align:center"><span data-spr="core-${d.type}-3" data-sc="2"></span><p class="tiny">${Number(d.m.slice(5))}월 ${esc(CORES[d.type].st[3])}</p></div>`).join('')}</div>`:'<p class="small muted">한 달에 300점을 채우면 그달 코어가 최종 각성해서 여기에 모여요.</p>'}</div>`}
+function partnerHTML(){const c=coreOf();if(!c)return '';const s=coreStage(coreXP());return `<div class="partner ${s===3?'awake':''}"><div data-spr="core-${c.type}-${s}" data-sc="${s?3:2}"></div></div>`}
+
 /* ---------- 데미지 ---------- */
 const CRIT={crit:.15,mega:.03};
 function damageFor(q,L){
@@ -745,7 +802,9 @@ function damageFor(q,L){
   if(kd==='hc'&&(q.a==='lv2'||q.a==='nje')){crit=2;why.push('에이스 크리티컬 ×2')}
   /* 랜덤 크리티컬: 퀘스트마다 한 번 뽑은 값(q.roll)을 저장해서 체크를 풀었다 다시 눌러도 결과가 같아요. 점수는 그대로, 데미지만. */
   if(q.roll==null)q.roll=Math.random();let ck='';
-  {const rc=q.roll<CRIT.mega?2:q.roll<CRIT.mega+CRIT.crit?1.5:1;if(rc>crit){crit=rc;ck=rc===2?'mega':'crit';why.push(rc===2?'MEGA HIT ×2':'CRITICAL ×1.5')}}
+  {const cb=coreBuffFor('blaze')*.05;const rc=q.roll<CRIT.mega?2:q.roll<CRIT.mega+CRIT.crit+cb?1.5:1;if(rc>crit){crit=rc;ck=rc===2?'mega':'crit';why.push(rc===2?'MEGA HIT ×2':'CRITICAL ×1.5')}}
+  {const lv=coreBuffFor('aegis');const e=S.emo[TODAY()];if(lv&&e&&e.cond&&e.cond<=2){const b=Math.round(20*lv);bonus+=b;why.push('이지스 코어 +'+b+'%')}}
+  {const lv=coreBuffFor('tidal');if(lv&&S.core&&q.s===S.core.weak){const b=Math.round(20*lv);bonus+=b;why.push('타이달 코어 +'+b+'%')}}
   const pot=S.potion[TODAY()];if(pot&&pot.until>Date.now()){bonus+=15;why.push('포션 +15%')}
   if(blessActive()){bonus+=BLESS_PCT;why.push('마스터의 가호 +'+BLESS_PCT+'%')}
   bonus=Math.min(100,bonus);
@@ -838,7 +897,7 @@ function render(){
   if(UI.tab==='emo'){nav.hidden=true;return renderEmotion()}
   renderNav([['today','오늘'],['plan','플랜'],['boss','보스전'],['raid','레이드'],['rank','랭킹'],['me','나']],UI.tab,id=>{UI.tab=id;render();toTop()});
   ({today:renderToday,plan:renderPlan,boss:renderBoss,raid:renderRaid,rank:renderRank,me:renderMe})[UI.tab]();
-  hydrate(scr);checkSeason();
+  hydrate(scr);checkSeason();setTimeout(coreCheck,UI.tab==='boss'?2600:400);
 }
 document.getElementById('modeStudent').onclick=()=>{UI.mode='student';render()};
 document.getElementById('modeParent').onclick=()=>{UI.mode='parent';render()};
@@ -988,9 +1047,10 @@ function renderToday(){
   const firstOpen=L.q.find(q=>!q.done);const bossS=firstOpen?firstOpen.s:main;const left=pctOf(bossLeft(bossS,mk),SUBJ[bossS].hp);
   const dd=dday();
   const ms=monthScoreRaw();
-  let h=sceneHTML(`<div class="hud"><div class="nm">${esc(S.char.name)}<small>${esc(KINGDOMS[S.char.kingdom].n)} · ${esc(S.char.job)}</small></div><div class="tagr">${Number(k.slice(5,7))}월 ${ms}/${BASE}</div></div>${heroHTML()}<div class="boss sleep" style="right:20px;transform:scale(.8);transform-origin:bottom right"><div data-spr="${bossS}" data-sc="5"></div></div>`)+
+  let h=sceneHTML(`<div class="hud"><div class="nm">${esc(S.char.name)}<small>${esc(KINGDOMS[S.char.kingdom].n)} · ${esc(S.char.job)}</small></div><div class="tagr">${Number(k.slice(5,7))}월 ${ms}/${BASE}</div></div>${heroHTML()}${partnerHTML()}<div class="boss sleep" style="right:20px;transform:scale(.8);transform-origin:bottom right"><div data-spr="${bossS}" data-sc="5"></div></div>`)+
    `<div class="row between"><div><p class="tiny muted">${fmt(k)} · 새벽 2시 마감</p><h1>오늘의 퀘스트</h1></div></div>
     <div class="bubble">${tot?`"퀘스트 ${tot}개 중 ${done}개 완료! ${SUBJ[bossS].boss} 체력 ${left}% 남았어"`:'"오늘은 플랜이 없는 날이야. 밀린 퀘스트를 보충하거나 쉬어도 돼"'}</div>`;
+  h+=coreCard();
   if(giftReady())h+=giftCard();else if(event2Ready())h+=event2Card();
   if(blessActive())h+=`<div class="banner" style="background:#5B3B8C"><span data-spr="star" data-sc="5"></span><div><b>마스터의 가호</b><p class="small" style="opacity:.9">선생님 과제 완료! ${fmt(S.bless.until)}까지 모든 공격 데미지 +${BLESS_PCT}%</p></div></div>`;
   else h+=`<div class="card" style="gap:4px"><div class="row between"><b>마스터의 가호</b><span class="pill">꺼짐</span></div><p class="tiny muted">이번 주 선생님 과제를 완료하면 1주일 동안 데미지 +${BLESS_PCT}%. 매주 과제를 하면 매주 받아요.</p></div>`;
@@ -1014,7 +1074,7 @@ function renderToday(){
   scr.innerHTML=h;
   scr.querySelectorAll('.check[data-i]').forEach(b=>b.onclick=()=>toggleQuest(+b.dataset.i));
   scr.querySelectorAll('.check[data-life]').forEach(b=>b.onclick=()=>{const a=b.dataset.life;L.life[a]=!L.life[a];if(L.life[a]){S.gauge=Math.min(100,S.gauge+20);toast(`+${ACT[a].pt}점 · 궁극기 게이지 ${S.gauge}%`)}else S.gauge=Math.max(0,S.gauge-20);save();render()});
-  $('#add').onclick=addSheet;
+  $('#add').onclick=addSheet;if($('#corepick'))$('#corepick').onclick=corePickSheet;
   $('#hid').onclick=()=>{L.hiddenReq=true;save();toast('선생님께 인증 요청을 보냈어요');render()};
   if($('#hidok'))$('#hidok').onclick=()=>{L.hidden=1;save();toast('인증 완료! 외우기 5점');render()};
   $('#finish').onclick=()=>{const Lk=S.logs[k];if(earlyOpen(k)&&allDone(k)){const pts=earlyPts(k);Lk.early={pts,at:Date.now()};save();SND.play('item');toast(`자정 전 마감 보너스 +${pts}점!`)}
@@ -1129,7 +1189,7 @@ function renderBoss(){
   const line=bossLine(s,hp,B.hp);
   const L=log();const openQ=L.q.findIndex(q=>q.s===s&&!q.done&&!(q.a==='lv2'&&!L.q.some(x=>x.s===s&&x.a==='lv1'&&x.done)));
   let h=sceneHTML(`<div class="hud"><div class="nm">${esc(B.boss)}<small>${B.n} 보스 · ${Number(mk.slice(5))}월</small></div>${p<=50&&hp>0?'<div class="tagr" style="color:#E2453C">광폭화</div>':''}</div>
-    <div class="speech" id="bspeech">${esc(line)}</div>${heroHTML()}<div class="boss ${hp===0?'gone':''} ${crackCls(hp,B.hp)}" id="bossSpr"><div data-spr="${s}" data-sc="7"></div></div>`)+
+    <div class="speech" id="bspeech">${esc(line)}</div>${heroHTML()}${partnerHTML()}<div class="boss ${hp===0?'gone':''} ${crackCls(hp,B.hp)}" id="bossSpr"><div data-spr="${s}" data-sc="7"></div></div>`)+
   `<div class="card"><div class="row between"><b>HP</b><span class="num px" id="hpnum">${fmtN(hp)} / ${fmtN(B.hp)}</span></div><div class="bar" style="height:18px"><i id="hpbar" style="width:${p}%"></i></div>
     <p class="tiny muted">방해 스킬: ${B.sk.map(esc).join(' · ')}</p>
     ${bossWarn(s,mk,hp)}</div>
@@ -1401,6 +1461,7 @@ function renderMe(){
     <div class="dream"><span class="tiny" style="opacity:.8">나의 꿈</span><br>${esc(c.dream)}</div>
     <p class="tiny" style="opacity:.85">여정의 목표: ${esc(c.goal)} · 오라 ${esc(c.colorName||'')}</p></div>
   ${studyCard()}
+  ${coreDexCard()}
   <div class="card"><div class="row between"><h3>경험치</h3><span class="num small">${total % 300} / 300</span></div><div class="bar gauge"><i style="width:${(total%300)/3}%"></i></div><p class="tiny muted">누적 ${total}점 · 300점마다 레벨업</p></div>
   <div class="card"><div class="row between"><h3>${Number(TODAY().slice(5,7))}월 시즌</h3><span class="num px">${monthScoreRaw()} / ${BASE}</span></div><div class="bar gauge"><i style="width:${pctOf(monthScoreRaw(),BASE)}%"></i></div>
     <p class="tiny muted">기준치 300점 = 평일 하루 2시간. 채우면 이달 과목 보스 6마리를 모두 잡을 수 있어요. 매달 1일에 0점으로 새로 시작해요.</p>
