@@ -65,6 +65,10 @@ td.wrapcell{white-space:normal;min-width:220px}
 .kv dd.link{font-weight:500;font-size:13px}
 .two{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px}
 .two .note{flex:1}
+.per{display:flex;flex-direction:column;gap:8px}
+.per .row select{width:auto;padding:7px 10px;border-radius:10px;font-size:14px}
+.per .btn.ghost[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}
+a.ana{font-size:12px;margin-left:4px;white-space:nowrap}
 .pill.mid{background:#DDF0E5;color:#23663F}.pill.high{background:#DCE8FA;color:#234E8C}
 [hidden]{display:none!important}
 @media (max-width:600px){.wrap{padding:12px}th,td{padding:7px 4px}}
@@ -79,6 +83,7 @@ const BASE=location.origin+location.pathname.replace(/admin\.html$/,'');
 const KEY='rr-admin-v1';
 const KINGDOM={dopa:['도파밍 왕국','#E8559A'],nj:['느좋 공화국','#C9925E'],gds:['감다살 왕국','#F07B3F'],ddk:['딸깍 제국','#3E8EDB'],hc:['하드캐리 연방','#D64545'],ft:['풀템 제국','#8D6E4A'],gim:['고인물 요새','#4C7A5A'],ult:['궁극기 왕국','#7A4FD0'],ukk:['억까탈출 공화국','#2BA7A0']};
 let AUTH=null;try{AUTH=JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){}
+let PER=(()=>{try{return JSON.parse(localStorage.getItem(KEY+':per')||'null')}catch(e){return null}})()||{k:'today'};
 let NEW_SCHOOL='mid',BULK_SCHOOL='mid',D=null,TAB='home',LAST_ERR_SEEN=+(localStorage.getItem(KEY+':errseen')||0),timer=null,busy=false;
 const app=document.getElementById('app');
 const esc=t=>String(t??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -100,6 +105,22 @@ function weekStart(k){const d=parse(k);return add(k,-((d.getDay()+6)%7))}
 function fmt(k){const d=parse(k);return (d.getMonth()+1)+'/'+d.getDate()+'('+'일월화수목금토'[d.getDay()]+')'}
 function ago(iso){if(!iso)return '-';const t=new Date(iso);if(isNaN(t))return '-';const m=Math.round((Date.now()-t)/60000);if(m<1)return '방금';if(m<60)return m+'분 전';if(m<1440)return Math.round(m/60)+'시간 전';return Math.round(m/1440)+'일 전'}
 function sumRange(daily,from,to,f){let s=0;Object.keys(daily||{}).forEach(k=>{if(k>=from&&k<=to)s+=(daily[k][f||'r']||0)});return s}
+/* 기간 고르기 (키즈 관리자와 같은 방식) */
+function savePer(){try{localStorage.setItem(KEY+':per',JSON.stringify(PER))}catch(e){}}
+function span(a,b){return fmt(a)+(a===b?'':'~'+fmt(b))}
+function period(today){const ws=weekStart(today),ms=today.slice(0,8)+'01';const k=PER.k;
+  if(k==='yesterday'){const y=add(today,-1);return {from:y,to:y,name:'어제',label:'어제 '+fmt(y)}}
+  if(k==='week')return {from:ws,to:today,name:'이번 주',label:'이번 주 '+span(ws,add(ws,6))};
+  if(k==='lastweek'){const a=add(ws,-7);return {from:a,to:add(a,6),name:'지난주',label:'지난주 '+span(a,add(a,6))}}
+  if(k==='month')return {from:ms,to:today,name:'이번 달',label:'이번 달 '+(+today.slice(5,7))+'월'};
+  if(k==='pw'&&PER.v){const a=PER.v;return {from:a,to:add(a,6),name:fmt(a)+' 주',label:span(a,add(a,6))+' 주'}}
+  if(k==='pm'&&PER.v){const a=PER.v+'-01',d=parse(a);d.setMonth(d.getMonth()+1);d.setDate(0);return {from:a,to:key(d),name:(+PER.v.slice(5,7))+'월',label:PER.v.slice(0,4)+'년 '+(+PER.v.slice(5,7))+'월'}}
+  return {from:today,to:today,name:'오늘',label:'오늘 '+fmt(today)}}
+function weekOpts(today,since){const out=[];let a=weekStart(today);for(let i=0;i<14&&add(a,6)>=since;i++,a=add(a,-7))out.push(a);return out}
+function monthOpts(today,since){const out=[];const d=parse(today.slice(0,8)+'01');for(let i=0;i<4;i++){const k=key(d).slice(0,7);if(k+'-31'<since)break;out.push(k);d.setMonth(d.getMonth()-1)}return out}
+function topCell(daily,from,to){const c={};Object.keys(daily||{}).forEach(k=>{if(k>=from&&k<=to&&daily[k].cell)c[daily[k].cell]=(c[daily[k].cell]||0)+1});const b=Object.keys(c).sort((x,y)=>c[y]-c[x])[0];return b?[b,c[b]]:null}
+function dmgRange(s,from,to){let t=0;Object.keys(s.daily||{}).forEach(k=>{if(k<from||k>to)return;t+=(s.dd&&s.dd[k]!=null)?s.dd[k]:(s.daily[k].raw||0)*10});return t}
+const BADCELL=['불안','무관심','걱정'];
 
 const SCHOOLS={mid:'중학생',high:'고등학생'};
 const schoolPill=v=>v?`<span class="pill ${v}">${v==='mid'?'중등':'고등'}</span>`:'<span class="pill off">미정</span>';
@@ -133,17 +154,31 @@ function render(){
     <span class="tiny muted" id="upd">방금 새로 고침</span><a class="btn ghost sm" href="support/" target="_blank" rel="noopener" style="text-decoration:none">지원센터</a><a class="btn ghost sm" href="rank.html" target="_blank" rel="noopener" style="text-decoration:none">랭킹 사이트</a>${D.links&&D.links.sheet?`<a class="btn ghost sm" href="${esc(D.links.sheet)}" target="_blank" rel="noopener" style="text-decoration:none">구글 시트</a>`:''}${D.links&&D.links.script?`<a class="btn ghost sm" href="${esc(D.links.script)}" target="_blank" rel="noopener" style="text-decoration:none">앱스크립트</a>`:''}<button class="btn ghost sm" id="rf">새로 고침</button><button class="btn ghost sm" id="lo">로그아웃</button></div>
   <div class="tabs">${[['home','오늘'],['students','학생 계정'],['new','계정 만들기'],['helpers','AI 헬퍼'+(D.helperOn?' · 켜짐':'')],['errors','오류 기록'+(newErr?' ('+newErr+')':'')]].map(([k,l])=>`<button data-t="${k}" aria-pressed="${TAB===k}">${l}</button>`).join('')}</div>`;
   if(TAB==='home'){
-    const cells={};stu.forEach(s=>{const e=s.daily[today];if(e&&e.cell)cells[e.cell]=(cells[e.cell]||0)+1});
-    h+=`<div class="grid"><div class="stat"><b>${real.filter(s=>s.active).length}</b><span>사용 중인 학생${helpers.length?' (AI 헬퍼 '+helpers.length+'명 빼고)':''}</span></div><div class="stat"><b>${doneToday}</b><span>오늘 공부 체크한 학생</span></div>
+    const since=D.since||add(today,-13),P=period(today),to=P.to>today?today:P.to;
+    const days=Math.max(1,Math.round((parse(to)-parse(P.from))/864e5)+1);
+    const did=s=>Object.keys(s.daily||{}).filter(k=>k>=P.from&&k<=to&&s.daily[k].raw>0).length;
+    const act=real.filter(s=>s.active),checked=act.filter(s=>did(s)>0).length;
+    const avg=act.length?Math.round(act.reduce((t,s)=>t+sumRange(s.daily,P.from,to),0)/act.length):0;
+    const cells={};stu.filter(s=>s.active).forEach(s=>Object.keys(s.daily||{}).forEach(k=>{const e=s.daily[k];if(k>=P.from&&k<=to&&e.cell)cells[e.cell]=(cells[e.cell]||0)+1}));
+    const wo=weekOpts(today,since),mo=monthOpts(today,since);
+    const pb=(k,l)=>`<button class="btn ghost sm" data-per="${k}" aria-pressed="${PER.k===k}">${l}</button>`;
+    h+=`<div class="card per"><div class="row">${pb('today','오늘')}${pb('yesterday','어제')}${pb('week','이번 주')}${pb('lastweek','지난주')}${pb('month','이번 달')}
+      <select id="pw" aria-label="주 고르기"><option value="">주 고르기</option>${wo.map(w=>`<option value="${w}" ${PER.k==='pw'&&PER.v===w?'selected':''}>${fmt(w)}~${fmt(add(w,6))}</option>`).join('')}</select>
+      <select id="pm" aria-label="달 고르기"><option value="">달 고르기</option>${mo.map(m=>`<option value="${m}" ${PER.k==='pm'&&PER.v===m?'selected':''}>${m.slice(0,4)}년 ${+m.slice(5,7)}월</option>`).join('')}</select></div>
+      <p class="tiny muted">지금 보는 기간: <b>${esc(P.label)}</b> (${span(P.from,P.to)}, ${days}일${P.to>today?' · 오늘까지':''})</p>
+      ${P.from<since?`<p class="note small">${D.since?'이 기간 앞부분은 서버에 기록이 없어 빠져 있어요.':'지금 서버는 최근 2주 기록만 보내 줘요. 더 지난 기간을 보려면 앱스크립트에 새 Code.gs를 붙여 넣고 [배포 > 배포 관리 > 새 버전]을 해 주세요.'}</p>`:''}</div>
+    <div class="grid"><div class="stat"><b>${act.length}</b><span>사용 중인 학생${helpers.length?' (AI 헬퍼 '+helpers.length+'명 빼고)':''}</span></div><div class="stat"><b>${checked}</b><span>${esc(P.name)} 공부 체크한 학생</span></div>
+      <div class="stat"><b>${avg}</b><span>${esc(P.name)} 1인당 평균 점수</span></div>
       <div class="stat ${D.pending.length?'alert':''}"><b>${D.pending.length}</b><span>외우기 인증 대기</span></div><div class="stat ${newErr?'alert':''}"><b>${newErr}</b><span>새 오류 기록</span></div></div>
     <div class="card"><h2>외우기 인증 승인</h2>${D.pending.length?`<div class="tscroll"><table><thead><tr><th>학생</th><th>캐릭터</th><th>날짜</th><th></th></tr></thead><tbody>${D.pending.sort((a,b)=>a.date<b.date?1:-1).map((p,i)=>`<tr><td>${esc(p.name)} <span class="tiny muted">${esc(p.id)}</span></td><td>${esc(p.char)}</td><td>${fmt(p.date)}</td><td><button class="btn sm" data-ap="${i}">인증 (외우기 5점)</button></td></tr>`).join('')}</tbody></table></div>`:'<p class="small muted">기다리는 요청이 없어요.</p>'}</div>
-    <div class="card"><h2>학생 현황</h2><div class="tscroll"><table><thead><tr><th>학생</th><th>캐릭터 · 왕국</th><th class="r">오늘</th><th class="r">이번 주</th><th class="r">이번 달</th><th>오늘의 칸</th><th>가호</th><th>마지막 저장</th></tr></thead><tbody>
-      ${stu.filter(s=>s.active).sort((a,b)=>sumRange(b.daily,ws,today)-sumRange(a.daily,ws,today)).map(s=>{const e=s.daily[today]||{};const K=s.char&&KINGDOM[s.char.kingdom];
-        return `<tr><td>${esc(s.name)} <span class="tiny muted">${esc(s.id)}</span>${aiPill(s)}</td><td>${s.char?`<span class="dot" style="background:${esc(s.char.color)}"></span>${esc(s.char.name)} <span class="tiny muted">${K?K[0]:''}</span>`:'<span class="pill off">캐릭터 전</span>'}</td>
-        <td class="r">${e.r||0}</td><td class="r">${sumRange(s.daily,ws,today)}</td><td class="r">${s.monthPts||sumRange(s.daily,ms,today,'raw')} <span class="tiny muted">/300</span></td><td>${e.cell?`<span class="pill ${['불안','무관심','걱정'].includes(e.cell)?'bad':''}">${e.cell}</span>`:'-'}</td>
-        <td>${s.bless&&today<=s.bless.until?'<span class="pill p">~'+fmt(s.bless.until)+'</span>':'-'}</td><td class="tiny">${ago(s.savedAt)}</td></tr>`}).join('')||'<tr><td colspan="8" class="muted">아직 학생 계정이 없어요. [계정 만들기]에서 만들어 주세요.</td></tr>'}
-    </tbody></table></div><p class="tiny muted">점수는 랭킹 점수(하루 45점 상한). 이번 달은 기준치 300점 대비 원점수. 30초마다 자동으로 새로 고침돼요.</p></div>
-    <div class="card"><h2>오늘 몰입 분포</h2><div class="row">${['몰입','각성','통제','이완','지루함','무관심','걱정','불안'].map(c=>`<span class="pill ${['불안','무관심','걱정'].includes(c)&&cells[c]?'bad':''}">${c} ${cells[c]||0}명</span>`).join('')}</div></div>`;
+    <div class="card"><h2>학생 현황</h2><div class="tscroll"><table><thead><tr><th>학생</th><th>캐릭터 · 왕국</th><th class="r">${esc(P.name)} 점수</th><th class="r">체크한 날</th><th class="r">데미지</th><th class="r">이번 달</th><th>자주 나온 칸</th><th>가호</th><th>마지막 저장</th></tr></thead><tbody>
+      ${stu.filter(s=>s.active).sort((a,b)=>(isH(a)-isH(b))||(sumRange(b.daily,P.from,to)-sumRange(a.daily,P.from,to))).map(s=>{const K=s.char&&KINGDOM[s.char.kingdom];const tc=topCell(s.daily,P.from,to);
+        return `<tr><td>${esc(s.name)} <span class="tiny muted">${esc(s.id)}</span>${s.parentCode?`<a class="ana" href="${esc(parentLink(s))}" target="_blank" rel="noopener" title="보호자용 분석 리포트를 새 창으로 열어요">분석 ↗</a>`:''}${aiPill(s)}</td><td>${s.char?`<span class="dot" style="background:${esc(s.char.color)}"></span>${esc(s.char.name)} <span class="tiny muted">${K?K[0]:''}</span>`:'<span class="pill off">캐릭터 전</span>'}</td>
+        <td class="r">${sumRange(s.daily,P.from,to)}</td><td class="r">${did(s)}<span class="tiny muted">/${days}</span></td><td class="r">${dmgRange(s,P.from,to).toLocaleString()}</td><td class="r">${s.monthPts||sumRange(s.daily,ms,today,'raw')} <span class="tiny muted">/300</span></td>
+        <td>${tc?`<span class="pill ${BADCELL.includes(tc[0])?'bad':''}">${tc[0]}${days>1?' '+tc[1]+'일':''}</span>`:'-'}</td>
+        <td>${s.bless&&today<=s.bless.until?'<span class="pill p">~'+fmt(s.bless.until)+'</span>':'-'}</td><td class="tiny">${ago(s.savedAt)}</td></tr>`}).join('')||'<tr><td colspan="9" class="muted">아직 학생 계정이 없어요. [계정 만들기]에서 만들어 주세요.</td></tr>'}
+    </tbody></table></div><p class="tiny muted">[분석 ↗]을 누르면 보호자가 보는 분석 리포트(몰입 8칸·주간 리포트)가 새 창으로 열려요. 점수는 랭킹 점수(하루 45점 상한), 데미지는 그 기간 보스에게 준 데미지(크리티컬·가호 포함)예요. 체크한 날은 공부를 1개 이상 체크한 날 수, 자주 나온 칸은 그 기간 감정 체크에서 가장 많이 고른 몰입 칸이에요. 이번 달은 기준치 300점 대비 원점수. 1인당 평균은 AI 헬퍼를 뺀 사용 중인 학생 기준이에요. 30초마다 자동으로 새로 고침돼요.</p></div>
+    <div class="card"><h2>${esc(P.name)} 몰입 분포</h2><p class="tiny muted">${days>1?'학생별로 그 기간 감정 체크한 날을 모두 센 횟수예요.':'오늘 감정 체크한 학생 수예요.'}</p><div class="row">${['몰입','각성','통제','이완','지루함','무관심','걱정','불안'].map(c=>`<span class="pill ${BADCELL.includes(c)&&cells[c]?'bad':''}">${c} ${cells[c]||0}${days>1?'회':'명'}</span>`).join('')}</div></div>`;
   }
   if(TAB==='students'){
     h+=`<div class="card"><h2>학생 계정</h2><p class="small muted">비밀번호는 시트에 암호화돼 저장되어 선생님도 원래 비밀번호를 볼 수 없어요. 잊었다면 [새 비밀번호]로 다시 발급하세요. [삭제]는 계정과 기록을 모두 지우고 되돌릴 수 없어요. 잠깐 쉬게 하려면 [멈추기]를 쓰세요. 학교(중등/고등)는 학생이 [나] 탭에서 바꿀 수 있어요.</p>
@@ -195,7 +230,10 @@ function aiPill(s){return isH(s)?' <span class="pill p">AI</span>':''}
 function showOut(html){const o=$('#out');if(o){o.innerHTML=html;o.scrollIntoView({behavior:'smooth',block:'nearest'});o.querySelectorAll('[data-copy]').forEach(b=>b.onclick=()=>copy(decodeURIComponent(b.dataset.copy)))}}
 function bind(){
   app.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{TAB=b.dataset.t;render()});
-  $('#rf').onclick=()=>refresh(true);$('#lo').onclick=()=>logout('로그아웃했어요');
+  $('#rf').onclick=()=>refresh(true);
+  app.querySelectorAll('[data-per]').forEach(b=>b.onclick=()=>{PER={k:b.dataset.per};savePer();render()});
+  if($('#pw'))$('#pw').onchange=e=>{PER=e.target.value?{k:'pw',v:e.target.value}:{k:'today'};savePer();render()};
+  if($('#pm'))$('#pm').onchange=e=>{PER=e.target.value?{k:'pm',v:e.target.value}:{k:'today'};savePer();render()};$('#lo').onclick=()=>logout('로그아웃했어요');
   app.querySelectorAll('[data-ap]').forEach(b=>b.onclick=async()=>{const p=D.pending[+b.dataset.ap];b.disabled=true;b.textContent='승인 중...';
     try{await api('adminApprove',{id:p.id,date:p.date});toast(p.name+' 승인 완료');refresh()}catch(e){toast(e.message);b.disabled=false;b.textContent='인증 (외우기 5점)'}});
   const find=id=>D.students.find(s=>s.id===id);
@@ -226,7 +264,7 @@ function bind(){
 }
 let lastAt=0;
 async function refresh(show){if(busy)return;busy=true;if(show&&!D)render();
-  try{D=await api('adminOverview');lastAt=Date.now();const keep=document.activeElement&&/INPUT|TEXTAREA/.test(document.activeElement.tagName);const out=$('#out');const outHtml=out?out.innerHTML:'';
+  try{D=await api('adminOverview');lastAt=Date.now();const keep=document.activeElement&&/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);const out=$('#out');const outHtml=out?out.innerHTML:'';
     if(!keep){render();if(outHtml&&$('#out')){showOut(outHtml)}}}
   catch(e){if(AUTH)toast(e.message)}busy=false;
   clearInterval(timer);timer=setInterval(()=>{if(!document.hidden)refresh()},30000)}
