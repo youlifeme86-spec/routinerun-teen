@@ -16,7 +16,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%2346B1D8'/%3E%3Crect x='3' y='9' width='10' height='4' fill='%237CC242'/%3E%3Crect x='6' y='3' width='4' height='6' fill='%23E2453C'/%3E%3C/svg%3E">
 <script src="config.js"></script>
 <script>
-window.RR_VERSION='2026.11.27-8';
+window.RR_VERSION='2026.11.27-9';
 /* 실시간 오류 기록: 학생 폰에서 난 오류를 구글 시트 [오류] 탭으로 보냄 */
 (function(){var n=0;window.RR_REPORT=function(msg,stack,extra){try{var C=window.RR_CONFIG||{};if(!C.API_URL||n>=8)return;n++;var a=null;try{a=JSON.parse(localStorage.getItem('rr-auth-v2')||'null')}catch(e){}
 fetch(C.API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},keepalive:true,body:JSON.stringify({action:'logError',token:a&&a.token||'',msg:String(msg||'').slice(0,1000),stack:String(stack||'').slice(0,3000),page:location.pathname+(location.hash.indexOf('#parent')===0?' (학부모)':''),tab:(window.RR_TAB||'')+(extra?' '+extra:''),ver:window.RR_VERSION||'',ua:navigator.userAgent.slice(0,300)})}).catch(function(){})}catch(e){}};
@@ -327,6 +327,14 @@ details summary{cursor:pointer;padding:4px 0}
 .giftcard{display:flex;align-items:center;gap:10px;width:calc(100% - 6px);margin:3px;padding:12px;border:0;text-align:left;background:linear-gradient(135deg,#8C5BD6,#E26A9A);color:#fff;box-shadow:var(--px);border-radius:0;position:relative}
 .giftcard .gtx{display:flex;flex-direction:column;gap:2px;min-width:0}.giftcard b{font-family:var(--f-title);font-size:19px}
 .giftcard .gnew{position:absolute;top:-8px;right:8px;background:#F7C531;color:#2B1D16;font-family:var(--f-pixel);font-size:8px;padding:4px 6px;box-shadow:var(--px2)}
+.astamps{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.astamp{display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 0;border-radius:8px;background:var(--accent-soft)}
+.astamp i{font-style:normal;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;border:2px dashed #C9B8A6;color:#9A8877}
+.astamp.on i{background:#E2453C;border:2px solid #A9231B;color:#FFE07A;transform:rotate(-12deg);box-shadow:0 2px 0 #7A1A14}
+.astamp.now i{border-color:#F2A65A;color:#F2A65A;animation:gb 1s steps(2) infinite}
+.astamp.vis i{background:#EEE7DF;font-size:12px}.astamp.fut{opacity:.45}
+.attopen{display:flex;align-items:center;justify-content:center;gap:8px}
+.game .astamp{border-radius:0;background:#4A2A22}.game .astamp .tiny{color:#F4E4C9}
 .gbox{animation:gb 1s steps(2) infinite;flex:none}.gbox.big{animation:gb 1.4s ease-in-out infinite}
 @keyframes gb{0%,100%{transform:rotate(-6deg)}50%{transform:rotate(6deg) translateY(-3px)}}
 .glist{display:flex;flex-direction:column;gap:4px}
@@ -755,7 +763,52 @@ const CORES={
   tidal:{n:'타이달 코어',egg:'심해알',c:'#2F6FD6',st:['미각성 코어','아기 수정여우','수정여우','아쿠아 울프'],buff:'내가 고른 약점 과목 데미지 +20%',buff2:'약점 과목 데미지 +30%',who:'싫은 과목을 잡고 싶은 타입'}};
 const CORE_TH=[0,30,150,300];
 function coreOf(st,mk){st=st||S;mk=mk||monthKeyOf(TODAY());const c=st.core;return c&&c.m===mk&&CORES[c.type]?c:null}
-function coreXP(st,mk){st=st||S;mk=mk||monthKeyOf(TODAY());return Object.keys(st.logs||{}).filter(x=>x.startsWith(mk)).reduce((a,x)=>a+dayScoreOf(st,x).raw,0)}
+function coreXP(st,mk){st=st||S;mk=mk||monthKeyOf(TODAY());return Object.keys(st.logs||{}).filter(x=>x.startsWith(mk)).reduce((a,x)=>a+dayScoreOf(st,x).raw,0)+attEggXP(st,mk)}
+
+/* ---------- 출석 체크: 접속하면 도장 자리가 생기고(잠김), 공부 퀘스트 1개를 끝내야 도장이 찍히고 출석 상자가 열려요 ----------
+   출석 상자 = 궁극기 게이지 +20% (하루 1번, 오늘만) · 한 주(월~일)에 도장 5개 = 주간 선물 알(가디언 코어) +5점.
+   둘 다 랭킹·학부모 리포트 점수에는 안 들어가요 (게이지는 데미지, 알 점수는 코어 성장에만). */
+const ATT={gauge:20,need:5,egg:5};
+function attEggXP(st,mk){const w=(st&&st.attWk)||{};return Object.keys(w).filter(x=>w[x]&&String(w[x].at||'').startsWith(mk)).reduce((a,x)=>a+(w[x].xp||0),0)}
+function attStudied(k,st){st=st||S;const L=(st.logs||{})[k];return !!L&&L.q.some(q=>q.done)}
+function attWeekDays(k){const w=weekKey(k||TODAY());return [...Array(7)].map((_,i)=>addDays(w,i))}
+function attStamps(k,st){return attWeekDays(k).filter(d=>attStudied(d,st)).length}
+function attBoxReady(){const k=TODAY();return attStudied(k)&&!((S.att||{})[k]||{}).ok}
+function attWeekReady(){const k=TODAY();return attStamps(k)>=ATT.need&&!(S.attWk||{})[weekKey(k)]}
+function attMark(){if(READONLY||!S.char||UI.mode!=='student')return;const k=TODAY();S.att=S.att||{};if(S.att[k])return;
+  S.att[k]={v:Date.now()};const old=addDays(k,-70);Object.keys(S.att).forEach(d=>{if(d<old)delete S.att[d]});save();
+  if(!attStudied(k))setTimeout(()=>{toast('출석 도장 자리 확보! 공부 1개 끝내면 쾅 찍히고 상자가 열려');SND.play('item')},700)}
+function attCard(){const k=TODAY(),A=S.att||{},st=attStamps(k),wk=(S.attWk||{})[weekKey(k)],ready=attBoxReady(),got=(A[k]||{}).ok;
+  const cells=attWeekDays(k).map((d,i)=>{const on=attStudied(d),vis=!!A[d],fut=d>k,today=d===k;
+    const cls=on?'on':fut?'fut':today?'now':vis?'vis':'off';
+    return `<div class="astamp ${cls}"><span class="tiny">${'월화수목금토일'[i]}</span><i>${on?'★':today?'?':vis?'🔒':''}</i></div>`}).join('');
+  let box;
+  if(got)box=`<div class="row" style="gap:10px"><span data-spr="chest" data-sc="3" style="opacity:.55"></span><p class="small" style="margin:0"><b>오늘 출석 상자 획득!</b><br><span class="tiny muted">궁극기 게이지 +${ATT.gauge}% 받았어. 내일 또 만나!</span></p></div>`;
+  else if(ready)box=`<button class="btn gold attopen" id="attopen"><span class="gbox" data-spr="chest" data-sc="3"></span> 출석 상자 열기! (게이지 +${ATT.gauge}%)</button>`;
+  else box=`<div class="row attlock" style="gap:10px"><span data-spr="chest" data-sc="3" style="filter:grayscale(1);opacity:.6"></span><p class="small" style="margin:0"><b>🔒 오늘 출석 상자가 잠겨 있어</b><br><span class="tiny muted">공부 퀘스트 <b>1개</b>만 끝내면 도장이 쾅! 찍히고 상자가 열려 (궁극기 게이지 +${ATT.gauge}%). 들어오기만 하면 도장은 안 찍혀.</span></p></div>`;
+  const wl=wk?`<span class="pill" style="background:#2FA06A;color:#fff">주간 선물 받음 · 알 +${wk.xp}점</span>`:st>=ATT.need?`<button class="chip" id="attwk">🎁 주간 선물 받기 (알 +${ATT.egg}점)</button>`:`<span class="tiny muted">도장 ${ATT.need-st}개 더 모으면 주간 선물: 알 +${ATT.egg}점</span>`;
+  return `<div class="card attcard" style="gap:8px"><div class="row between"><h3>출석 체크</h3><span class="pill">${streak()?`연속 ${streak()}일 🔥`:'연속 출석 시작!'}</span></div>
+    <div class="astamps">${cells}</div>${box}
+    <div class="row between" style="gap:6px;flex-wrap:wrap"><span class="small"><b class="num">${Math.min(st,7)}</b> / ${ATT.need} 도장</span>${wl}</div></div>`}
+function attOpen(){if(!attBoxReady())return;const k=TODAY();S.att=S.att||{};S.att[k]=Object.assign({v:Date.now()},S.att[k]||{},{ok:Date.now(),g:ATT.gauge});
+  S.gauge=Math.min(100,(S.gauge||0)+ATT.gauge);let wk=false;if(attWeekReady()){(S.attWk=S.attWk||{})[weekKey(k)]={at:k,xp:ATT.egg};wk=true}
+  save();SND.play('kill');attModal(true,wk)}
+function attClaimWeek(){if(!attWeekReady())return;const k=TODAY();(S.attWk=S.attWk||{})[weekKey(k)]={at:k,xp:ATT.egg};save();SND.play('kill');attModal(false,true)}
+function attModal(box,wk){document.querySelectorAll('.attm').forEach(x=>x.remove());const m=document.createElement('div');m.className='modal attm';
+  m.innerHTML=`<div class="card giftm" role="dialog" aria-label="출석 보상" style="gap:10px;text-align:center"><div class="gbox big" data-spr="chest" data-sc="6" style="margin:0 auto"></div>
+   ${box?`<h1>출석 상자 오픈!</h1><p>궁극기 게이지 <b>+${ATT.gauge}%</b> (지금 ${S.gauge}%)</p><p class="tiny muted">${S.gauge>=100?'게이지 100%! 다음 공격은 데미지 3배야.':'100%가 되면 다음 공격 데미지 3배!'}</p>`:''}
+   ${wk?`<h2>🎁 도장 ${ATT.need}개 달성! 주간 선물</h2><p>이번 달 알(가디언 코어)에 <b>+${ATT.egg}점</b>${coreOf()?'':' (알을 고르면 바로 반영돼)'}</p>`:''}
+   <p class="tiny muted">랭킹·학부모 리포트 점수는 그대로예요.</p><button class="btn gold" id="aok">좋아!</button></div>`;
+  phone.appendChild(m);hydrate(m);m.querySelector('#aok').onclick=()=>{m.remove();render()}}
+/* 오늘 탭에 돌아왔을 때 열 수 있는 상자가 있으면 바로 보여 줘요 (열기는 학생이 눌러서) */
+function attCheck(){if(READONLY||!S.char||UI.mode!=='student'||UI.tab!=='today'||document.querySelector('.modal,.sheet'))return;
+  if(attBoxReady()){const m=document.createElement('div');m.className='modal attm';
+    m.innerHTML=`<div class="card giftm" role="dialog" aria-label="출석 상자" style="gap:10px;text-align:center"><h2>출석 도장 쾅!</h2><div class="gbox big" data-spr="chest" data-sc="6" style="margin:0 auto"></div><p class="small">오늘 공부를 시작해서 출석 상자가 열렸어.</p><button class="btn gold" id="ago">상자 열기!</button><button class="btn ghost" id="ax">나중에</button></div>`;
+    phone.appendChild(m);hydrate(m);m.querySelector('#ago').onclick=()=>{m.remove();attOpen()};m.querySelector('#ax').onclick=()=>m.remove()}
+  else if(attWeekReady())attClaimWeek()}
+/* 체크를 취소해서 오늘 끝낸 퀘스트가 0개가 되면 오늘 상자·주간 선물도 되돌려요 */
+function attUndo(k){const A=(S.att||{})[k];if(attStudied(k))return;if(A&&A.ok){S.gauge=Math.max(0,(S.gauge||0)-(A.g||ATT.gauge));delete A.ok;delete A.g}
+  const w=(S.attWk||{})[weekKey(k)];if(w&&w.at===k&&attStamps(k)<ATT.need)delete S.attWk[weekKey(k)]}
 function coreStage(xp){return xp>=300?3:xp>=150?2:xp>=30?1:0}
 /* 버프 세기: 부화 전 0, 부화 1, 성장·각성 1.5 */
 function coreLv(st,mk){const c=coreOf(st,mk);if(!c)return 0;const s=coreStage(coreXP(st,mk));return s>=2?1.5:s>=1?1:0}
@@ -771,7 +824,7 @@ function coreCard(){
   return `<div class="card corecard" style="gap:6px;border-color:${T.c}"><div class="row" style="gap:12px"><span class="coresp ${s===3?'awake':''}" data-spr="core-${c.type}-${s}" data-sc="${s?4:4}"></span>
     <div style="min-width:0;flex:1"><div class="row between"><b>${esc(T.st[s])}</b><span class="tiny muted">${T.n}</span></div>
     <div class="bar gauge" style="margin:4px 0"><i style="width:${nx?pctOf(xp-CORE_TH[s],nx-CORE_TH[s]):100}%;background:${T.c}"></i></div>
-    <p class="tiny muted num">${nx?`이달 ${xp}점 · ${['부화','성장','각성'][s]}까지 ${nx-xp}점`:`이달 ${xp}점 · 최종 각성! 도감에 등록됐어`}</p></div></div>
+    <p class="tiny muted num">${nx?`이달 ${xp}점${attEggXP(S,mk)?` (출석 선물 +${attEggXP(S,mk)} 포함)`:''} · ${['부화','성장','각성'][s]}까지 ${nx-xp}점`:`이달 ${xp}점 · 최종 각성! 도감에 등록됐어`}</p></div></div>
     <p class="small">${s?`<b style="color:${T.c}">버프</b> ${s>=2?T.buff2:T.buff}${c.type==='tidal'?` (약점: ${SUBJ[c.weak||'m'].n})`:''}`:`<span class="muted">부화하면 버프가 켜져요: ${T.buff}${c.type==='tidal'?` (약점: ${SUBJ[c.weak||'m'].n})`:''}</span>`}</p>
     ${T.later?`<p class="tiny muted">${T.later}</p>`:''}</div>`}
 function corePickSheet(){if(READONLY)return;const sh=document.createElement('div');sh.className='sheet';let sel=(S.core&&S.core.type)||'blaze',weak=(S.core&&S.core.weak)||'m';
@@ -799,18 +852,18 @@ function coreDexCard(){const dex=S.coreDex||[];return `<div class="card"><div cl
 function partnerHTML(){const c=coreOf();if(!c)return '';const s=coreStage(coreXP());return `<div class="partner ${s===3?'awake':''}"><div data-spr="core-${c.type}-${s}" data-sc="${s?3:2}"></div></div>`}
 
 /* 업데이트 소식: 학생마다 한 번만 보여 줘요 (NEWS.id 바꾸면 다시 떠요) */
-const NEWS={id:'2026-11-27c',items:[
+const NEWS={id:'2026-11-27d',items:[
+  ['✅','출석 체크 & 출석 상자','앱에 들어오면 오늘 도장 자리가 생겨. 공부 퀘스트 1개만 끝내면 도장 쾅! + 출석 상자(궁극기 게이지 +20%). 들어오기만 하고 나가면 상자는 잠겨 있어.'],
+  ['🎁','주간 선물: 알 +5점','한 주(월~일)에 출석 도장 5개를 모으면 이번 달 알(가디언 코어)에 +5점! 연속 출석 일수도 출석 카드에서 볼 수 있어.'],
   ['🏰','랭킹 레이스 지도','랭킹 탭에 출발점에서 스터디아 성까지 가는 길이 생겼어. 점수만큼 캐릭터가 성으로 달려가! 1~3위는 메달, 나는 노란 이름표.'],
   ['🥚','가디언 코어(알) 4종','오늘 탭에서 이번 달 알을 골라 줘. 공부 점수 30점이면 부화, 150점 성장, 300점이면 최종 각성!'],
   ['🐾','파트너도 같이 공격!','부화한 파트너가 내 공격 뒤에 보스에게 달려가 한 번 더 쳐. 성장하면 쾅!, 각성하면 각성 일격!'],
-  ['💥','CRITICAL! · MEGA HIT!','퀘스트를 완료하면 15% 확률로 데미지 1.5배, 3% 확률로 2배가 터져.'],
-  ['🗯️','보스가 말을 해','보스 HP 75%·50%·25%마다 금이 가고 새 대사가 나와. 하루 두 번째 완료부터 COMBO!'],
-  ['⏱️','내 공부 시간','오늘 탭에 오늘·이번 주 공부 시간, 나 탭에 자세한 공부 시간 카드가 생겼어.']]};
+  ['💥','CRITICAL! · MEGA HIT!','퀘스트를 완료하면 15% 확률로 데미지 1.5배, 3% 확률로 2배가 터져.']]};
 function newsCheck(){if(READONLY||!S.char||UI.mode!=='student'||UI.tab!=='today'||S.newsSeen===NEWS.id||document.querySelector('.modal,.sheet'))return;
   const m=document.createElement('div');m.className='modal';
   m.innerHTML=`<div class="card" role="dialog" aria-label="업데이트 소식" style="gap:10px"><h2>새로 생겼어요!</h2>
     ${NEWS.items.map(([ic,t,d])=>`<div class="row" style="gap:10px;align-items:flex-start"><span style="font-size:22px;line-height:1">${ic}</span><div><b>${t}</b><p class="small" style="margin:2px 0 0">${d}</p></div></div>`).join('')}
-    <p class="tiny muted">크리티컬·코어 버프는 보스 데미지에만 들어가고 랭킹 점수는 그대로야. <a href="support/rules.html#core" target="_blank" rel="noopener">규칙 도감에서 자세히</a></p>
+    <p class="tiny muted">크리티컬·코어 버프·출석 보상은 보스 데미지와 알 성장에만 들어가고 랭킹 점수는 그대로야. <a href="support/rules.html#core" target="_blank" rel="noopener">규칙 도감에서 자세히</a></p>
     <button class="btn gold" id="ok">확인!</button></div>`;
   phone.appendChild(m);m.querySelector('#ok').onclick=()=>{S.newsSeen=NEWS.id;save();m.remove();SND.play('item')}}
 
@@ -919,7 +972,7 @@ function render(){
   if(UI.tab==='emo'){nav.hidden=true;return renderEmotion()}
   renderNav([['today','오늘'],['plan','플랜'],['boss','보스전'],['raid','레이드'],['rank','랭킹'],['me','나']],UI.tab,id=>{UI.tab=id;render();toTop()});
   ({today:renderToday,plan:renderPlan,boss:renderBoss,raid:renderRaid,rank:renderRank,me:renderMe})[UI.tab]();
-  hydrate(scr);checkSeason();setTimeout(coreCheck,UI.tab==='boss'?2600:400);setTimeout(newsCheck,1200);
+  hydrate(scr);checkSeason();setTimeout(coreCheck,UI.tab==='boss'?2600:400);setTimeout(newsCheck,1200);setTimeout(attCheck,1700);
 }
 document.getElementById('modeStudent').onclick=()=>{UI.mode='student';render()};
 document.getElementById('modeParent').onclick=()=>{UI.mode='parent';render()};
@@ -1072,6 +1125,7 @@ function renderToday(){
   let h=sceneHTML(`<div class="hud"><div class="nm">${esc(S.char.name)}<small>${esc(KINGDOMS[S.char.kingdom].n)} · ${esc(S.char.job)}</small></div><div class="tagr">${Number(k.slice(5,7))}월 ${ms}/${BASE}</div></div>${heroHTML()}${partnerHTML()}<div class="boss sleep" style="right:20px;transform:scale(.8);transform-origin:bottom right"><div data-spr="${bossS}" data-sc="5"></div></div>`)+
    `<div class="row between"><div><p class="tiny muted">${fmt(k)} · 새벽 2시 마감</p><h1>오늘의 퀘스트</h1></div></div>
     <div class="bubble">${tot?`"퀘스트 ${tot}개 중 ${done}개 완료! ${SUBJ[bossS].boss} 체력 ${left}% 남았어"`:'"오늘은 플랜이 없는 날이야. 밀린 퀘스트를 보충하거나 쉬어도 돼"'}</div>`;
+  attMark();h+=attCard();
   h+=coreCard();
   if(giftReady())h+=giftCard();else if(event2Ready())h+=event2Card();
   if(blessActive())h+=`<div class="banner" style="background:#5B3B8C"><span data-spr="star" data-sc="5"></span><div><b>마스터의 가호</b><p class="small" style="opacity:.9">선생님 과제 완료! ${fmt(S.bless.until)}까지 모든 공격 데미지 +${BLESS_PCT}%</p></div></div>`;
@@ -1102,6 +1156,7 @@ function renderToday(){
   $('#finish').onclick=()=>{const Lk=S.logs[k];if(earlyOpen(k)&&allDone(k)){const pts=earlyPts(k);Lk.early={pts,at:Date.now()};save();SND.play('item');toast(`자정 전 마감 보너스 +${pts}점!`)}
     UI.tab='emo';UI.emo={i:0,a:{}};render();toTop()};
   if($('#gift'))$('#gift').onclick=openGift;
+  if($('#attopen'))$('#attopen').onclick=attOpen;if($('#attwk'))$('#attwk').onclick=attClaimWeek;
   if($('#ev2'))$('#ev2').onclick=openEvent2;
 }
 function toggleQuest(i){
@@ -1109,17 +1164,17 @@ function toggleQuest(i){
   if(!q.done){
     const lim=dayLimit(L,q);if(lim){toast(lim);return}
     if(q.a==='lec'){q.no=S.lecNo[q.s]++;if(lectureBonusAvailable(q.s,k)){q.pts=6;(S.bonus[weekKey(k)]=S.bonus[weekKey(k)]||{})[q.s]=1}else q.pts=5}
-    const mk=monthKeyOf(k);const before=monthBossDmg(q.s,mk);
-    q.done=true;q.at=Date.now();
+    const mk=monthKeyOf(k);const before=monthBossDmg(q.s,mk);const attFirst=!attStudied(k);
+    q.done=true;q.at=Date.now();(S.att=S.att||{})[k]=S.att[k]||{v:Date.now()};
     const r=damageFor(q,L);q.dmg=r.dmg;
     let blessNew=false;if(q.a==='hw'){S.bless={from:k,until:addDays(k,6)};q.blessed=1;blessNew=true}
     save();
     UI.pendingFx={s:q.s,before,dmg:r.dmg,pts:questPts(q),why:r.why,crit:r.crit,combo:L.q.filter(x=>x.done).length,killed:before<SUBJ[q.s].hp&&before+r.dmg>=SUBJ[q.s].hp,bless:blessNew};
-    UI.tab='boss';UI.boss=q.s;render();toTop();return;
+    UI.tab='boss';UI.boss=q.s;render();toTop();if(attFirst)setTimeout(()=>toast('출석 도장 쾅! 오늘 탭에서 출석 상자를 열어 봐'),3200);return;
   } else {
     q.done=false;delete q.dmg;if(q.blessed&&S.bless&&S.bless.from===k){delete S.bless;delete q.blessed}
     if(q.a==='lec'){S.lecNo[q.s]=Math.max(1,S.lecNo[q.s]-1);if(q.pts===6&&S.bonus[weekKey(k)])delete S.bonus[weekKey(k)][q.s];delete q.no;delete q.pts}
-    q.cancelled=(q.cancelled||0)+1;save();toast('체크를 취소했어요 (취소 기록은 남아요)');
+    q.cancelled=(q.cancelled||0)+1;attUndo(k);save();toast('체크를 취소했어요 (취소 기록은 남아요)');
   }
   render();
 }
@@ -1502,7 +1557,7 @@ function renderMe(){
   <div class="card"><div class="row between"><h3>쟁여둔 아이템</h3><span class="pill">${(S.items||[]).length}개</span></div>
     ${(S.items||[]).length?(S.items||[]).map(it=>`<div class="item"><span data-spr="${it.kind==='chest'?'chest':it.s}" data-sc="${it.kind==='chest'?3:2}"></span><div style="flex:1"><b class="small">${esc(it.name)}</b><div class="tiny muted">${esc(it.from)} 획득 · 레이드 ${it.dmg} 데미지</div></div></div>`).join(''):'<p class="small muted">한 달을 마치면 처치한 과목 보스마다 장비 카드 1장(레이드 100 데미지), 기준치 300점을 채우면 시즌 보물상자(300 데미지)를 받아요. 시험 레이드가 열리면 꺼내 쓰세요.</p>'}</div>
   ${S.seasons&&Object.keys(S.seasons).length?`<div class="card"><h3>지난 시즌</h3>${Object.keys(S.seasons).sort().reverse().map(mk=>{const r=S.seasons[mk];return `<div class="row between small"><span>${Number(mk.slice(5))}월 · ${esc(r.name)} · ${esc(KINGDOMS[r.kingdom]?KINGDOMS[r.kingdom].n:'')}</span><span class="num px">${r.pts}점 ${r.killed.length}/6</span></div>`}).join('')}</div>`:''}
-  <div class="card"><h3>연속 출석 <span class="num">${streak()}</span>일</h3><p class="small muted">7일이면 펫 [알람 부엉이], 30일이면 [황금 마라탕 펫]. 출석은 퀘스트 1개 이상 체크한 날.</p></div>
+  <div class="card"><h3>연속 출석 <span class="num">${streak()}</span>일</h3><p class="small muted">7일이면 펫 [알람 부엉이], 30일이면 [황금 마라탕 펫]. 출석은 퀘스트 1개 이상 체크한 날. 그날 출석 상자(궁극기 게이지 +20%)가 열리고, 한 주에 도장 5개면 주간 선물 알 +5점.</p></div>
   <div class="card"><div class="row between"><h3>캐릭터 성별</h3><div class="row">${['여','남'].map(g=>`<button class="chip" data-sg="${g}" aria-pressed="${(c.gender||'여')===g}">${g==='여'?'여학생':'남학생'}</button>`).join('')}</div></div></div>
   <div class="card"><h3>학부모 링크</h3><p class="small muted">부모님께 이 링크를 보내면 분석 화면만 열려요. 다른 친구와의 순위는 보이지 않아요.</p>
     <input type="text" id="plink" readonly value="${BASE_URL}#parent-${esc(S.code||'')}"><button class="btn ghost" id="pcopy2">링크 복사</button></div>
@@ -1591,7 +1646,8 @@ function parentWeek(k){
   const dMin=A.min-P.min;
   h+=`<div class="card"><p class="tiny muted">공부한 시간 (예상)</p><p class="num" style="font-size:30px;font-weight:800;color:var(--accent)">약 ${phm(A.min)}</p>
     <p class="small" style="color:${dMin>=0?'#2FA06A':'#B3261E'}">${P.min?`지난주 같은 기간보다 ${phm(Math.abs(dMin))} ${dMin>=0?'더':'덜'} 공부했어요`:'지난주 같은 기간 기록이 없어요'}</p>
-    <div class="ptiles">${[[A.cnt+'회','공부 횟수'],[A.on+'일','공부한 날'],[A.on?phm(Math.round(A.min/A.on)):'-','하루 평균'],[A.raw+'점',`점수 (주 기준 ${WEEK_BASE}점의 ${pctOf(A.raw,WEEK_BASE)}%)`]].map(([v,l])=>`<div><b class="num">${v}</b><span>${l}</span></div>`).join('')}</div></div>`;
+    <div class="ptiles">${[[A.cnt+'회','공부 횟수'],[A.on+'일','공부한 날'],[A.on?phm(Math.round(A.min/A.on)):'-','하루 평균'],[A.raw+'점',`점수 (주 기준 ${WEEK_BASE}점의 ${pctOf(A.raw,WEEK_BASE)}%)`]].map(([v,l])=>`<div><b class="num">${v}</b><span>${l}</span></div>`).join('')}</div>
+    ${(()=>{const vo=days.filter(d=>(S.att||{})[d]&&!attStudied(d)).length;return `<p class="tiny muted">출석 도장 ${attStamps(w)}개 (공부 퀘스트를 1개 이상 끝낸 날, 5개면 주간 선물)${vo?` · 앱만 열고 공부는 안 한 날 ${vo}일`:''}</p>`})()}</div>`;
   /* 4. 마음 체크 */
   let most=null;const ems=days.filter(d=>S.emo[d]).map(d=>({d,e:S.emo[d],lab:'월화수목금토일'[(parseDay(d).getDay()+6)%7]}));
   if(ems.length){const cnt={};ems.forEach(o=>cnt[o.e.cell]=(cnt[o.e.cell]||0)+1);most=Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a]||FLOW_RING.indexOf(a)-FLOW_RING.indexOf(b))[0];
