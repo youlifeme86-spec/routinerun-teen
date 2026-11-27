@@ -652,10 +652,38 @@ function makeDeco(key,scale){var R=DECO[key];if(!R)return null;var k=key+'|'+sca
 var SCN=null;
 function scene(){if(!SCN){try{SCN={mtn:mtnURL(),hills:hillsURL(),ground:groundURL()}}catch(e){SCN={}}}return SCN}
 
+/* ---------- 가디언 코어 (알 → 아기 → 성장 → 각성) ---------- */
+var CORE_PAL={
+  blaze:{p:'#E2453C',P:'#FF9A7A',q:'#9E2420',e:'#FFD34D'},
+  ever:{p:'#2E9E6B',P:'#8FDDB0',q:'#1D6646',e:'#F7C531'},
+  aegis:{p:'#9AA6B8',P:'#E6EBF2',q:'#5F6A7D',e:'#6FE6EE'},
+  tidal:{p:'#2F6FD6',P:'#9CC6FF',q:'#1C4596',e:'#E6F6FF'}};
+var CORE_ART={
+ egg:["....ppp....","...pPPpp...","..pPPpppp..",".pPPppPPqp.",".pPppPPPpqp".slice(0,11),"pPpppppppqp","pPppPPppppq","ppppPPPppqp","ppPppppppqp",".ppPPpppqq.",".qpppppqqq.","..qqqqqqq..","...qqqqq..."],
+ blaze1:["...e......e...","...ee....ee...","...pppppppp...","..pPPpppppppq.","..pPwbpppwbpq.","..pPbbpppbbpq.","..pPPpkkppPpq.","...pppppppp...","q..pPPPPPPp..q","qq.pPPPPPPpppq",".qqpPPPPPPpq..","...pppppppp...","...pp....pp...","...qq....qq..."],
+ ever1:["..qq......qq..","..qpq....qpq..","..pppppppppp..",".pPPpppppppPp.",".peebpppeebpp.",".pebbpppebbpp.",".pPPppyyppPPp.","..pppppypppp..","qqpPPPPPPPpqq.","qqpPqPPqPPpqq.",".qpPPPPPPPpq..","..pppppppppp..","...yy....yy...","..yyy....yyy.."],
+ aegis1:[".....ee.......",".....q........","..pppppppppp..",".pPPppppppppq.",".pqqqqqqqqqpq.",".pqeeqqqeeqpq.",".pqqqqqqqqqpq.",".pPPppppppppq.","..qqpppppqq...",".PqpPPePPpqP..",".PqpPPPPPpqP..","..qpppppppq...","..qq.....qq...",".qqq.....qqq.."],
+ tidal1:[".p........p...",".pp......pp...",".pPp....pPp...",".pPpppppppPp..",".pppppppppppp.",".pPwbpppwbpp..",".pPbbpppbbpp..","..pPPbbbPPp...","...pPPPPPp....","..ppPPPPPpp.PP","..pPPPPPPPpPPw","..ppPPPPPppPw.","..pp.....pp...","..qq.....qq..."],
+ blaze2:["..e............e..","..ee..........ee..","...eppppppppppe...","qq.pPPppppppppp.qq","qPqpPwwbppwwbpp.qPq".slice(0,18),"qPPpPwbbppwbbpppPq","qPPpPPPppppppppPPq","qPPPpppkRRkppppPPq","qqPPpppppppppppPqq",".qqqpPPPPPPPPpqqq.","...ppPPPPPPPPpp..q","...ppPPPPPPPPppppq","...ppPPPPPPPPpp.qq","....pppppppppp....","....ppp....ppp....","...eqq.....eqq...."],
+ ever2:["..qqq........qqq..","..qpqq......qqpq..","..qpppyyyyyyppqq..","..pppppyyyypppppq.",".pPPpppppppppPPpq.",".peeebpppppeeebpq.",".pebbbpppppebbbpq.",".peeebppyyppeeepq.",".pPPpppyyyypppPPpq",
+  "qqpPPPPPyyPPPPPpqq","qPqpPqPPPPPPqPpqPq","qPqpPPPqPPqPPPpqPq","qqqpPPPPPPPPPPpqqq","..qpppppppppppq...","....yyy....yyy....","...yyyy....yyyy..."],
+ aegis2:["........ee........","........qq........","...pppppppppppp...","..pPPppppppppppq..","..pqqqqqqqqqqqpq..","..pqeeeqqqqeeeqq..","..pqqqqqqqqqqqpq..","..pPPpppppppppq...","yy.qqpppppppqq.yy.","yeyqpPPPPPPPpqyey.","yeeyqpPPeePPpqyeey".slice(0,18),"yeyqpPPeeePPpqyey.","yy.qpPPPPPPPpq.yy.","...qppppppppq.....","...qqq....qqq.....","..qqqq....qqqq...."],
+ tidal2:[".p............p...",".pp..........pp...",".pPp........pPp...",".pPPp......pPPp...",".pPpppppppppPPp...","pppppppppppppppp..","pPPwwbppppwwbPPp..","pPPwbbppppwbbPPp..",".pPPPPbbbbPPPPp...","..pPPPPPPPPPPp...P","...ppPPPPPPpp...PP","..ppPPPPPPPPpp.PPw","..pPPPPPPPPPPpPPw.","..ppPPPPPPPPppPw..","..ppp......ppp....","..qqq......qqq...."]
+};
+var ccache={};
+function makeCore(key,scale){var m=key.match(/^core-(\w+)-(\d)$/);if(!m)return null;var c=m[1],st=+m[2],pal=CORE_PAL[c];if(!pal)return null;
+  var art=st===0?CORE_ART.egg:CORE_ART[c+(st>=2?'2':'1')];if(!art)return null;var k=key+'|'+scale;
+  if(!ccache[k]){var w=Math.max.apply(null,art.map(function(r){return r.length}));var pad=st===3?3:1;var g=grid(w+pad*2,art.length+pad*2+1);putA(g,art,pad,pad);outline(g);
+    if(st===3){[[0,2],[w+pad*2-2,4],[1,art.length],[w+pad*2-1,art.length-2],[Math.floor(w/2)+pad,0]].forEach(function(p){if(p[1]<g.h&&p[0]<g.w&&!g[p[1]][p[0]])g[p[1]][p[0]]='y'})}
+    shadow(g,(w+pad*2)/2,art.length+pad,Math.round(w/3));
+    ccache[k]=paint(g,scale,Object.assign({},BASE,pal,{b:'#221E30',k:'#F7A1C4'}))}
+  return cloneCanvas(ccache[k])}
+
 function make(key,sc,ds){ds=ds||{};sc=+sc||4;
   if(key==='hero'||key==='heroM'){var s=sc<=2?1:Math.round(sc*0.75);return makeChar(key==='heroM'?'남':'여',ds.job||'',ds.hero||'#EE7FAE',s)}
   if(BOSS[key]){var bs=Math.max(1,Math.round(sc*0.6));if(sc>=2&&bs<2)bs=2;return makeBoss(key,bs)}
   if(DECO[key]){return makeDeco(key,sc)}
+  if(key.indexOf('core-')===0){return makeCore(key,sc)}
   return null}
 
 window.RRART={make:make,scene:scene,charGrid:charGrid,BASE:BASE,auraPal:auraPal,paint:paint};
