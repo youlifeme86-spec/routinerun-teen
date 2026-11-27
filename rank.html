@@ -10,6 +10,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Press+Start+2P&family=Noto+Sans+KR:wght@400;500;700&display=swap">
 <script src="config.js"></script>
 <script src="art.js?v=2026.11.26-6"></script>
+<script src="race.js?v=2026.11.27-8"></script>
 <style>
 :root{--sky:#46B1D8;--sky2:#86D9F0;--paper:#FFF4D6;--paper2:#FFFBEA;--ink:#2B1D16;--muted:#6E5844;--red:#E2453C;--gold:#F7C531;--night:#2E2440;--night2:#3A2A20;--blue:#5BC0EB;--purple:#8C5BD6;--green:#3E9B4B;
   --px:0 -3px 0 0 #2B1D16,0 3px 0 0 #2B1D16,-3px 0 0 0 #2B1D16,3px 0 0 0 #2B1D16,0 7px 0 0 rgba(43,29,22,.3);--px2:0 -2px 0 #2B1D16,0 2px 0 #2B1D16,-2px 0 0 #2B1D16,2px 0 0 #2B1D16;
@@ -148,16 +149,20 @@ function render(){
   if(!D){app.innerHTML=`<div class="card"><h2>랭킹을 불러오는 중...</h2>${ERR?`<p class="small" style="color:var(--red)">${esc(ERR)}</p>`:''}</div>`;return}
   const P=players();const today=dayKey();const mo=Number(today.slice(5,7));
   let h=`<div class="top"><h1 class="title">스터디아 랭킹</h1><span class="sp"></span><span class="tag">${mo}월 시즌</span><span class="tag">${P.length}명 참여</span><a class="btn ghost" href="./">내 앱</a></div>
-  <a class="card" href="support/#new" style="display:block;text-decoration:none;color:inherit;padding:10px 14px"><b>NEW</b> <span class="small">가디언 코어(알) 4종 · 파트너 같이 공격 · CRITICAL!/MEGA HIT! · 보스 대사 · 내 공부 시간. 크리티컬·코어 버프는 보스 데미지에만, 랭킹 점수는 그대로예요. 자세히 →</span></a>
+  <a class="card" href="support/#new" style="display:block;text-decoration:none;color:inherit;padding:10px 14px"><b>NEW</b> <span class="small">레이스 지도: 점수만큼 스터디아 성으로 달려가요(1~3위 메달, 나는 노란 이름표) · 가디언 코어(알) 4종 · 파트너 같이 공격 · CRITICAL!/MEGA HIT! · 보스 대사 · 내 공부 시간. 크리티컬·코어 버프는 보스 데미지에만, 랭킹 점수는 그대로예요. 자세히 →</span></a>
   <div class="tabs">${[['char','캐릭터 랭킹'],['kingdom','왕국 대항전'],['boss','보스 현황'],['hidden','히든보스']].map(([k,l])=>`<button data-t="${k}" aria-pressed="${TAB===k}">${l}</button>`).join('')}</div>`;
   if(!P.length)h+=`<div class="card empty">아직 이번 달에 공부를 체크한 모험가가 없어요. 첫 퀘스트를 완료하면 여기에 나타나요.</div>`;
   else if(TAB==='char'){
     const keys=keysOf(PER);const list=P.map(p=>({p,v:sum(p,keys)})).sort((a,b)=>b.v-a.v);
+    const raceGoal=window.RRRACE?RRRACE.goalFor(PER,list.map(x=>({score:x.v}))):0;
     const top=list.slice(0,3);const order=[1,0,2].filter(i=>top[i]);
     h+=`<div class="card"><div class="sub">${[['today','오늘'],['yesterday','어제'],['week','이번 주'],['month','이번 달']].map(([k,l])=>`<button data-p="${k}" aria-pressed="${PER===k}">${l}</button>`).join('')}</div>
+      <div id="race-main"></div>
+      <div class="rr-race-cap"><span>${{today:'오늘 레이스',yesterday:'어제 레이스',week:'월~일 · 이번 주 레이스',month:'1일~말일 · 이번 달 레이스'}[PER]} · 점수만큼 성으로 나아가요</span><span>스터디아 성까지 <b>${raceGoal}</b>점</span></div>
       <div class="podium">${order.map(i=>{const x=top[i];const hgt=[96,70,54][i];return `<div class="p">${av(x.p,3)}<b>${esc(x.p.char.name)}</b><span class="tiny" style="color:${KINGDOMS[x.p.char.kingdom]?KINGDOMS[x.p.char.kingdom].c:'#888'}">${KINGDOMS[x.p.char.kingdom]?KINGDOMS[x.p.char.kingdom].n:''}</span><div class="blk" style="height:${hgt}px">${i+1}</div><span class="pxn">${x.v}점</span></div>`}).join('')}</div>
       <div>${list.map((x,i)=>{const K=KINGDOMS[x.p.char.kingdom]||{n:'',c:'#888'};return `<div class="rank ${i<3?'top'+(i+1):''}"><span class="no">${i+1}</span>${av(x.p)}<div class="who"><b>${esc(x.p.char.name)}</b><span class="tiny" style="color:${K.c}">● ${K.n}</span>${x.p.char.job?` <span class="tiny muted">${esc(x.p.char.job)}</span>`:''}</div><span class="pxn num">${x.v}</span></div>`}).join('')}</div>
-      <p class="tiny muted">하루 랭킹 점수는 ${DAILY_CAP}점까지. 이번 달에 한 번이라도 공부를 체크한 모든 왕국의 모험가가 함께 겨뤄요. 1분마다 새로 고침.</p></div>`;
+      <p class="tiny muted">하루 랭킹 점수는 ${DAILY_CAP}점까지. 레이스 지도의 성은 하루 ${DAILY_CAP}점·주 100점·월 300점이고, 선두가 넘으면 선두 점수가 성이 돼요. 캐릭터를 누르면 이름과 점수가 보여요. 이번 달에 한 번이라도 공부를 체크한 모든 왕국의 모험가가 함께 겨뤄요. 1분마다 새로 고침.</p></div>`;
+    if(PER==='month')h+=`<div class="card"><h3>월~일 · 이번 주 단거리</h3><div id="race-week" style="max-width:460px;width:100%"></div><p class="tiny muted">이번 주 점수로 달려요. 성은 100점(선두가 넘으면 선두 점수).</p></div>`;
   }
   else if(TAB==='kingdom'){
     const keys=keysOf('month');
@@ -189,6 +194,10 @@ function render(){
   }
   h+=`<p class="tiny muted" style="text-align:center" id="upd"></p>`;
   app.innerHTML=h;hydrate();
+  if(TAB==='char'&&P.length&&window.RRRACE){const me=TOK&&TOK.id;
+    const mk=per=>{const keys=keysOf(per);return P.map(p=>({id:p.id,name:p.char.name,color:p.char.color,gender:p.char.gender,job:p.char.job,kingdom:KINGDOMS[p.char.kingdom]?KINGDOMS[p.char.kingdom].n:'',score:sum(p,keys),me:p.id===me})).sort((a,b)=>b.score-a.score).map((x,i)=>({...x,rank:i+1}))};
+    const a=mk(PER);RRRACE.mount(document.getElementById('race-main'),{players:a,goal:RRRACE.goalFor(PER,a),label:'레이스 지도'});
+    const wk=document.getElementById('race-week');if(wk){const b=mk('week');RRRACE.mount(wk,{players:b,goal:RRRACE.goalFor('week',b),compact:true,label:'이번 주 단거리'})}}
   app.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{TAB=b.dataset.t;try{localStorage.setItem('rr-rank-tab',TAB)}catch(e){}render()});
   app.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>{PER=b.dataset.p;render()});
   tick();
