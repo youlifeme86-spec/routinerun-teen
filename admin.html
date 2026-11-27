@@ -199,8 +199,8 @@ function bind(){
   app.querySelectorAll('[data-ap]').forEach(b=>b.onclick=async()=>{const p=D.pending[+b.dataset.ap];b.disabled=true;b.textContent='승인 중...';
     try{await api('adminApprove',{id:p.id,date:p.date});toast(p.name+' 승인 완료');refresh()}catch(e){toast(e.message);b.disabled=false;b.textContent='인증 (외우기 5점)'}});
   const find=id=>D.students.find(s=>s.id===id);
-  app.querySelectorAll('[data-rs]').forEach(b=>b.onclick=async()=>{const s=find(b.dataset.rs);if(!b.dataset.c){b.dataset.c=1;b.textContent='한 번 더 누르면 발급';return}b.disabled=true;
-    try{const j=await api('adminReset',{id:s.id});showOut(issueCard(s,j.pw,s.name+' 새 비밀번호를 만들었어요 (예전 기기의 로그인은 풀려요)'));b.textContent='발급 완료'}catch(e){toast(e.message);b.disabled=false}});
+  app.querySelectorAll('[data-rs]').forEach(b=>b.onclick=async()=>{const s=find(b.dataset.rs);const want=prompt(`${s.name}(${s.id}) 새 비밀번호\n원하는 비밀번호를 넣으세요 (6자 이상). 비워 두면 자동으로 8자리를 만들어요.`,'');if(want===null)return;if(want&&want.trim().length<6){toast('비밀번호는 6자 이상으로 해 주세요');return}b.disabled=true;
+    try{const j=await api('adminReset',{id:s.id,pw:want.trim()});showOut(issueCard(s,j.pw,s.name+' 새 비밀번호를 만들었어요 (예전 기기의 로그인은 풀려요)'));b.textContent='발급 완료'}catch(e){toast(e.message);b.disabled=false}});
   app.querySelectorAll('[data-pl]').forEach(b=>b.onclick=()=>{const s=find(b.dataset.pl);const t=parentText(s);showOut(`<div class="card"><h3>${esc(s.name)} 학부모 링크</h3><div class="note">${esc(t)}</div><div class="row"><button class="btn sm" data-copy="${encodeURIComponent(t)}">복사</button><a class="btn ghost sm" href="${esc(parentLink(s))}" target="_blank" rel="noopener">열어 보기</a></div><p class="tiny muted">링크가 새어 나갔다면 시트 [계정] 탭의 학부모코드를 지우고 새로 넣으면 예전 링크는 막혀요.</p></div>`)});
   app.querySelectorAll('[data-in]').forEach(b=>b.onclick=()=>{const s=find(b.dataset.in);showOut(issueCard(s,'',s.name+' 입장 안내'))});
   app.querySelectorAll('[data-ac]').forEach(b=>b.onclick=async()=>{const s=find(b.dataset.ac);b.disabled=true;try{await api('adminSetActive',{id:s.id,active:!s.active});toast(s.active?'멈췄어요. 그 학생은 로그인이 풀려요':'다시 쓸 수 있어요');refresh()}catch(e){toast(e.message);b.disabled=false}});
