@@ -16,7 +16,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%2346B1D8'/%3E%3Crect x='3' y='9' width='10' height='4' fill='%237CC242'/%3E%3Crect x='6' y='3' width='4' height='6' fill='%23E2453C'/%3E%3C/svg%3E">
 <script src="config.js"></script>
 <script>
-window.RR_VERSION='2026.11.28-1';
+window.RR_VERSION='2026.11.28-2';
 /* 실시간 오류 기록: 학생 폰에서 난 오류를 구글 시트 [오류] 탭으로 보냄 */
 (function(){var n=0;window.RR_REPORT=function(msg,stack,extra){try{var C=window.RR_CONFIG||{};if(!C.API_URL||n>=8)return;n++;var a=null;try{a=JSON.parse(localStorage.getItem('rr-auth-v2')||'null')}catch(e){}
 fetch(C.API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},keepalive:true,body:JSON.stringify({action:'logError',token:a&&a.token||'',msg:String(msg||'').slice(0,1000),stack:String(stack||'').slice(0,3000),page:location.pathname+(location.hash.indexOf('#parent')===0?' (학부모)':''),tab:(window.RR_TAB||'')+(extra?' '+extra:''),ver:window.RR_VERSION||'',ua:navigator.userAgent.slice(0,300)})}).catch(function(){})}catch(e){}};
@@ -654,7 +654,7 @@ function load(){try{const s=localStorage.getItem(KEY());return s?JSON.parse(s):n
 let S=freshState();
 /* 저장: 화면은 바로 바뀌고, 서버 저장은 1.2초 뒤에 몰아서 보냄. 실패하면 이 기기에 보관했다가 다시 보냄 */
 let writeTimer=null,retryTimer=null,flushing=false,flushAgain=false,SYNC='idle',failCount=0;
-function computeDaily(st){const out={};Object.keys(st.logs||{}).forEach(k=>{const d=dayScoreOf(st,k);if(d.raw||st.emo&&st.emo[k])out[k]={r:d.rank,raw:d.raw,min:d.min,n:d.subjects,cell:st.emo&&st.emo[k]?st.emo[k].cell:null,hr:st.logs[k].hiddenReq&&!st.logs[k].hidden?1:0}});return out}
+function computeDaily(st){const out={};const ks=Object.keys(st.logs||{});if(st.m1&&st.m1.day&&!ks.includes(st.m1.day))ks.push(st.m1.day);ks.forEach(k=>{const d=dayScoreOf(st,k);if(d.raw||st.emo&&st.emo[k])out[k]={r:d.rank,raw:d.raw,min:d.min,n:d.subjects,cell:st.emo&&st.emo[k]?st.emo[k].cell:null,hr:st.logs[k]&&st.logs[k].hiddenReq&&!st.logs[k].hidden?1:0};if(d.m1&&out[k])out[k].m1=d.m1});return out}
 function isDirty(){try{return localStorage.getItem(KEY()+':dirty')==='1'}catch(e){return false}}
 function setDirty(v){try{v?localStorage.setItem(KEY()+':dirty','1'):localStorage.removeItem(KEY()+':dirty')}catch(e){}}
 function cacheLocal(){try{localStorage.setItem(KEY(),JSON.stringify(S))}catch(e){}}
@@ -666,13 +666,22 @@ async function flush(){
   if(flushing){flushAgain=true;return}
   flushing=true;const sentRev=S.rev;setSync('saving');
   try{const j=await api('save',{state:JSON.stringify(S),rev:S.rev});
-    const changed=S.rev!==sentRev;S.rev=Math.max(S.rev||0,j.rev||0);mergeApprovals(j.approved);cacheLocal();
+    const changed=S.rev!==sentRev;S.rev=Math.max(S.rev||0,j.rev||0);mergeApprovals(j.approved);mergeMission(j.mission);cacheLocal();
     if(!changed)setDirty(false);failCount=0;setSync(changed?'wait':'ok')}
   catch(e){if(e.code==='auth'){flushing=false;forceLogout(e.message);return}
     failCount++;setSync('fail');
     if(e.code!=='network'&&e.code!=='timeout'&&failCount<=2&&window.RR_REPORT)RR_REPORT('저장 실패: '+e.message,'',e.code);
     retryTimer=setTimeout(flush,Math.min(60000,5000*failCount))}
   finally{flushing=false;if(flushAgain){flushAgain=false;flush()}}}
+/* 미션1: 서버 응답(load·save)의 mission 을 합쳐요. 옛 서버면 mission 이 없어서(undefined) 아무것도 안 해요 */
+function mergeMission(m){if(m===undefined||READONLY||!S)return;const was=JSON.stringify(S.m1||null)+'|'+JSON.stringify(S.bless||null);const before=S.m1&&S.m1.day;
+  if(!m){delete S.m1;if(S.bless&&S.bless.admin)delete S.bless}
+  else{S.m1={pts:Number(m.pts)||0,day:m.day||''};
+    if(m.day&&m.until){if(!S.bless||S.bless.until<m.until)S.bless={from:m.day,until:m.until,admin:1}}else if(S.bless&&S.bless.admin)delete S.bless}
+  if(was===JSON.stringify(S.m1||null)+'|'+JSON.stringify(S.bless||null))return;
+  S.daily=computeDaily(S);cacheLocal();
+  if(S.m1&&S.m1.day&&!before){toast('미션1 완료! +'+S.m1.pts+'점 · 마스터의 가호 7일');SND.play('kill')}
+  if(canRerender())render()}
 function mergeApprovals(dates){let ch=false;(dates||[]).forEach(d=>{const L=S.logs&&S.logs[d];if(L&&!L.hidden){L.hidden=1;ch=true}});
   if(ch){S.daily=computeDaily(S);cacheLocal();toast('선생님이 외우기를 인증했어요! 오늘 외우기 5점');if(canRerender())render()}}
 function savePrivate(){try{localStorage.setItem(KEY()+':priv',JSON.stringify(PRIV))}catch(e){}
@@ -703,7 +712,7 @@ async function startSession(){
     if(j.parentCode)S.code=j.parentCode;if(j.name)AUTH.name=j.name;
     /* 선생님이 계정 만들 때 고른 중등/고등: 학생이 아직 안 골랐으면 미리 채움 (나 탭에서 바꿀 수 있음) */
     if((j.school==='mid'||j.school==='high')&&!S.school){if(S.char)S.school=j.school;else UI.ob.draft.school=UI.ob.draft.school||j.school}
-    mergeApprovals(j.approved);cacheLocal();LOADING=false;
+    mergeApprovals(j.approved);mergeMission(j.mission);cacheLocal();LOADING=false;
     if(isDirty())flush();else setSync('ok');
     if(was||canRerender()||!S.char)render()}
   catch(e){if(e.code==='auth'){forceLogout(e.message);return}
@@ -744,22 +753,25 @@ function syncTodayWithPlan(){const k=TODAY();const L=S.logs[k];if(!L)return;
 function log(k){k=k||TODAY();if(!S.logs[k])S.logs[k]={q:defaultQuests(k).map(q=>({...q,done:false})),life:{},hidden:0,streakChecked:false};return S.logs[k]}
 function questPts(q){return q.pts||ACT[q.a].pt}
 function dayScore(k){return dayScoreOf(S,k)}
-function dayScoreOf(st,k){const L=(st.logs||{})[k];if(!L)return {raw:0,rank:0,min:0,subjects:0};
+/* 미션1: 선생님(관리자)이 학생마다 점수를 정하고 완료 체크하면 그날 +점수 (하루 45점 상한 밖) + 마스터의 가호 7일. st.m1={pts,day} 는 서버가 넣어 줘요 */
+function m1Of(st,k){const m=st&&st.m1;return m&&m.day&&m.day===k?Number(m.pts)||0:0}
+function dayScoreOf(st,k){const L=(st.logs||{})[k];const m1=m1Of(st,k);if(!L)return {raw:m1,rank:m1,min:0,subjects:0,m1};
   let raw=0,min=0;const subs=new Set();
   L.q.forEach(q=>{if(q.done){raw+=qPts(q,L);min+=q.min||actMin(q.a,q.s);subs.add(q.s)}});
   Object.keys(L.life).forEach(a=>{if(L.life[a])raw+=ACT[a].pt});
   const eb=L.early&&L.early.pts||0;
-  return {raw:raw+eb,rank:Math.min(raw,DAILY_CAP)+eb,min,subjects:subs.size,early:eb}}
+  return {raw:raw+eb+m1,rank:Math.min(raw,DAILY_CAP)+eb+m1,min,subjects:subs.size,early:eb,m1}}
 /* 자정 전 마감 보너스: 그날 퀘스트를 다 끝내고 밤 12시 전에 '오늘 끝!'을 누르면 그날 점수의 1% (올림, 최소 1점) */
 const EARLY_PCT=1;
 function calToday(){const d=new Date();return ymd(d.getFullYear(),d.getMonth()+1,d.getDate())}
-function earlyPts(k){const s=dayScore(k);return Math.max(1,Math.ceil((s.raw-(s.early||0))*EARLY_PCT/100))}
+function earlyPts(k){const s=dayScore(k);return Math.max(1,Math.ceil((s.raw-(s.early||0)-(s.m1||0))*EARLY_PCT/100))}
 function earlyOpen(k){const L=S.logs[k];return !!L&&!L.early&&calToday()===k}
 function allDone(k){const L=S.logs[k];return !!L&&L.q.length>0&&L.q.every(q=>q.done)}
 function streak(){let n=0,k=TODAY();if(!(S.logs[k]&&S.logs[k].q.some(q=>q.done)))k=addDays(k,-1);
   while(S.logs[k]&&S.logs[k].q.some(q=>q.done)){n++;k=addDays(k,-1)}return n}
 function weekScore(k){const w=weekKey(k||TODAY());let t=0;for(let i=0;i<7;i++)t+=dayScore(addDays(w,i)).rank;return t}
-function monthScore(){const k=TODAY();const pre=k.slice(0,7);return Object.keys(S.logs).filter(x=>x.startsWith(pre)).reduce((a,x)=>a+dayScore(x).rank,0)}
+function logKeys(){const ks=Object.keys(S.logs);if(S.m1&&S.m1.day&&!S.logs[S.m1.day])ks.push(S.m1.day);return ks}
+function monthScore(){const k=TODAY();const pre=k.slice(0,7);return logKeys().filter(x=>x.startsWith(pre)).reduce((a,x)=>a+dayScore(x).rank,0)}
 
 /* 강의 보너스: 12/6까지, 과목마다 주 1회 +1 */
 function lectureBonusAvailable(s,k){if(k>LECTURE_DEADLINE)return false;const w=weekKey(k);return !(S.bonus[w]&&S.bonus[w][s])}
@@ -869,7 +881,8 @@ function coreDexCard(){const dex=S.coreDex||[];return `<div class="card"><div cl
 function partnerHTML(){const c=coreOf();if(!c)return '';const s=coreStage(coreXP());return `<div class="partner ${s===3?'awake':''}"><div data-spr="core-${c.type}-${s}" data-sc="${s?3:2}"></div></div>`}
 
 /* 업데이트 소식: 학생마다 한 번만 보여 줘요 (NEWS.id 바꾸면 다시 떠요) */
-const NEWS={id:'2026-11-28a',items:[
+const NEWS={id:'2026-11-28b',items:[
+  ['📜','미션1 · 선생님 미션','선생님이 내 준 미션1을 끝내면 선생님이 확인하고 체크해 줘. 받으면 랭킹 점수 +점수(학생마다 선생님이 정해, 하루 45점 상한 밖) + 마스터의 가호 7일(데미지 +10%)! 오늘 탭 미션1 카드에서 내 점수를 볼 수 있어.'],
   ['✅','출석 체크 1일차~7일차','오늘 탭에 출석 카드가 생겼어. 공부 퀘스트 1개만 끝내면 오늘 칸에 스터디아 왕관 도장이 쾅! + 궁극기 게이지 +20%. 들어오기만 하고 나가면 도장은 잠겨 있어.'],
   ['🎁','5일차 주간 선물: 알 +5점','한 주(월~일)에 도장 5개, 5일차 칸까지 찍으면 이번 달 알(가디언 코어)에 +5점! 월요일마다 1일차부터 새로 시작해.'],
   ['🏰','랭킹 레이스 지도','랭킹 탭에 출발점에서 스터디아 성까지 가는 길이 생겼어. 점수만큼 캐릭터가 성으로 달려가! 1~3위는 메달, 나는 노란 이름표.'],
@@ -1133,6 +1146,8 @@ function openEvent2(){const P=event2Plan();const m=document.createElement('div')
   m.querySelector('#eok').onclick=()=>{S.event2={at:TODAY(),mk:P.mk,boss:P.boss,hidden:P.hidden};save();SND.play('kill');
     m.querySelector('.giftm').innerHTML=`<h1 style="text-align:center">받았다!</h1><p style="text-align:center">과목 보스 ${fmtN(P.bt)} · 히든보스 ${fmtN(P.hidden)} 데미지가 들어갔어요.</p><p class="small muted" style="text-align:center">보스전 탭에서 남은 HP를 확인해 봐.</p><div class="row"><button class="btn ghost" id="ex">닫기</button><button class="btn" id="eboss">보스전 가기</button></div>`;
     m.querySelector('#ex').onclick=()=>{m.remove();render()};m.querySelector('#eboss').onclick=()=>{m.remove();UI.tab='boss';render();toTop()}}}
+function m1Card(){const m=S.m1,done=!!m.day;
+  return `<div class="card" style="gap:4px;${done?'border-color:#5B3B8C':''}"><div class="row between"><b>미션1 · 선생님 미션</b><span class="pill ${done?'purple':''}">${done?'완료 +'+m.pts+'점':'+'+m.pts+'점'}</span></div><p class="tiny muted">${done?fmt(m.day)+'에 선생님이 완료 체크했어요. 랭킹 점수 +'+m.pts+'점(하루 상한 밖)과 마스터의 가호 7일을 받았어요.':'선생님이 내 준 미션1을 끝내면 선생님이 확인하고 체크해 줘요. 받으면 랭킹 점수 +'+m.pts+'점, 마스터의 가호 7일(데미지 +'+BLESS_PCT+'%).'}</p></div>`}
 function renderToday(){
   const k=TODAY(),L=log(k),sc=dayScore(k);const done=L.q.filter(q=>q.done).length,tot=L.q.length;
   const mk=monthKeyOf(k);const main=Object.keys(SUBJ).sort((a,b)=>bossLeft(b,mk)/SUBJ[b].hp-bossLeft(a,mk)/SUBJ[a].hp)[0];
@@ -1145,8 +1160,9 @@ function renderToday(){
   attMark();h+=attCard();
   h+=coreCard();
   if(giftReady())h+=giftCard();else if(event2Ready())h+=event2Card();
-  if(blessActive())h+=`<div class="banner" style="background:#5B3B8C"><span data-spr="star" data-sc="5"></span><div><b>마스터의 가호</b><p class="small" style="opacity:.9">선생님 과제 완료! ${fmt(S.bless.until)}까지 모든 공격 데미지 +${BLESS_PCT}%</p></div></div>`;
+  if(blessActive())h+=`<div class="banner" style="background:#5B3B8C"><span data-spr="star" data-sc="5"></span><div><b>마스터의 가호</b><p class="small" style="opacity:.9">${S.bless.admin?'미션1 완료!':'선생님 과제 완료!'} ${fmt(S.bless.until)}까지 모든 공격 데미지 +${BLESS_PCT}%</p></div></div>`;
   else h+=`<div class="card" style="gap:4px"><div class="row between"><b>마스터의 가호</b><span class="pill">꺼짐</span></div><p class="tiny muted">이번 주 선생님 과제를 완료하면 1주일 동안 데미지 +${BLESS_PCT}%. 매주 과제를 하면 매주 받아요.</p></div>`;
+  if(S.m1&&S.m1.pts)h+=m1Card();
   if(dd>=0)h+=`<div class="banner"><div class="d num">D-${dd}</div><div><b>시험 전 강의완강 베네핏</b><p class="small" style="opacity:.85">12/6까지 들은 강의는 과목마다 주 1회 +1점. 이번 주 남은 과목: ${Object.keys(SUBJ).filter(s=>lectureBonusAvailable(s,k)).map(s=>SUBJ[s].n).join(' ')||'없음'}</p></div></div>`;
   h+=`<div class="card" style="gap:8px"><div class="row between"><h3>공부 퀘스트</h3><span class="num small"><b style="font-size:20px">${sc.rank}</b> / ${DAILY_CAP}점</span></div><p class="tiny muted">오늘 공부 시간 <b class="num">${hm(sc.min)}</b> · 이번 주 <b class="num">${hm(minIn(weekDays()))}</b> <span>([나] 탭에서 자세히)</span></p>`;
   if(!tot)h+=`<p class="small muted">오늘 플랜이 비어 있어요. 플랜 탭에서 요일별 퀘스트를 넣거나, 아래 '즉석 추가'로 오늘 한 공부를 넣으세요.</p>`;
@@ -1247,7 +1263,7 @@ function renderPlan(){
 }
 
 /* ---------- 보스전 (이달의 과목 보스) ---------- */
-function monthScoreRaw(mk){mk=mk||monthKeyOf(TODAY());return Object.keys(S.logs).filter(x=>x.startsWith(mk)).reduce((a,x)=>a+dayScore(x).raw,0)}
+function monthScoreRaw(mk){mk=mk||monthKeyOf(TODAY());return logKeys().filter(x=>x.startsWith(mk)).reduce((a,x)=>a+dayScore(x).raw,0)}
 /* ---------- 공략 비법서: 점수 설계 안내 (평일 2시간 = 월 300점 = 3,000 데미지) ---------- */
 function guideRaid(){const all=myRaids().filter(r=>!r.vac).map(r=>raidInst(r));return all.find(x=>x.open&&x.left>0)||all.filter(x=>!x.open).sort((a,b)=>a.openStart<b.openStart?-1:1)[0]||all[0]}
 function guideHTML(mk){
@@ -1557,7 +1573,7 @@ function studyCard(){
     ${Object.keys(sub).length?`<div class="chips">${Object.keys(SUBJ).filter(x=>sub[x]).map(x=>`<span class="pill">${SUBJ[x].n} ${hm(sub[x])}</span>`).join('')}</div>`:''}
     <p class="tiny muted">${lw?`지난주보다 ${diff>=0?'+':'-'}${hm(Math.abs(diff))}`:'지난주 기록이 쌓이면 비교해 줄게'} · 이달 공부한 날 ${studied}일 · 막대 숫자는 시간</p></div>`}
 function renderMe(){
-  const c=S.char,K=KINGDOMS[c.kingdom];const total=Object.keys(S.logs).reduce((a,k)=>a+dayScore(k).raw,0);const lv=Math.floor(total/300)+1;
+  const c=S.char,K=KINGDOMS[c.kingdom];const total=logKeys().reduce((a,k)=>a+dayScore(k).raw,0);const lv=Math.floor(total/300)+1;
   const titles=['떨어진 자','견습 모험가','숙련 모험가','왕국의 기사','대륙의 주인'];
   let h=`${UI.justMade?'<h1>캐릭터 카드 완성!</h1>':''}
   <div class="charcard" style="background:linear-gradient(150deg,${c.color},${K.c})">
@@ -1697,6 +1713,7 @@ function parentWeek(k){
   const extra=[];days.forEach(d=>{const L=S.logs[d];if(!L)return;L.q.filter(q=>q.done&&q.a==='hw').forEach(q=>extra.push([d,'선생님 과제 완료 (마스터의 가호 7일)',qPts(q,L)]));
     if(L.hidden)extra.push([d,'외우기 선생님 인증',MEM_VERIFIED-ACT.mem.pt]);if(L.early)extra.push([d,'자정 전 마감 보너스',L.early.pts]);
     L.q.filter(q=>q.done&&q.a==='lec'&&q.pts===6).forEach(q=>extra.push([d,SUBJ[q.s].n+' 강의 보너스',1]))});
+  days.forEach(d=>{const m=m1Of(S,d);if(m)extra.push([d,'미션1 선생님 확인 (마스터의 가호 7일)',m])});
   h+=`<div class="card"><h3>추가 포인트</h3>${extra.length?extra.map(([d,t,p])=>`<div class="row between small"><span>${fmt(d)} ${esc(t)}</span><b style="color:#2FA06A">+${p}점</b></div>`).join(''):'<p class="small muted">이번 주는 추가 포인트가 없어요.</p>'}</div>`;
   /* 9. 한눈에 보기 */
   const out=[];const topS=Object.keys(sub).sort((a,b)=>sub[b].n-sub[a].n)[0];
@@ -1746,7 +1763,7 @@ function renderParent(){
   }
   if(t==='week')h+=parentWeek(k);
   if(t==='month'){
-    const m=k.slice(0,7);const ds=Object.keys(S.logs).filter(d=>d.startsWith(m)).sort();
+    const m=k.slice(0,7);const ds=logKeys().filter(d=>d.startsWith(m)).sort();
     const path=Object.keys(S.emo).filter(d=>d.startsWith(m)).sort().map(d=>[d,S.emo[d].cell]);
     h+=`<h1>월간 리포트</h1><p class="small muted">${Number(m.slice(5))}월 누적</p></div>
     <div class="card"><div class="row between"><h3>이달 점수</h3><span class="num" style="font-family:var(--f-display);font-size:24px">${ds.reduce((a,d)=>a+dayScore(d).raw,0)} / ${BASE}점</span></div><div class="bar gauge"><i style="width:${pctOf(ds.reduce((a,d)=>a+dayScore(d).raw,0),BASE)}%"></i></div><p class="small muted">기준치 300점은 평일 하루 2시간입니다. 이달 과목 보스 ${6-Object.keys(SUBJ).filter(x=>bossLeft(x)).length}/6 처치.</p><p class="small muted">기록한 날 ${ds.filter(d=>S.logs[d].q.some(q=>q.done)).length}일 · 연속 출석 ${streak()}일</p></div>
