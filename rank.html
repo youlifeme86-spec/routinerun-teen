@@ -63,7 +63,10 @@ input{font:inherit;border:0;box-shadow:var(--px2);background:var(--paper2);paddi
 .podium{display:flex;align-items:flex-end;justify-content:center;gap:8px;padding:8px 0 0}
 .podium .p{display:flex;flex-direction:column;align-items:center;gap:4px;width:30%;max-width:140px;text-align:center}
 .podium .blk{width:100%;background:var(--gold);box-shadow:var(--px2);font-family:var(--f-title);font-size:26px;display:grid;place-items:center}
-.podium .p b{font-size:14px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.podium .p b{font-size:14px;max-width:100%;line-height:1.25;word-break:break-all;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.podium .av{width:auto;height:auto;min-width:56px;padding:6px 8px 4px;margin-bottom:4px;position:relative;z-index:0}
+.podium .av canvas{display:block}
+.podium .p .tiny{line-height:1.2}
 [hidden]{display:none!important}
 @media (max-width:600px){.title{font-size:28px}.wrap{padding:12px 16px 32px}}
 
