@@ -641,13 +641,16 @@ var DECO={
  flower:[".k.",".kKk".slice(0,3),".a.","aa."],
  chest:[".uuuuuuuu.","uTTTTTTTTu","uyyyyyyyyu","utTTyyTTtu","uyyyOOyyyu","utTTTTTTtu","uuuuuuuuuu"],
  star:["...y...","...y...","..yYy..","yyYYYyy",".yYYYy.","..yyy..",".y...y."],
- coin:[".zzz.","zyYyz","zyYyz","zyYyz",".zzz."]
+ coin:[".zzz.","zyYyz","zyYyz","zyYyz",".zzz."],
+ /* 출석 도장(스터디아 왕관 인장)과 궁극기 번개 */
+ stamp:["......rrrrr......","....rrrrrrrrr....","...rrrKKKKKrrr...","..rrKKKKKKKKKrr..",".rrKrKKKrKKKrKrr.",".rrKrrKrrrKrrKrr.","rrKKrrrrrrrrrKKrr","rrKKrrYrrrYrrKKrr","rrKKrrrrrrrrrKKrr","rrKKKKKKKKKKKKKrr","rrKKKrrrrrrrKKKrr",".rrKKKKKKKKKKKrr.",".rrKKKrKrKrKKKrr.","..rrKKKKKKKKKrr..","...rrrKKKKKrrr...","....rrrrrrrrr....","......rrrrr......"],
+ bolt:["....yyyy","...yYYy.","..yYYy..",".yYYyyyy","yyyyYYy.","...yYy..","..yYy...",".yy.....","y......."]
 };
 var dcache={};
 function makeDeco(key,scale){var R=DECO[key];if(!R)return null;var k=key+'|'+scale;
   if(!dcache[k]){var w=Math.max.apply(null,R.map(function(r){return r.length}));var top=key==='island'?7:0;var g=grid(w+2,R.length+2+top);putA(g,R,1,1+top);
     if(key==='island'){putA(g,DECO.itree,5,1);putA(g,DECO.flower,20,top-2);putA(g,DECO.flower,24,top-3)}
-    if(key!=='cloud')outline(g);dcache[k]=paint(g,scale,Object.assign({},BASE,{c:'#FFFFFF',L:'#D3ECFA'}))}
+    if(key!=='cloud'&&key!=='stamp')outline(g);dcache[k]=paint(g,scale,Object.assign({},BASE,{c:'#FFFFFF',L:'#D3ECFA'}))}
   return cloneCanvas(dcache[k])}
 var SCN=null;
 function scene(){if(!SCN){try{SCN={mtn:mtnURL(),hills:hillsURL(),ground:groundURL()}}catch(e){SCN={}}}return SCN}
