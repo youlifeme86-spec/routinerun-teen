@@ -16,7 +16,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%2346B1D8'/%3E%3Crect x='3' y='9' width='10' height='4' fill='%237CC242'/%3E%3Crect x='6' y='3' width='4' height='6' fill='%23E2453C'/%3E%3C/svg%3E">
 <script src="config.js"></script>
 <script>
-window.RR_VERSION='2026.11.27-8';
+window.RR_VERSION='2026.11.27-9';
 /* 실시간 오류 기록: 학생 폰에서 난 오류를 구글 시트 [오류] 탭으로 보냄 */
 (function(){var n=0;window.RR_REPORT=function(msg,stack,extra){try{var C=window.RR_CONFIG||{};if(!C.API_URL||n>=8)return;n++;var a=null;try{a=JSON.parse(localStorage.getItem('rr-auth-v2')||'null')}catch(e){}
 fetch(C.API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},keepalive:true,body:JSON.stringify({action:'logError',token:a&&a.token||'',msg:String(msg||'').slice(0,1000),stack:String(stack||'').slice(0,3000),page:location.pathname+(location.hash.indexOf('#parent')===0?' (학부모)':''),tab:(window.RR_TAB||'')+(extra?' '+extra:''),ver:window.RR_VERSION||'',ua:navigator.userAgent.slice(0,300)})}).catch(function(){})}catch(e){}};
@@ -383,7 +383,7 @@ details summary{cursor:pointer;padding:4px 0}
 </div>
 
 <script src="art.js?v=2026.11.27-4"></script>
-<script src="race.js?v=2026.11.27-8"></script>
+<script src="race.js?v=2026.11.27-9"></script>
 <script>
 (function(){
 /* ---------- 데이터 ---------- */
@@ -799,8 +799,8 @@ function coreDexCard(){const dex=S.coreDex||[];return `<div class="card"><div cl
 function partnerHTML(){const c=coreOf();if(!c)return '';const s=coreStage(coreXP());return `<div class="partner ${s===3?'awake':''}"><div data-spr="core-${c.type}-${s}" data-sc="${s?3:2}"></div></div>`}
 
 /* 업데이트 소식: 학생마다 한 번만 보여 줘요 (NEWS.id 바꾸면 다시 떠요) */
-const NEWS={id:'2026-11-27c',items:[
-  ['🏰','랭킹 레이스 지도','랭킹 탭에 출발점에서 스터디아 성까지 가는 길이 생겼어. 점수만큼 캐릭터가 성으로 달려가! 1~3위는 메달, 나는 노란 이름표.'],
+const NEWS={id:'2026-11-27d',items:[
+  ['🏰','랭킹 레이스 지도','랭킹 탭에 출발점에서 스터디아 성까지 가는 길이 생겼어. 점수만큼 캐릭터가 성으로 달려가! 1~3위는 메달, 나는 노란 이름표. 랭킹 사이트에선 오늘·이번 주·이번 달 3개를 한 번에 봐.'],
   ['🥚','가디언 코어(알) 4종','오늘 탭에서 이번 달 알을 골라 줘. 공부 점수 30점이면 부화, 150점 성장, 300점이면 최종 각성!'],
   ['🐾','파트너도 같이 공격!','부화한 파트너가 내 공격 뒤에 보스에게 달려가 한 번 더 쳐. 성장하면 쾅!, 각성하면 각성 일격!'],
   ['💥','CRITICAL! · MEGA HIT!','퀘스트를 완료하면 15% 확률로 데미지 1.5배, 3% 확률로 2배가 터져.'],
