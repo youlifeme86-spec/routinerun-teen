@@ -16,7 +16,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%2346B1D8'/%3E%3Crect x='3' y='9' width='10' height='4' fill='%237CC242'/%3E%3Crect x='6' y='3' width='4' height='6' fill='%23E2453C'/%3E%3C/svg%3E">
 <script src="config.js"></script>
 <script>
-window.RR_VERSION='2026.11.28-1';
+window.RR_VERSION='2026.11.28-2';
 /* 실시간 오류 기록: 학생 폰에서 난 오류를 구글 시트 [오류] 탭으로 보냄 */
 (function(){var n=0;window.RR_REPORT=function(msg,stack,extra){try{var C=window.RR_CONFIG||{};if(!C.API_URL||n>=8)return;n++;var a=null;try{a=JSON.parse(localStorage.getItem('rr-auth-v2')||'null')}catch(e){}
 fetch(C.API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},keepalive:true,body:JSON.stringify({action:'logError',token:a&&a.token||'',msg:String(msg||'').slice(0,1000),stack:String(stack||'').slice(0,3000),page:location.pathname+(location.hash.indexOf('#parent')===0?' (학부모)':''),tab:(window.RR_TAB||'')+(extra?' '+extra:''),ver:window.RR_VERSION||'',ua:navigator.userAgent.slice(0,300)})}).catch(function(){})}catch(e){}};
@@ -536,7 +536,7 @@ function bossTrack(s,mk,st){st=st||S;const hp=SUBJ[s].hp,y=+mk.slice(0,4),m=+mk.
   let eff=gift,streak=0,heals=[],shield=(st.char&&st.char.kingdom==='ukk')?1:0,blocked=0;const hk=1-.5*coreBuffFor('ever',st,mk);
   for(let d=1;d<=last;d++){const k=ymd(y,m,d);if(k>today)break;const dm=dayBossDmg(s,k,st);eff+=dm;
     if(k===today)break;if(k<jd)continue;
-    if(dm>0)streak=0;else{streak++;if(streak%HEAL_DAYS===0&&eff>0&&eff<hp){if(shield){shield=0;blocked++}else{const h=Math.min(eff,Math.round(hp*HEAL_PCT/100*hk));eff-=h;heals.push({k,h})}}}}
+    if(dm>0)streak=0;else if(st.shields&&st.shields[k]){/* 스트릭 방패 날: 반격 없음 */}else{streak++;if(streak%HEAL_DAYS===0&&eff>0&&eff<hp){if(shield){shield=0;blocked++}else{const h=Math.min(eff,Math.round(hp*HEAL_PCT/100*hk));eff-=h;heals.push({k,h})}}}}
   return {eff,heals,blocked,streak}}
 function monthBossDmg(s,mk,st){return bossTrack(s,mk,st).eff}
 function bossLeft(s,mk){return Math.max(0,SUBJ[s].hp-monthBossDmg(s,mk||monthKeyOf(TODAY())))}
@@ -654,7 +654,7 @@ function load(){try{const s=localStorage.getItem(KEY());return s?JSON.parse(s):n
 let S=freshState();
 /* 저장: 화면은 바로 바뀌고, 서버 저장은 1.2초 뒤에 몰아서 보냄. 실패하면 이 기기에 보관했다가 다시 보냄 */
 let writeTimer=null,retryTimer=null,flushing=false,flushAgain=false,SYNC='idle',failCount=0;
-function computeDaily(st){const out={};Object.keys(st.logs||{}).forEach(k=>{const d=dayScoreOf(st,k);if(d.raw||st.emo&&st.emo[k])out[k]={r:d.rank,raw:d.raw,min:d.min,n:d.subjects,cell:st.emo&&st.emo[k]?st.emo[k].cell:null,hr:st.logs[k].hiddenReq&&!st.logs[k].hidden?1:0}});return out}
+function computeDaily(st){const out={};const ks=Object.keys(st.logs||{});m1Days(st).forEach(d=>{if(!ks.includes(d))ks.push(d)});ks.forEach(k=>{const d=dayScoreOf(st,k);if(d.raw||st.emo&&st.emo[k])out[k]={r:d.rank,raw:d.raw,min:d.min,n:d.subjects,cell:st.emo&&st.emo[k]?st.emo[k].cell:null,hr:st.logs[k]&&st.logs[k].hiddenReq&&!st.logs[k].hidden?1:0};if(d.m1&&out[k])out[k].m1=d.m1});return out}
 function isDirty(){try{return localStorage.getItem(KEY()+':dirty')==='1'}catch(e){return false}}
 function setDirty(v){try{v?localStorage.setItem(KEY()+':dirty','1'):localStorage.removeItem(KEY()+':dirty')}catch(e){}}
 function cacheLocal(){try{localStorage.setItem(KEY(),JSON.stringify(S))}catch(e){}}
@@ -666,13 +666,28 @@ async function flush(){
   if(flushing){flushAgain=true;return}
   flushing=true;const sentRev=S.rev;setSync('saving');
   try{const j=await api('save',{state:JSON.stringify(S),rev:S.rev});
-    const changed=S.rev!==sentRev;S.rev=Math.max(S.rev||0,j.rev||0);mergeApprovals(j.approved);cacheLocal();
+    const changed=S.rev!==sentRev;S.rev=Math.max(S.rev||0,j.rev||0);mergeApprovals(j.approved);mergeBonus(j.bonus);cacheLocal();
     if(!changed)setDirty(false);failCount=0;setSync(changed?'wait':'ok')}
   catch(e){if(e.code==='auth'){flushing=false;forceLogout(e.message);return}
     failCount++;setSync('fail');
     if(e.code!=='network'&&e.code!=='timeout'&&failCount<=2&&window.RR_REPORT)RR_REPORT('저장 실패: '+e.message,'',e.code);
     retryTimer=setTimeout(flush,Math.min(60000,5000*failCount))}
   finally{flushing=false;if(flushAgain){flushAgain=false;flush()}}}
+/* 보너스 체크: 서버 응답(load·save)의 bonus 를 합쳐요(숙제검사 점수·가호, 스트릭 방패). 옛 서버면 bonus 가 없어서 아무것도 안 해요 */
+function mergeBonus(b){if(!b||READONLY||!S)return;const snap=()=>JSON.stringify([S.m1||null,S.bless||null,S.shields||null,S.hwReq||'',S.shieldReq||'']);const was=snap();
+  const oldC=S.m1&&S.m1.checks||{},oldSh=S.shields||{};
+  S.m1={n:b.n,pts:b.pts,checks:b.checks||{}};
+  if(b.last&&b.until&&b.until>=TODAY()){if(!S.bless||S.bless.until<b.until)S.bless={from:b.last,until:b.until,admin:1}}else if(S.bless&&S.bless.admin)delete S.bless;
+  const sh={};(b.shields||[]).forEach(d=>sh[d]=1);S.shields=sh;
+  if(S.hwReq&&b.last&&b.last>=S.hwReq)delete S.hwReq;
+  const denied=S.shieldReq&&(b.denied||[]).includes(S.shieldReq);if(S.shieldReq&&(sh[S.shieldReq]||denied))delete S.shieldReq;
+  if(was===snap())return;
+  S.daily=computeDaily(S);cacheLocal();
+  const newC=Object.keys(S.m1.checks).find(d=>!oldC[d]),newSh=Object.keys(sh).find(d=>!oldSh[d]);
+  if(newC){toast('숙제검사 통과! +'+S.m1.checks[newC]+'점 · 마스터의 가호 7일');SND.play('kill')}
+  else if(newSh){toast('마스터가 '+fmt(newSh)+' 스트릭 방패를 허가했어요! 연속 출석이 이어져요');SND.play('item')}
+  else if(denied)toast('이번 방패는 허가되지 않았어요');
+  if(canRerender())render()}
 function mergeApprovals(dates){let ch=false;(dates||[]).forEach(d=>{const L=S.logs&&S.logs[d];if(L&&!L.hidden){L.hidden=1;ch=true}});
   if(ch){S.daily=computeDaily(S);cacheLocal();toast('선생님이 외우기를 인증했어요! 오늘 외우기 5점');if(canRerender())render()}}
 function savePrivate(){try{localStorage.setItem(KEY()+':priv',JSON.stringify(PRIV))}catch(e){}
@@ -703,7 +718,7 @@ async function startSession(){
     if(j.parentCode)S.code=j.parentCode;if(j.name)AUTH.name=j.name;
     /* 선생님이 계정 만들 때 고른 중등/고등: 학생이 아직 안 골랐으면 미리 채움 (나 탭에서 바꿀 수 있음) */
     if((j.school==='mid'||j.school==='high')&&!S.school){if(S.char)S.school=j.school;else UI.ob.draft.school=UI.ob.draft.school||j.school}
-    mergeApprovals(j.approved);cacheLocal();LOADING=false;
+    mergeApprovals(j.approved);mergeBonus(j.bonus);cacheLocal();LOADING=false;
     if(isDirty())flush();else setSync('ok');
     if(was||canRerender()||!S.char)render()}
   catch(e){if(e.code==='auth'){forceLogout(e.message);return}
@@ -744,22 +759,30 @@ function syncTodayWithPlan(){const k=TODAY();const L=S.logs[k];if(!L)return;
 function log(k){k=k||TODAY();if(!S.logs[k])S.logs[k]={q:defaultQuests(k).map(q=>({...q,done:false})),life:{},hidden:0,streakChecked:false};return S.logs[k]}
 function questPts(q){return q.pts||ACT[q.a].pt}
 function dayScore(k){return dayScoreOf(S,k)}
-function dayScoreOf(st,k){const L=(st.logs||{})[k];if(!L)return {raw:0,rank:0,min:0,subjects:0};
+/* 히든미션 '마스터의 가호 · 숙제검사': 마스터(관리자)가 학생마다 횟수를 정하고(1번 3점) 체크하면 그날 +점수 (하루 45점 상한 밖) + 마스터의 가호 7일. st.m1={n,pts,checks:{날짜:점수}} 는 서버가 넣어 줘요 */
+const HW_UNIT=3;
+function m1Of(st,k){const c=st&&st.m1&&st.m1.checks;return c&&c[k]?Number(c[k])||0:0}
+function m1Days(st){return Object.keys(st&&st.m1&&st.m1.checks||{})}
+function dayScoreOf(st,k){const L=(st.logs||{})[k];const m1=m1Of(st,k);if(!L)return {raw:m1,rank:m1,min:0,subjects:0,m1};
   let raw=0,min=0;const subs=new Set();
   L.q.forEach(q=>{if(q.done){raw+=qPts(q,L);min+=q.min||actMin(q.a,q.s);subs.add(q.s)}});
   Object.keys(L.life).forEach(a=>{if(L.life[a])raw+=ACT[a].pt});
   const eb=L.early&&L.early.pts||0;
-  return {raw:raw+eb,rank:Math.min(raw,DAILY_CAP)+eb,min,subjects:subs.size,early:eb}}
+  return {raw:raw+eb+m1,rank:Math.min(raw,DAILY_CAP)+eb+m1,min,subjects:subs.size,early:eb,m1}}
 /* 자정 전 마감 보너스: 그날 퀘스트를 다 끝내고 밤 12시 전에 '오늘 끝!'을 누르면 그날 점수의 1% (올림, 최소 1점) */
 const EARLY_PCT=1;
 function calToday(){const d=new Date();return ymd(d.getFullYear(),d.getMonth()+1,d.getDate())}
-function earlyPts(k){const s=dayScore(k);return Math.max(1,Math.ceil((s.raw-(s.early||0))*EARLY_PCT/100))}
+function earlyPts(k){const s=dayScore(k);return Math.max(1,Math.ceil((s.raw-(s.early||0)-(s.m1||0))*EARLY_PCT/100))}
 function earlyOpen(k){const L=S.logs[k];return !!L&&!L.early&&calToday()===k}
-function allDone(k){const L=S.logs[k];return !!L&&L.q.length>0&&L.q.every(q=>q.done)}
-function streak(){let n=0,k=TODAY();if(!(S.logs[k]&&S.logs[k].q.some(q=>q.done)))k=addDays(k,-1);
-  while(S.logs[k]&&S.logs[k].q.some(q=>q.done)){n++;k=addDays(k,-1)}return n}
+/* 올클리어: 6과목(국영수사과한) 퀘스트만 봐요. 영단어 퀘스트는 빼요 */
+function allDone(k){const L=S.logs[k];const qs=L?L.q.filter(q=>q.a!=='word'&&SUBJ[q.s]):[];return qs.length>0&&qs.every(q=>q.done)}
+function studied(k){return !!(S.logs[k]&&S.logs[k].q.some(q=>q.done))}
+/* 연속 출석: 마스터가 허가한 스트릭 방패 날(S.shields)은 끊기지 않고 건너뛰어요 (날 수에는 안 들어감) */
+function streak(){let n=0,k=TODAY();if(!studied(k))k=addDays(k,-1);
+  for(let g=0;g<400;g++){if(studied(k))n++;else if(!(S.shields&&S.shields[k]))break;k=addDays(k,-1)}return n}
 function weekScore(k){const w=weekKey(k||TODAY());let t=0;for(let i=0;i<7;i++)t+=dayScore(addDays(w,i)).rank;return t}
-function monthScore(){const k=TODAY();const pre=k.slice(0,7);return Object.keys(S.logs).filter(x=>x.startsWith(pre)).reduce((a,x)=>a+dayScore(x).rank,0)}
+function logKeys(){const ks=Object.keys(S.logs);m1Days(S).forEach(d=>{if(!S.logs[d])ks.push(d)});return ks}
+function monthScore(){const k=TODAY();const pre=k.slice(0,7);return logKeys().filter(x=>x.startsWith(pre)).reduce((a,x)=>a+dayScore(x).rank,0)}
 
 /* 강의 보너스: 12/6까지, 과목마다 주 1회 +1 */
 function lectureBonusAvailable(s,k){if(k>LECTURE_DEADLINE)return false;const w=weekKey(k);return !(S.bonus[w]&&S.bonus[w][s])}
@@ -869,7 +892,10 @@ function coreDexCard(){const dex=S.coreDex||[];return `<div class="card"><div cl
 function partnerHTML(){const c=coreOf();if(!c)return '';const s=coreStage(coreXP());return `<div class="partner ${s===3?'awake':''}"><div data-spr="core-${c.type}-${s}" data-sc="${s?3:2}"></div></div>`}
 
 /* 업데이트 소식: 학생마다 한 번만 보여 줘요 (NEWS.id 바꾸면 다시 떠요) */
-const NEWS={id:'2026-11-28a',items:[
+const NEWS={id:'2026-11-28b',items:[
+  ['📜','보너스 체크 · 숙제검사','오늘 탭에 보너스 체크가 생겼어. 숙제를 다 하면 "숙제검사 알리기"를 누르고 마스터(선생님)께 검사받아. 마스터가 체크하면 1번에 3점(2번이면 6점, 하루 45점 상한 밖) + 마스터의 가호 7일(데미지 +10%)!'],
+  ['🛡️','스트릭 방패는 마스터 허가제','공부를 못 한 날이 생기면 다음 날 "방패 알리기"를 눌러. 마스터가 허가하면 연속 출석이 이어지고 그날 보스 반격도 막아. 직접 쓸 수는 없어.'],
+  ['🏁','올클리어 보너스는 6과목만','국어·영어·수학·사회·과학·한국사 퀘스트를 전부 끝내고 12시 전에 "오늘 끝!"을 누르면 보너스. 영단어는 안 쳐.'],
   ['✅','출석 체크 1일차~7일차','오늘 탭에 출석 카드가 생겼어. 공부 퀘스트 1개만 끝내면 오늘 칸에 스터디아 왕관 도장이 쾅! + 궁극기 게이지 +20%. 들어오기만 하고 나가면 도장은 잠겨 있어.'],
   ['🎁','5일차 주간 선물: 알 +5점','한 주(월~일)에 도장 5개, 5일차 칸까지 찍으면 이번 달 알(가디언 코어)에 +5점! 월요일마다 1일차부터 새로 시작해.'],
   ['🏰','랭킹 레이스 지도','랭킹 탭에 출발점에서 스터디아 성까지 가는 길이 생겼어. 점수만큼 캐릭터가 성으로 달려가! 1~3위는 메달, 나는 노란 이름표.'],
@@ -1133,6 +1159,32 @@ function openEvent2(){const P=event2Plan();const m=document.createElement('div')
   m.querySelector('#eok').onclick=()=>{S.event2={at:TODAY(),mk:P.mk,boss:P.boss,hidden:P.hidden};save();SND.play('kill');
     m.querySelector('.giftm').innerHTML=`<h1 style="text-align:center">받았다!</h1><p style="text-align:center">과목 보스 ${fmtN(P.bt)} · 히든보스 ${fmtN(P.hidden)} 데미지가 들어갔어요.</p><p class="small muted" style="text-align:center">보스전 탭에서 남은 HP를 확인해 봐.</p><div class="row"><button class="btn ghost" id="ex">닫기</button><button class="btn" id="eboss">보스전 가기</button></div>`;
     m.querySelector('#ex').onclick=()=>{m.remove();render()};m.querySelector('#eboss').onclick=()=>{m.remove();UI.tab='boss';render();toTop()}}}
+/* ---------- 보너스 체크: 올클리어 · 외우기 인증 · 숙제검사 · 스트릭 방패 ----------
+   올클리어는 국어·영어·수학·사회·과학·한국사 6과목 퀘스트만 봐요(영단어 제외).
+   숙제검사·스트릭 방패는 학생이 '알리기'만 하고, 마스터(관리자)만 허가할 수 있어요. */
+function shieldDay(k){k=k||TODAY();const y=addDays(k,-1);if(studied(y)||S.shields&&S.shields[y])return null;
+  const y2=addDays(y,-1);return (studied(y2)||S.shields&&S.shields[y2])?y:null}
+function bonusCard(k,L){const memDone=L.q.some(q=>q.a==='mem'&&q.done);const m=S.m1||{n:1,pts:HW_UNIT,checks:{}};const hwToday=m.checks&&m.checks[k];
+  const sd=shieldDay(k),req=S.shieldReq,last=Object.keys(S.shields||{}).sort().pop();
+  const row=(t,pill,desc,btn)=>`<div class="bonusrow" style="display:flex;flex-direction:column;gap:4px;padding:8px 0;border-top:1px dashed var(--line)"><div class="row between"><b class="small">${t}</b>${pill}</div><p class="tiny muted" style="margin:0">${desc}</p>${btn||''}</div>`;
+  let h=`<div class="card" style="gap:2px"><div class="row between"><h3>보너스 체크</h3><span class="tiny muted">마스터 허가는 알리기로</span></div>`;
+  /* 1. 올클리어 (자정 전) */
+  const Lx=S.logs[k];
+  h+=row('올클리어 보너스',Lx&&Lx.early?`<span class="pill" style="background:#E7F3D6">+${Lx.early.pts}점 획득</span>`:earlyOpen(k)?`<span class="pill">+${earlyPts(k)}점</span>`:'<span class="pill off">오늘 마감</span>',
+    Lx&&Lx.early?'오늘 6과목 퀘스트를 12시 전에 모두 끝냈어요. 랭킹·리포트 점수에 들어가요.':`국어·영어·수학·사회·과학·한국사 퀘스트를 전부 끝내고 밤 12시 전에 '오늘 끝!'을 누르면 그날 점수의 ${EARLY_PCT}%(올림, 최소 1점). 영단어는 안 쳐요.${allDone(k)?'':` 남은 6과목 퀘스트 ${Lx?Lx.q.filter(q=>!q.done&&q.a!=='word').length:0}개!`}`);
+  /* 2. 외우기 인증 */
+  h+=row('히든미션 · 외우기 선생님 인증','<span class="pill">3점 → 5점</span>','오늘 외운 걸 선생님께 확인받으면 오늘 외우기 퀘스트가 하나에 3점 대신 5점이 돼요.',
+    `<button class="btn ghost sm" id="hid" ${L.hiddenReq||!memDone?'disabled':''}>${L.hiddenReq?(L.hidden?'인증 완료 · 외우기 5점':'선생님 인증 기다리는 중'):memDone?'인증 요청 알리기':'외우기 퀘스트를 먼저 완료해 주세요'}</button>${L.hiddenReq&&!L.hidden&&!MODE_DB?'<button class="chip" id="hidok" style="align-self:flex-start">이 기기에서 승인하기 (오프라인)</button>':''}`);
+  /* 3. 숙제검사 */
+  h+=row('히든미션 · 마스터의 가호 · 숙제검사',hwToday?`<span class="pill purple">통과 +${hwToday}점</span>`:`<span class="pill">+${m.pts}점</span>`,
+    hwToday?'오늘 마스터가 숙제를 검사했어요. 랭킹 점수 +'+hwToday+'점(하루 상한 밖)과 마스터의 가호 7일!':'숙제를 다 하면 알리기를 누르고 마스터(선생님)께 검사받아. 체크는 마스터만 할 수 있어. 통과하면 1번에 3점(지금 +'+m.pts+'점) + 마스터의 가호 7일(데미지 +'+BLESS_PCT+'%).',
+    hwToday?'':`<button class="btn ghost sm" id="hwreq" ${S.hwReq===k?'disabled':''}>${S.hwReq===k?'마스터 검사 기다리는 중':'숙제검사 알리기'}</button>`);
+  /* 4. 스트릭 방패 */
+  const rq=req&&!(S.shields&&S.shields[req]);
+  h+=row('스트릭 방패',rq?'<span class="pill">허가 대기</span>':last&&last>=addDays(k,-7)?`<span class="pill purple">${fmt(last)} 지킴</span>`:'<span class="pill off">마스터 허가제</span>',
+    rq?`${fmt(req)} 방패를 알렸어요. 마스터가 허가하면 연속 출석이 이어지고 그날 보스 반격(회복)도 막아요.`:sd?`어제(${fmt(sd)}) 공부를 못 했네. 사정이 있었다면 알리기를 눌러 마스터께 방패를 부탁해 봐. 직접 쓸 수는 없고 마스터가 허가해야 해.`:'공부를 못 한 날이 생기면 다음 날 알리기로 마스터께 방패를 부탁할 수 있어요. 허가받으면 연속 출석이 끊기지 않아요(점수는 없어요).',
+    !rq&&sd?`<button class="btn ghost sm" id="shreq">방패 알리기 (${fmt(sd)})</button>`:'');
+  return h+'</div>'}
 function renderToday(){
   const k=TODAY(),L=log(k),sc=dayScore(k);const done=L.q.filter(q=>q.done).length,tot=L.q.length;
   const mk=monthKeyOf(k);const main=Object.keys(SUBJ).sort((a,b)=>bossLeft(b,mk)/SUBJ[b].hp-bossLeft(a,mk)/SUBJ[a].hp)[0];
@@ -1145,7 +1197,7 @@ function renderToday(){
   attMark();h+=attCard();
   h+=coreCard();
   if(giftReady())h+=giftCard();else if(event2Ready())h+=event2Card();
-  if(blessActive())h+=`<div class="banner" style="background:#5B3B8C"><span data-spr="star" data-sc="5"></span><div><b>마스터의 가호</b><p class="small" style="opacity:.9">선생님 과제 완료! ${fmt(S.bless.until)}까지 모든 공격 데미지 +${BLESS_PCT}%</p></div></div>`;
+  if(blessActive())h+=`<div class="banner" style="background:#5B3B8C"><span data-spr="star" data-sc="5"></span><div><b>마스터의 가호</b><p class="small" style="opacity:.9">${S.bless.admin?'숙제검사 통과!':'선생님 과제 완료!'} ${fmt(S.bless.until)}까지 모든 공격 데미지 +${BLESS_PCT}%</p></div></div>`;
   else h+=`<div class="card" style="gap:4px"><div class="row between"><b>마스터의 가호</b><span class="pill">꺼짐</span></div><p class="tiny muted">이번 주 선생님 과제를 완료하면 1주일 동안 데미지 +${BLESS_PCT}%. 매주 과제를 하면 매주 받아요.</p></div>`;
   if(dd>=0)h+=`<div class="banner"><div class="d num">D-${dd}</div><div><b>시험 전 강의완강 베네핏</b><p class="small" style="opacity:.85">12/6까지 들은 강의는 과목마다 주 1회 +1점. 이번 주 남은 과목: ${Object.keys(SUBJ).filter(s=>lectureBonusAvailable(s,k)).map(s=>SUBJ[s].n).join(' ')||'없음'}</p></div></div>`;
   h+=`<div class="card" style="gap:8px"><div class="row between"><h3>공부 퀘스트</h3><span class="num small"><b style="font-size:20px">${sc.rank}</b> / ${DAILY_CAP}점</span></div><p class="tiny muted">오늘 공부 시간 <b class="num">${hm(sc.min)}</b> · 이번 주 <b class="num">${hm(minIn(weekDays()))}</b> <span>([나] 탭에서 자세히)</span></p>`;
@@ -1158,19 +1210,18 @@ function renderToday(){
       <button class="check" data-i="${i}" aria-label="${esc(label)} ${q.done?'완료 취소':'완료하고 공격'}" ${locked?'disabled':''}>${q.done?'✓':'공격!'}</button></div>`});
   h+=`<button class="btn ghost" id="add">+ 즉석 추가 (플랜에 없던 공부)</button></div>`;
   h+=`<div class="card" style="gap:8px"><div class="row between"><h3>생활 미션</h3><span class="tiny muted">궁극기 게이지 +20%</span></div>${['room','gym','meal'].map(a=>`<div class="quest ${L.life[a]?'done':''}"><span class="dot" style="background:var(--gold)"></span><div class="body"><div class="t">${ACT[a].n}</div><div class="tiny muted">+${ACT[a].pt}점 · 하루 1회</div></div><button class="check" data-life="${a}" aria-label="${ACT[a].n} 완료">${L.life[a]?'✓':'완료'}</button></div>`).join('')}</div>`;
-  h+=`<div class="card" style="gap:8px"><div class="row between"><h3>외우기 선생님 인증</h3><span class="pill">3점 → 5점</span></div><p class="small muted">오늘 외운 걸 선생님께 확인받으면 오늘 외우기 퀘스트가 하나에 3점 대신 5점이 돼요.</p>
-    <button class="btn ghost" id="hid" ${L.hiddenReq||!L.q.some(q=>q.a==='mem'&&q.done)?'disabled':''}>${L.hiddenReq?(L.hidden?'인증 완료 · 외우기 5점':'선생님 인증 기다리는 중'):L.q.some(q=>q.a==='mem'&&q.done)?'인증 요청 보내기':'외우기 퀘스트를 먼저 완료해 주세요'}</button>${L.hiddenReq&&!L.hidden&&!MODE_DB?'<button class="chip" id="hidok" style="align-self:flex-start">이 기기에서 승인하기 (오프라인)</button>':''}</div>`;
+  h+=bonusCard(k,L);
   const emoDone=S.emo[k]&&!S.emo[k].demo;
-  {const Lx=S.logs[k];if(Lx&&Lx.early)h+=`<div class="card" style="gap:4px;background:#E7F3D6"><b>자정 전 마감 보너스 +${Lx.early.pts}점 획득!</b><p class="tiny muted">오늘 12시 전에 공부를 끝냈어요. 랭킹·리포트 점수에 들어가요.</p></div>`;
-   else if(earlyOpen(k))h+=`<div class="card" style="gap:4px"><div class="row between"><b>자정 전 마감 보너스</b><span class="pill">+${earlyPts(k)}점</span></div><p class="tiny muted">오늘 퀘스트를 전부 끝내고 밤 12시 전에 '오늘 끝!'을 누르면 그날 점수의 ${EARLY_PCT}%(올림, 최소 1점)를 더 줘요.${allDone(k)?'':` 남은 퀘스트 ${Lx?Lx.q.filter(q=>!q.done).length:0}개!`}</p></div>`}
   h+=`<button class="btn" id="finish">${emoDone?'마음 체크 다시 하기':'오늘 끝! 마음 체크하러 가기'}</button><p class="tiny muted" style="text-align:center">한 과목은 하루 3회, 같은 과목·같은 활동은 2회까지 점수가 쌓여요. 체크 취소는 오늘만.</p>`;
   scr.innerHTML=h;
   scr.querySelectorAll('.check[data-i]').forEach(b=>b.onclick=()=>toggleQuest(+b.dataset.i));
   scr.querySelectorAll('.check[data-life]').forEach(b=>b.onclick=()=>{const a=b.dataset.life;L.life[a]=!L.life[a];if(L.life[a]){S.gauge=Math.min(100,S.gauge+20);toast(`+${ACT[a].pt}점 · 궁극기 게이지 ${S.gauge}%`)}else S.gauge=Math.max(0,S.gauge-20);save();render()});
   $('#add').onclick=addSheet;if($('#corepick'))$('#corepick').onclick=corePickSheet;
   $('#hid').onclick=()=>{L.hiddenReq=true;save();toast('선생님께 인증 요청을 보냈어요');render()};
+  if($('#hwreq'))$('#hwreq').onclick=()=>{S.hwReq=k;save();toast('마스터께 숙제검사를 알렸어요');render()};
+  if($('#shreq'))$('#shreq').onclick=()=>{const d=shieldDay(k);if(!d)return;S.shieldReq=d;save();toast('마스터께 방패를 알렸어요. 허가를 기다려 줘');render()};
   if($('#hidok'))$('#hidok').onclick=()=>{L.hidden=1;save();toast('인증 완료! 외우기 5점');render()};
-  $('#finish').onclick=()=>{const Lk=S.logs[k];if(earlyOpen(k)&&allDone(k)){const pts=earlyPts(k);Lk.early={pts,at:Date.now()};save();SND.play('item');toast(`자정 전 마감 보너스 +${pts}점!`)}
+  $('#finish').onclick=()=>{const Lk=S.logs[k];if(earlyOpen(k)&&allDone(k)){const pts=earlyPts(k);Lk.early={pts,at:Date.now()};save();SND.play('item');toast(`올클리어 보너스 +${pts}점!`)}
     UI.tab='emo';UI.emo={i:0,a:{}};render();toTop()};
   if($('#gift'))$('#gift').onclick=openGift;
   scr.querySelectorAll('.aslot.ready').forEach(b=>{b.setAttribute('role','button');b.tabIndex=0;b.onclick=attOpen});if($('#attwk'))$('#attwk').onclick=attClaimWeek;
@@ -1247,7 +1298,7 @@ function renderPlan(){
 }
 
 /* ---------- 보스전 (이달의 과목 보스) ---------- */
-function monthScoreRaw(mk){mk=mk||monthKeyOf(TODAY());return Object.keys(S.logs).filter(x=>x.startsWith(mk)).reduce((a,x)=>a+dayScore(x).raw,0)}
+function monthScoreRaw(mk){mk=mk||monthKeyOf(TODAY());return logKeys().filter(x=>x.startsWith(mk)).reduce((a,x)=>a+dayScore(x).raw,0)}
 /* ---------- 공략 비법서: 점수 설계 안내 (평일 2시간 = 월 300점 = 3,000 데미지) ---------- */
 function guideRaid(){const all=myRaids().filter(r=>!r.vac).map(r=>raidInst(r));return all.find(x=>x.open&&x.left>0)||all.filter(x=>!x.open).sort((a,b)=>a.openStart<b.openStart?-1:1)[0]||all[0]}
 function guideHTML(mk){
@@ -1557,7 +1608,7 @@ function studyCard(){
     ${Object.keys(sub).length?`<div class="chips">${Object.keys(SUBJ).filter(x=>sub[x]).map(x=>`<span class="pill">${SUBJ[x].n} ${hm(sub[x])}</span>`).join('')}</div>`:''}
     <p class="tiny muted">${lw?`지난주보다 ${diff>=0?'+':'-'}${hm(Math.abs(diff))}`:'지난주 기록이 쌓이면 비교해 줄게'} · 이달 공부한 날 ${studied}일 · 막대 숫자는 시간</p></div>`}
 function renderMe(){
-  const c=S.char,K=KINGDOMS[c.kingdom];const total=Object.keys(S.logs).reduce((a,k)=>a+dayScore(k).raw,0);const lv=Math.floor(total/300)+1;
+  const c=S.char,K=KINGDOMS[c.kingdom];const total=logKeys().reduce((a,k)=>a+dayScore(k).raw,0);const lv=Math.floor(total/300)+1;
   const titles=['떨어진 자','견습 모험가','숙련 모험가','왕국의 기사','대륙의 주인'];
   let h=`${UI.justMade?'<h1>캐릭터 카드 완성!</h1>':''}
   <div class="charcard" style="background:linear-gradient(150deg,${c.color},${K.c})">
@@ -1695,8 +1746,9 @@ function parentWeek(k){
   h+=`<div class="card"><h3>요일별 공부 시간과 컨디션</h3><div class="wkbars">${days.map((d,i)=>{const e=S.emo[d];const fut=d>k;return `<div><span class="tiny num muted">${mins[i]?(Math.round(mins[i]/6)/10)+'h':''}</span><div class="wb"><i style="height:${mins[i]/mm*100}%"></i></div><b class="small">${'월화수목금토일'[i]}</b><span>${e&&e.cond?FACES[e.cond-1][0]:fut?'':'·'}</span></div>`}).join('')}</div></div>`;
   /* 8. 추가 포인트 */
   const extra=[];days.forEach(d=>{const L=S.logs[d];if(!L)return;L.q.filter(q=>q.done&&q.a==='hw').forEach(q=>extra.push([d,'선생님 과제 완료 (마스터의 가호 7일)',qPts(q,L)]));
-    if(L.hidden)extra.push([d,'외우기 선생님 인증',MEM_VERIFIED-ACT.mem.pt]);if(L.early)extra.push([d,'자정 전 마감 보너스',L.early.pts]);
+    if(L.hidden)extra.push([d,'외우기 선생님 인증',MEM_VERIFIED-ACT.mem.pt]);if(L.early)extra.push([d,'올클리어 보너스 (자정 전)',L.early.pts]);
     L.q.filter(q=>q.done&&q.a==='lec'&&q.pts===6).forEach(q=>extra.push([d,SUBJ[q.s].n+' 강의 보너스',1]))});
+  days.forEach(d=>{const m=m1Of(S,d);if(m)extra.push([d,'히든미션 숙제검사 (마스터의 가호 7일)',m])});
   h+=`<div class="card"><h3>추가 포인트</h3>${extra.length?extra.map(([d,t,p])=>`<div class="row between small"><span>${fmt(d)} ${esc(t)}</span><b style="color:#2FA06A">+${p}점</b></div>`).join(''):'<p class="small muted">이번 주는 추가 포인트가 없어요.</p>'}</div>`;
   /* 9. 한눈에 보기 */
   const out=[];const topS=Object.keys(sub).sort((a,b)=>sub[b].n-sub[a].n)[0];
@@ -1746,7 +1798,7 @@ function renderParent(){
   }
   if(t==='week')h+=parentWeek(k);
   if(t==='month'){
-    const m=k.slice(0,7);const ds=Object.keys(S.logs).filter(d=>d.startsWith(m)).sort();
+    const m=k.slice(0,7);const ds=logKeys().filter(d=>d.startsWith(m)).sort();
     const path=Object.keys(S.emo).filter(d=>d.startsWith(m)).sort().map(d=>[d,S.emo[d].cell]);
     h+=`<h1>월간 리포트</h1><p class="small muted">${Number(m.slice(5))}월 누적</p></div>
     <div class="card"><div class="row between"><h3>이달 점수</h3><span class="num" style="font-family:var(--f-display);font-size:24px">${ds.reduce((a,d)=>a+dayScore(d).raw,0)} / ${BASE}점</span></div><div class="bar gauge"><i style="width:${pctOf(ds.reduce((a,d)=>a+dayScore(d).raw,0),BASE)}%"></i></div><p class="small muted">기준치 300점은 평일 하루 2시간입니다. 이달 과목 보스 ${6-Object.keys(SUBJ).filter(x=>bossLeft(x)).length}/6 처치.</p><p class="small muted">기록한 날 ${ds.filter(d=>S.logs[d].q.some(q=>q.done)).length}일 · 연속 출석 ${streak()}일</p></div>

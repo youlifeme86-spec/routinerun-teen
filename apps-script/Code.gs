@@ -10,9 +10,10 @@
  *   기록  : 학생마다 한 줄. 앱 전체 상태(JSON)를 여러 칸에 나눠 저장
  *   승인  : 암기 인증 승인 내역
  *   오류  : 학생 폰에서 난 오류가 실시간으로 쌓이는 곳
+ *   미션  : 보너스 체크 — 숙제검사 횟수·체크(1번 3점 + 마스터의 가호 7일), 스트릭 방패 허가/거절
  */
 
-var SERVER_VERSION = '2026.11.27-1';
+var SERVER_VERSION = '2026.11.28-1';
 var TZ = 'Asia/Seoul';
 var CHUNK = 45000;            // 시트 한 칸 최대 50,000자라 45,000자씩 나눠 저장
 var MAX_CHUNKS = 40;          // 학생 한 명 최대 약 1.8MB
@@ -24,7 +25,8 @@ var SHEETS = {
   acc:  { name: '계정', head: ['아이디', '이름', '역할', 'salt', 'hash', '학부모코드', '사용', '만든날', '마지막접속', '토큰버전', '메모', '학교'] },
   st:   { name: '기록', head: ['아이디', 'rev', '저장시각', '요약', '비공개', '상태1'] },
   ap:   { name: '승인', head: ['아이디', '날짜', '승인시각', '승인자'] },
-  err:  { name: '오류', head: ['시각', '아이디', '버전', '화면', '탭', '내용', '스택', '기기'] }
+  err:  { name: '오류', head: ['시각', '아이디', '버전', '화면', '탭', '내용', '스택', '기기'] },
+  ms:   { name: '미션', head: ['아이디', '종류', '횟수', '날짜', '가호끝/허가', '바꾼시각', '바꾼사람'] }
 };
 var A = { id: 0, name: 1, role: 2, salt: 3, hash: 4, code: 5, active: 6, created: 7, last: 8, tv: 9, memo: 10, school: 11 };
 
@@ -261,6 +263,7 @@ var ROUTES = {
   adminStudent: adminStudent_,
   adminDelete: adminDelete_,
   adminHelperSet: adminHelperSet_,
+  adminMission: adminMission_,
   adminClearErrors: function (b) { auth_(b, 'admin'); clearErrorsMenu(); return {}; }
 };
 
@@ -288,7 +291,7 @@ function load_(b) {
   return {
     id: u.id, name: u.row[A.name], parentCode: u.row[A.code], school: normSchool_(u.row[A.school]),
     state: rec ? rec.state : null, rev: rec ? rec.rev : 0,
-    priv: rec ? rec.priv : null, approved: approvedDates_(u.id)
+    priv: rec ? rec.priv : null, approved: approvedDates_(u.id), bonus: bonusOf_(u.id)
   };
 }
 
@@ -302,10 +305,12 @@ function save_(b) {
     var prev = readState_(u.id, true);
     var approved = approvedDates_(u.id);
     applyApprovals_(st, approved);
+    var bonus = bonusOf_(u.id);
+    applyBonus_(st, bonus);
     var rev = Math.max(Number(b.rev) || 0, prev ? prev.rev + 1 : 1);
     st.rev = rev;
     writeState_(u.id, st, rev, prev ? prev.rowNo : 0, prev ? prev.privRaw : '');
-    return { rev: rev, approved: approved, savedAt: new Date().toISOString() };
+    return { rev: rev, approved: approved, bonus: bonus, savedAt: new Date().toISOString() };
   } finally { lock.releaseLock(); }
 }
 
@@ -389,6 +394,7 @@ function adminOverview_(b) {
   eachState_(function (id, sum, rev, savedAt, rowNo) { states[id] = { sum: sum, rev: rev, savedAt: savedAt }; });
   var approved = {};
   rows_('ap').forEach(function (r) { approved[r[0] + '|' + r[1]] = true; });
+  var bonusMap = allBonus_();
   var students = [], pending = [];
   rows_('acc').forEach(function (r) {
     if (!r[A.id]) return;
@@ -404,7 +410,8 @@ function adminOverview_(b) {
       school: normSchool_(sum.school) || normSchool_(r[A.school]), schoolPreset: normSchool_(r[A.school]),
       created: iso_(r[A.created]), lastLogin: iso_(r[A.last]), savedAt: s.savedAt || '', memo: r[A.memo] || '',
       char: sum.char || null, daily: daily, dd: sum.dd || null, bless: sum.bless || null, monthPts: sum.monthPts || 0,
-      helper: HELPERS.hasOwnProperty(String(r[A.id]))
+      helper: HELPERS.hasOwnProperty(String(r[A.id])),
+      bonus: bonusMap[String(r[A.id])] || null, hwReq: sum.hwReq || '', shieldReq: sum.shieldReq || ''
     });
   });
   var errSh = sheet_('err');
@@ -518,6 +525,96 @@ function adminApprove_(b) {
   return {};
 }
 
+/* ===================== 보너스 체크 (마스터=관리자만 허가) =====================
+ * [미션] 시트 한 줄씩:
+ *   m1set  : 학생별 숙제검사 횟수 설정 (횟수 칸)
+ *   m1     : 숙제검사 체크 1건 (횟수·검사한 날·가호 끝나는 날). 점수 = 횟수 × 3점 (1번 3점, 2번 6점)
+ *   shield : 스트릭 방패 허가/거절 (지킨 날, 가호끝 칸에 Y=허가 / N=거절)
+ * 숙제검사 체크: 그날 랭킹·리포트 점수 +점수 (하루 45점 상한 밖) + 마스터의 가호 7일(데미지 +10%). 풀면 둘 다 빠짐.
+ * 스트릭 방패: 학생이 공부 못 한 날을 '알리기' 하면 마스터가 허가 → 그날 연속 출석이 끊기지 않고 보스 반격(회복)도 막음. 점수는 없음. */
+var MISSION_UNIT = 3, MISSION_MAX_N = 10;
+
+function adminMission_(b) {
+  var me = auth_(b, 'admin');
+  var id = normId_(b.id);
+  var f = id && findAccount_(id);
+  if (!f || f.row[A.role] !== 'student') fail_('학생 계정을 찾지 못했어요', 'no_account');
+  var today = dayKey_(0);
+  var lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try {
+    var cur = bonusOf_(id), sh = sheet_('ms'), rs = rows_('ms'), i;
+    var n = cur.n;
+    if (b.n != null) {
+      n = Math.round(Number(b.n));
+      if (!(n >= 1 && n <= MISSION_MAX_N)) fail_('숙제검사 횟수는 1~' + MISSION_MAX_N + '번으로 해 주세요', 'bad_n');
+      for (i = rs.length - 1; i >= 0; i--) if (String(rs[i][0]) === id && String(rs[i][1]) === 'm1set') sh.deleteRow(i + 2);
+      sh.appendRow([id, 'm1set', n, '', '', new Date(), me.id]);
+      rs = rows_('ms');
+    }
+    var hasToday = !!cur.checks[today];
+    // 오늘 검사 체크를 넣거나 빼기 (이미 체크한 날 횟수를 바꾸면 오늘 점수도 같이 바뀜)
+    if (b.done === false || (b.done === true || (b.n != null && hasToday))) {
+      for (i = rs.length - 1; i >= 0; i--) if (String(rs[i][0]) === id && String(rs[i][1]) === 'm1' && dayStr_(rs[i][3]) === today) sh.deleteRow(i + 2);
+      if (b.done === true || (b.done == null && hasToday)) sh.appendRow([id, 'm1', n, today, dayKey_(6), new Date(), me.id]);
+    }
+    // 방패 허가(Y)·거절(N)·취소(off)
+    if (b.shield) {
+      var d = String(b.shield.day || '');
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(d) || d >= today) fail_('방패 날짜가 올바르지 않아요', 'bad_date');
+      for (i = rs.length - 1; i >= 0; i--) if (String(rs[i][0]) === id && String(rs[i][1]) === 'shield' && dayStr_(rs[i][3]) === d) sh.deleteRow(i + 2);
+      if (b.shield.ok === true || b.shield.ok === false) sh.appendRow([id, 'shield', '', d, b.shield.ok ? 'Y' : 'N', new Date(), me.id]);
+    }
+    var bonus = bonusOf_(id);
+    // 학생 기록에도 바로 반영 (학생이 다음에 저장할 때도 서버가 다시 합쳐 줌)
+    var rec = readState_(id, true);
+    if (rec && rec.state) {
+      var st = JSON.parse(rec.state);
+      applyBonus_(st, bonus);
+      st.rev = rec.rev + 1;
+      writeState_(id, st, st.rev, rec.rowNo, rec.privRaw);
+    }
+    CacheService.getScriptCache().remove('roster');
+    return { bonus: bonus };
+  } finally { lock.releaseLock(); }
+}
+
+function dayStr_(v) { return v instanceof Date ? Utilities.formatDate(v, TZ, 'yyyy-MM-dd') : String(v || ''); }
+
+/** 학생별 보너스 체크 상태: {n, pts, checks:{날짜:점수}, last, until, shields:[날짜], denied:[날짜]} */
+function allBonus_() {
+  var m = {};
+  var get = function (id) { return m[id] || (m[id] = { n: 1, pts: MISSION_UNIT, checks: {}, last: '', until: '', shields: [], denied: [] }); };
+  rows_('ms').forEach(function (r) {
+    var id = String(r[0] || ''), k = String(r[1] || '');
+    if (!id) return;
+    var o = get(id), d = dayStr_(r[3]);
+    if (k === 'm1set') { o.n = Math.max(1, Number(r[2]) || 1); o.pts = o.n * MISSION_UNIT; }
+    else if (k === 'm1' && d) {
+      o.checks[d] = Math.max(1, Number(r[2]) || 1) * MISSION_UNIT;
+      if (d > o.last) { o.last = d; o.until = dayStr_(r[4]); }
+    } else if (k === 'shield' && d) (String(r[4]) === 'N' ? o.denied : o.shields).push(d);
+  });
+  return m;
+}
+function bonusOf_(id) { return allBonus_()[id] || { n: 1, pts: MISSION_UNIT, checks: {}, last: '', until: '', shields: [], denied: [] }; }
+
+/** 보너스 체크를 학생 기록(JSON)에 합치기
+ *  st.m1 = {n, pts, checks}, 마지막 검사의 마스터의 가호(admin 표시), st.shields = {날짜:1}
+ *  마스터가 처리한 알리기(hwReq·shieldReq)는 지움 */
+function applyBonus_(st, b) {
+  b = b || bonusOf_('');
+  st.m1 = { n: b.n, pts: b.pts, checks: b.checks };
+  if (b.last && b.until && b.until >= dayKey_(0)) {
+    if (!st.bless || String(st.bless.until) < b.until) st.bless = { from: b.last, until: b.until, admin: 1 };
+  } else if (st.bless && st.bless.admin) delete st.bless;
+  var sh = {};
+  b.shields.forEach(function (d) { sh[d] = 1; });
+  st.shields = sh;
+  if (st.hwReq && b.last && b.last >= st.hwReq) delete st.hwReq;
+  if (st.shieldReq && (sh[st.shieldReq] || b.denied.indexOf(st.shieldReq) >= 0)) delete st.shieldReq;
+}
+
 function adminStudent_(b) {
   auth_(b, 'admin');
   var rec = readState_(normId_(b.id));
@@ -573,7 +670,15 @@ function eachState_(fn) {
 /** 랭킹·관리자 화면에서 쓰는 작은 요약 (요약 칸에 저장) */
 function summary_(st) {
   var c = st.char || null;
-  var daily = st.daily || {};
+  var daily = JSON.parse(JSON.stringify(st.daily || {}));
+  // 숙제검사 점수: 학생 앱이 아직 계산에 안 넣었으면(옛 앱·학생이 아직 안 열었을 때) 여기서 더해 줌
+  var chk = st.m1 && st.m1.checks || {};
+  Object.keys(chk).forEach(function (d) {
+    var p = Number(chk[d]) || 0;
+    if (!p || (daily[d] && daily[d].m1)) return;
+    var e = daily[d] || (daily[d] = { r: 0, raw: 0, min: 0, n: 0, cell: null, hr: 0 });
+    e.r = Number(e.r || 0) + p; e.raw = Number(e.raw || 0) + p; e.m1 = p;
+  });
   var mk = dayKey_(0).slice(0, 7), pts = 0;
   Object.keys(daily).forEach(function (k) { if (k.slice(0, 7) === mk) pts += Number(daily[k].raw || 0); });
   var hiddenReq = [];
@@ -597,7 +702,7 @@ function summary_(st) {
   });
   return {
     char: c ? { name: c.name, color: c.color, kingdom: c.kingdom, job: c.job, gender: c.gender || '' } : null,
-    daily: daily, dd: dd, bless: st.bless || null, monthPts: pts, hiddenReq: hiddenReq, school: st.school || '',
+    daily: daily, dd: dd, bless: st.bless || null, monthPts: pts, hwReq: st.hwReq || '', shieldReq: st.shieldReq || '', hiddenReq: hiddenReq, school: st.school || '',
     board: { mk: mk, boss: boss, season: season, items: (st.items || []).length, memOk: memOk }
   };
 }
@@ -697,7 +802,7 @@ function ensureSheets_() {
       sh.getRange(1, 1, 1, def.head.length).setValues([def.head]).setFontWeight('bold');
       sh.setFrozenRows(1);
       // 아이디·날짜·코드가 숫자나 날짜로 바뀌지 않게 글자 형식으로 고정
-      var textCols = { acc: 'A:G', st: 'A:A', ap: 'A:B', err: 'B:B' }[k];
+      var textCols = { acc: 'A:G', st: 'A:A', ap: 'A:B', err: 'B:B', ms: 'A:B' }[k];
       if (textCols) sh.getRange(textCols).setNumberFormat('@');
     } else if (sh.getLastColumn() < def.head.length) {
       // 예전 시트에 새 칸(예: 학교)이 없으면 머리글만 채워 줌
